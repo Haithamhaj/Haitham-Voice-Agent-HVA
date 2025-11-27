@@ -48,25 +48,26 @@ class HVA:
         self.router = get_router()
         self.dispatcher = get_dispatcher()
         
-        # Register tools (will be implemented in later phases)
-        # self._register_tools()
+        # Register tools
+        self._register_tools()
         
         logger.info("HVA initialized successfully")
     
     def _register_tools(self):
         """Register all tool modules with dispatcher"""
-        # TODO: Implement in Phase 2-4
-        # from .tools.files import FileTools
-        # from .tools.docs import DocTools
-        # from .tools.browser import BrowserTools
-        # from .tools.terminal import TerminalTools
+        from .tools.files import FileTools
+        from .tools.docs import DocTools
+        from .tools.browser import BrowserTools
+        from .tools.terminal import TerminalTools
+        
+        self.dispatcher.register_tool("files", FileTools())
+        self.dispatcher.register_tool("docs", DocTools())
+        self.dispatcher.register_tool("browser", BrowserTools())
+        self.dispatcher.register_tool("terminal", TerminalTools())
+        
+        # TODO: Implement in Phase 3-4
         # from .tools.gmail import GmailModule
         # from .tools.memory import MemoryModule
-        
-        # self.dispatcher.register_tool("files", FileTools())
-        # self.dispatcher.register_tool("docs", DocTools())
-        # self.dispatcher.register_tool("browser", BrowserTools())
-        # self.dispatcher.register_tool("terminal", TerminalTools())
         # self.dispatcher.register_tool("gmail", GmailModule())
         # self.dispatcher.register_tool("memory", MemoryModule())
         
