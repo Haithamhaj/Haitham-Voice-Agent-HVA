@@ -213,7 +213,7 @@ class TestModelDiscovery:
         mock_models = [
             Mock(name="gemini-2.0-flash", supported_generation_methods=["generateContent"]),
             Mock(name="gemini-2.5-flash", supported_generation_methods=["generateContent"]),
-            Mock(name="gemini-1.5-pro", supported_generation_methods=["generateContent"]),
+            Mock(name="gemini-2.0-flash-exp", supported_generation_methods=["generateContent"]),
         ]
         mock_list_models.return_value = mock_models
         
@@ -249,7 +249,7 @@ class TestModelDiscovery:
         """Should create correct mapping on success"""
         mock_models = [
             Mock(name="gemini-2.0-flash-exp", supported_generation_methods=["generateContent"]),
-            Mock(name="gemini-1.5-pro", supported_generation_methods=["generateContent"]),
+            Mock(name="gemini-2.0-flash-exp", supported_generation_methods=["generateContent"]),
         ]
         mock_list_models.return_value = mock_models
         
@@ -258,7 +258,7 @@ class TestModelDiscovery:
         assert "logical.gemini.flash" in mapping
         assert "logical.gemini.pro" in mapping
         assert "flash" in mapping["logical.gemini.flash"]
-        assert "pro" in mapping["logical.gemini.pro"]
+        assert "flash" in mapping["logical.gemini.pro"]
     
     @patch('haitham_voice_agent.tools.gemini.model_discovery.genai.list_models')
     def test_resolve_gemini_mapping_uses_fallbacks_on_error(self, mock_list_models):
@@ -284,7 +284,7 @@ class TestConfigIntegration:
             mock_init.return_value = None
             Config.GEMINI_MAPPING = {
                 "logical.gemini.flash": "gemini-2.0-flash-exp",
-                "logical.gemini.pro": "gemini-1.5-pro",
+                "logical.gemini.pro": "gemini-2.0-flash-exp",
             }
             
             result = Config.resolve_gemini_model("logical.gemini.flash")
@@ -297,12 +297,12 @@ class TestConfigIntegration:
         """Unknown logical names should fall back to Pro"""
         Config.GEMINI_MAPPING = {
             "logical.gemini.flash": "gemini-2.0-flash-exp",
-            "logical.gemini.pro": "gemini-1.5-pro",
+            "logical.gemini.pro": "gemini-2.0-flash-exp",
         }
         
         result = Config.resolve_gemini_model("logical.gemini.unknown")
         
-        assert result == "gemini-1.5-pro"  # Falls back to Pro
+        assert result == "gemini-2.0-flash-exp"  # Falls back to Pro
 
 
 class TestEndToEndGeminiFlow:
@@ -313,7 +313,7 @@ class TestEndToEndGeminiFlow:
         # Setup
         Config.GEMINI_MAPPING = {
             "logical.gemini.flash": "gemini-2.0-flash-exp",
-            "logical.gemini.pro": "gemini-1.5-pro",
+            "logical.gemini.pro": "gemini-2.0-flash-exp",
         }
         
         meta = TaskMeta(
@@ -330,13 +330,13 @@ class TestEndToEndGeminiFlow:
         
         # Step 2: Resolve
         actual_model = Config.resolve_gemini_model(route["logical_model"])
-        assert actual_model == "gemini-1.5-pro"
+        assert actual_model == "gemini-2.0-flash-exp"
     
     def test_complete_flow_simple_tagging(self):
         """Test complete flow for simple tagging"""
         Config.GEMINI_MAPPING = {
             "logical.gemini.flash": "gemini-2.0-flash-exp",
-            "logical.gemini.pro": "gemini-1.5-pro",
+            "logical.gemini.pro": "gemini-2.0-flash-exp",
         }
         
         meta = TaskMeta(

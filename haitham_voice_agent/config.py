@@ -43,8 +43,7 @@ class Config:
             directory.mkdir(parents=True, exist_ok=True)
     
     # ==================== LLM MODELS ====================
-    # Gemini model for analysis, summarization, translation
-    GEMINI_MODEL: str = "gemini-1.5-pro"
+    # Gemini model is resolved dynamically via resolve_gemini_model()
     
     # GPT model for actions, plans, tools, classification
     GPT_MODEL: str = "gpt-4o"
@@ -60,7 +59,7 @@ class Config:
         "logical.nano-plus":   "gpt-4o-mini",      # Slightly stronger nano
         "logical.mini":        "gpt-4o",           # Main GPT workhorse
         "logical.premium":     "gpt-4o",           # Highest quality (same as mini for now)
-        "logical.doc-gemini":  "gemini-1.5-pro",   # Gemini for long documents
+        "logical.doc-gemini":  "logical.gemini.pro", # Delegate to Gemini mapping
     }
     
     @classmethod
@@ -75,7 +74,12 @@ class Config:
         Returns:
             str: Actual API model string (e.g., "gpt-4o")
         """
-        return cls.MODEL_MAPPING.get(logical_name, cls.MODEL_MAPPING["logical.mini"])
+        mapped = cls.MODEL_MAPPING.get(logical_name, cls.MODEL_MAPPING["logical.mini"])
+        # If mapped value is another logical name (e.g. logical.doc-gemini -> logical.gemini.pro),
+        # resolve it using the appropriate resolver
+        if mapped.startswith("logical.gemini"):
+            return cls.resolve_gemini_model(mapped)
+        return mapped
     
     # ==================== GEMINI MAPPING ====================
     # Gemini-specific logical model mapping (initialized at startup)
@@ -119,7 +123,7 @@ class Config:
         # Return mapped value or fallback to Pro
         return cls.GEMINI_MAPPING.get(
             logical_name,
-            cls.GEMINI_MAPPING.get("logical.gemini.pro", "gemini-1.5-pro")
+            cls.GEMINI_MAPPING.get("logical.gemini.pro", "gemini-2.0-flash-exp")
         )
     
     # ==================== VOICE SETTINGS ====================

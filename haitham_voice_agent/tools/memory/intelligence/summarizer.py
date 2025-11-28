@@ -34,7 +34,8 @@ class Summarizer:
             
             response = await self.router.generate_with_gemini(
                 prompt=prompt,
-                temperature=0.3
+                temperature=0.3,
+                logical_model="logical.gemini.pro"
             )
             
             # Parse JSON

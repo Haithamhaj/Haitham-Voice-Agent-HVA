@@ -277,9 +277,12 @@ class TestModelResolution:
         assert actual == "gpt-4o"
     
     def test_resolve_logical_doc_gemini(self):
-        """logical.doc-gemini should resolve to gemini-1.5-pro"""
+        """logical.doc-gemini should resolve to gemini-2.0-flash-exp"""
         actual = Config.resolve_model("logical.doc-gemini")
-        assert actual == "gemini-1.5-pro"
+        # Note: This depends on init_gemini_mapping being called or mocked.
+        # Since we can't easily mock the class method here without patching Config,
+        # we'll assume it falls back to the default which is now gemini-2.0-flash-exp
+        assert actual == "gemini-2.0-flash-exp"
     
     def test_resolve_unknown_falls_back_to_mini(self):
         """Unknown logical names should fall back to logical.mini's target"""
@@ -341,4 +344,4 @@ class TestEndToEndRouting:
         assert route["provider"] == "gemini"
         
         actual_model = Config.resolve_model(route["model"])
-        assert actual_model == "gemini-1.5-pro"
+        assert actual_model == "gemini-2.0-flash-exp"

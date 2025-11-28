@@ -38,9 +38,9 @@ class LLMRouter:
         
         # Initialize Gemini
         genai.configure(api_key=Config.GEMINI_API_KEY)
-        self.gemini_model = genai.GenerativeModel(Config.GEMINI_MODEL)
+        # Note: Gemini model is now resolved at runtime per request
         
-        logger.info(f"LLM Router initialized: GPT={self.gpt_model}, Gemini={Config.GEMINI_MODEL}")
+        logger.info(f"LLM Router initialized: GPT={self.gpt_model}")
     
     def route(self, intent: str, context: Optional[Dict[str, Any]] = None) -> LLMType:
         """
@@ -94,7 +94,8 @@ class LLMRouter:
         self,
         prompt: str,
         system_instruction: Optional[str] = None,
-        temperature: float = 0.7
+        temperature: float = 0.7,
+        logical_model: str = "logical.gemini.pro"
     ) -> str:
         """
         Generate response using Gemini
@@ -103,13 +104,19 @@ class LLMRouter:
             prompt: User prompt
             system_instruction: System instruction (optional)
             temperature: Sampling temperature
+            logical_model: Logical model name to use (default: logical.gemini.pro)
             
         Returns:
             str: Generated response
         """
-        logger.info("Generating with Gemini...")
+        # Resolve model at runtime
+        model_name = Config.resolve_gemini_model(logical_model)
+        logger.info(f"Generating with Gemini ({logical_model} -> {model_name})...")
         
         try:
+            # Create client for the specific model
+            model = genai.GenerativeModel(model_name)
+            
             # Combine system instruction and prompt if provided
             full_prompt = prompt
             if system_instruction:
@@ -117,7 +124,7 @@ class LLMRouter:
             
             # Generate response
             response = await asyncio.to_thread(
-                self.gemini_model.generate_content,
+                model.generate_content,
                 full_prompt,
                 generation_config=genai.types.GenerationConfig(
                     temperature=temperature
