@@ -94,6 +94,15 @@ class LocalSTT:
         if not any(WHISPER_MODELS.values()):
             init_whisper_models()
             
+        # Log available microphones for debugging
+        try:
+            mics = sr.Microphone.list_microphone_names()
+            logger.info(f"Available Microphones: {mics}")
+            # Note: sr.Microphone() uses the system default device.
+            # To change it, one would need to pass device_index to sr.Microphone(device_index=...)
+        except Exception as e:
+            logger.warning(f"Could not list microphones: {e}")
+            
     def listen_realtime(self, language: Optional[str] = None) -> Optional[str]:
         """
         Command Mode STT:
