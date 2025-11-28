@@ -97,7 +97,7 @@ class Config:
             # Safe fallbacks
             cls.GEMINI_MAPPING = {
                 "logical.gemini.flash": "gemini-2.0-flash-exp",
-                "logical.gemini.pro": "gemini-1.5-pro",
+                "logical.gemini.pro": "gemini-2.0-flash-exp",
             }
     
     @classmethod

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Safe fallbacks in case discovery fails
 FALLBACKS = {
     "flash": "gemini-2.0-flash-exp",
-    "pro": "gemini-1.5-pro",
+    "pro": "gemini-2.0-flash-exp",  # Use flash as fallback for pro too (safer)
 }
 
 

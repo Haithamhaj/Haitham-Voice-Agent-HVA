@@ -1,21 +1,25 @@
 """
-Main HVA Module
+Haitham Voice Agent - Main Entry Point
 
-Implements the main orchestration loop:
-Voice Input → STT → LLM Router → Plan Generation → 
-User Confirmation → Dispatcher → Tools → TTS Response
+The Voice Loop:
+1. Listen: Capture audio via STT
+2. Route: Send text to LLM Router  
+3. Plan: Receive execution plan (JSON)
+4. Confirm: Speak plan → Listen for "Yes"
+5. Execute: Run tools → Speak result
 """
 
 import asyncio
 import logging
 import sys
-from pathlib import Path
+import json
+from typing import Optional
 
-from .config import Config, validate_config
-from .stt import get_stt
-from .tts import get_tts
-from .llm_router import get_router
-from .dispatcher import get_dispatcher
+from haitham_voice_agent.config import Config
+from haitham_voice_agent.tools.voice import STT, TTS
+from haitham_voice_agent.llm_router import LLMRouter
+from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
+from haitham_voice_agent.tools.gmail.connection_manager import ConnectionManager
 
 # Set up logging
 logging.basicConfig(
@@ -31,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class HVA:
-    """Haitham Voice Agent - Main orchestrator"""
+    """Haitham Voice Agent - Main Orchestrator"""
     
     def __init__(self):
         logger.info("=" * 60)
@@ -39,207 +43,272 @@ class HVA:
         logger.info("=" * 60)
         
         # Validate configuration
-        if not validate_config():
+        if not Config.validate():
             raise RuntimeError("Configuration validation failed")
         
-        # Initialize modules
-        self.stt = get_stt()
-        self.tts = get_tts()
-        self.router = get_router()
-        self.dispatcher = get_dispatcher()
+        # Initialize Gemini mapping at startup
+        logger.info("Initializing Gemini model discovery...")
+        Config.init_gemini_mapping()
         
-        # Register tools
-        self._register_tools()
+        # Initialize voice
+        self.stt = STT()
+        self.tts = TTS()
+        
+        # Initialize LLM
+        self.router = LLMRouter()
+        
+        # Initialize tools
+        self.memory_tools = VoiceMemoryTools()
+        self.gmail = ConnectionManager()
+        
+        # Default language
+        self.language = "ar"  # Arabic by default
         
         logger.info("HVA initialized successfully")
     
-    def _register_tools(self):
-        """Register all tool modules with dispatcher"""
-        from .tools.files import FileTools
-        from .tools.docs import DocTools
-        from .tools.browser import BrowserTools
-        from .tools.terminal import TerminalTools
-        
-        self.dispatcher.register_tool("files", FileTools())
-        self.dispatcher.register_tool("docs", DocTools())
-        self.dispatcher.register_tool("browser", BrowserTools())
-        self.dispatcher.register_tool("terminal", TerminalTools())
-        
-        # TODO: Implement in Phase 3-4
-        # from .tools.gmail import GmailModule
-        # from .tools.memory import MemoryModule
-        # self.dispatcher.register_tool("gmail", GmailModule())
-        # self.dispatcher.register_tool("memory", MemoryModule())
-        
-        logger.info("All tools registered")
+    async def initialize_async(self):
+        """Initialize async components"""
+        await self.memory_tools.ensure_initialized()
+        logger.info("Async components initialized")
     
-    async def process_voice_command(self, duration: int = 5) -> bool:
+    def listen(self, timeout: int = 10) -> Optional[str]:
         """
-        Process a single voice command through the full pipeline
+        Listen for voice input and transcribe.
         
-        Args:
-            duration: Recording duration in seconds
-            
         Returns:
-            bool: True if command processed successfully, False otherwise
+            str: Transcribed text or None
         """
-        try:
-            # 1. Listen for voice input
-            logger.info("Listening for voice command...")
-            await self.tts.speak("أنا جاهز، تفضل")  # "I'm ready, go ahead"
-            
-            # 2. Transcribe
-            text = await self.stt.listen_and_transcribe(duration=duration)
-            logger.info(f"Transcribed: {text}")
-            
-            if not text or text == "placeholder transcription":
-                await self.tts.speak("لم أفهم، من فضلك أعد المحاولة")  # "I didn't understand, please try again"
-                return False
-            
-            # 3. Generate execution plan
-            logger.info("Generating execution plan...")
-            plan = await self.router.generate_execution_plan(text)
-            
-            # 4. Confirm with user
-            logger.info("Requesting user confirmation...")
-            confirmation_text = self._format_plan_for_confirmation(plan)
-            await self.tts.speak(confirmation_text)
-            
-            # Ask for confirmation
-            await self.tts.speak("هل تؤكد التنفيذ؟")  # "Do you confirm execution?"
-            confirmed = await self.stt.listen_for_confirmation(timeout=10)
-            
-            if not confirmed:
-                logger.info("User rejected execution")
-                await self.tts.speak("تم الإلغاء")  # "Cancelled"
-                return False
-            
-            # 5. Execute plan
-            logger.info("Executing plan...")
-            results = await self.dispatcher.execute_plan(plan)
-            
-            # 6. Respond with results
-            response_text = self._format_results_for_response(results)
-            await self.tts.speak(response_text)
-            
-            logger.info("Command processed successfully")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error processing command: {e}", exc_info=True)
-            await self.tts.speak("حدث خطأ، من فضلك حاول مرة أخرى")  # "An error occurred, please try again"
-            return False
-    
-    def _format_plan_for_confirmation(self, plan: dict) -> str:
-        """
-        Format execution plan for TTS confirmation
+        logger.info("Listening...")
+        text = self.stt.listen(language=self.language, timeout=timeout)
         
-        Args:
-            plan: Execution plan dictionary
-            
-        Returns:
-            str: Formatted text for TTS
-        """
-        intent = plan.get("intent", "Unknown intent")
-        steps_count = len(plan.get("steps", []))
-        risks = plan.get("risks", [])
-        
-        # Detect language from intent
-        language = self.stt.detect_language(intent)
-        
-        if language == "ar":
-            text = f"سأقوم بـ: {intent}. "
-            text += f"عدد الخطوات: {steps_count}. "
-            
-            if risks:
-                text += f"تحذير: {', '.join(risks)}. "
+        if text:
+            logger.info(f"Heard: {text}")
         else:
-            text = f"I will: {intent}. "
-            text += f"Number of steps: {steps_count}. "
-            
-            if risks:
-                text += f"Warning: {', '.join(risks)}. "
+            logger.warning("No speech detected")
         
         return text
     
-    def _format_results_for_response(self, results: list) -> str:
+    def speak(self, text: str):
+        """Speak text using TTS"""
+        self.tts.speak(text, language=self.language)
+    
+    async def route_and_plan(self, user_text: str) -> dict:
         """
-        Format execution results for TTS response
+        Route user input to LLM and generate execution plan.
         
         Args:
-            results: List of result dictionaries
+            user_text: User's spoken command
             
         Returns:
-            str: Formatted text for TTS
+            dict: Execution plan with intent, steps, and parameters
         """
-        if not results:
-            return "لم يتم تنفيذ أي خطوات"  # "No steps executed"
+        logger.info("Generating execution plan...")
         
-        # Check if any errors occurred
-        errors = [r for r in results if r.get("error", False)]
+        # Use GPT for planning (tool calling, JSON output)
+        prompt = f"""
+You are HVA, a voice assistant. The user said: "{user_text}"
+
+Analyze the intent and generate an execution plan.
+
+Return JSON:
+{{
+    "intent": "Brief description of what user wants",
+    "tool": "memory|gmail|other",
+    "action": "save_note|search|fetch_email|send_email|other",
+    "parameters": {{}},
+    "confirmation_needed": true/false
+}}
+
+Examples:
+- "احفظ ملاحظة عن اجتماع اليوم" → {{"intent": "Save meeting note", "tool": "memory", "action": "save_note", ...}}
+- "اجلب آخر إيميل" → {{"intent": "Fetch latest email", "tool": "gmail", "action": "fetch_email", ...}}
+- "ابحث عن Mind-Q" → {{"intent": "Search memories about Mind-Q", "tool": "memory", "action": "search", ...}}
+"""
         
-        if errors:
-            error_msg = errors[0].get("message", "Unknown error")
-            return f"حدث خطأ: {error_msg}"  # "An error occurred: ..."
+        response = await self.router.generate_with_gpt(prompt, temperature=0.3)
         
-        # Success
-        success_count = len([r for r in results if not r.get("error", False)])
-        return f"تم التنفيذ بنجاح. عدد الخطوات المنفذة: {success_count}"  # "Executed successfully. Steps completed: ..."
+        # Parse JSON
+        try:
+            if isinstance(response, str):
+                # Clean markdown code blocks
+                clean = response.replace("```json", "").replace("```", "").strip()
+                plan = json.loads(clean)
+            else:
+                plan = response
+            
+            logger.info(f"Plan: {plan}")
+            return plan
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse plan: {e}")
+            return {
+                "intent": "Unknown",
+                "tool": "other",
+                "action": "error",
+                "parameters": {},
+                "confirmation_needed": False
+            }
+    
+    def confirm_plan(self, plan: dict) -> bool:
+        """
+        Speak the plan and ask for confirmation.
+        
+        Returns:
+            bool: True if confirmed, False otherwise
+        """
+        intent = plan.get("intent", "Unknown action")
+        
+        # Speak intent
+        if self.language == "ar":
+            self.speak(f"سأقوم بـ: {intent}. هل تؤكد؟")
+        else:
+            self.speak(f"I will: {intent}. Do you confirm?")
+        
+        # Listen for confirmation
+        response = self.listen(timeout=5)
+        
+        if not response:
+            return False
+        
+        # Check for affirmative words
+        affirmative_ar = ["نعم", "أكد", "موافق", "تمام", "اه"]
+        affirmative_en = ["yes", "confirm", "ok", "sure", "yeah"]
+        
+        response_lower = response.lower()
+        
+        if self.language == "ar":
+            return any(word in response_lower for word in affirmative_ar)
+        else:
+            return any(word in response_lower for word in affirmative_en)
+    
+    async def execute_plan(self, plan: dict) -> dict:
+        """
+        Execute the plan by calling appropriate tools.
+        
+        Returns:
+            dict: Execution result
+        """
+        tool = plan.get("tool", "other")
+        action = plan.get("action", "unknown")
+        params = plan.get("parameters", {})
+        
+        logger.info(f"Executing: {tool}.{action}")
+        
+        try:
+            # Route to appropriate tool
+            if tool == "memory":
+                return await self._execute_memory_action(action, params, plan)
+            elif tool == "gmail":
+                return await self._execute_gmail_action(action, params)
+            else:
+                return {"success": False, "message": "Unknown tool"}
+                
+        except Exception as e:
+            logger.error(f"Execution error: {e}")
+            return {"success": False, "message": str(e)}
+    
+    async def _execute_memory_action(self, action: str, params: dict, plan: dict) -> dict:
+        """Execute memory-related actions"""
+        if action == "save_note":
+            # Extract content from plan intent or params
+            content = params.get("content") or plan.get("intent", "")
+            result = await self.memory_tools.process_voice_note(content)
+            return result
+        
+        elif action == "search":
+            query = params.get("query") or plan.get("intent", "")
+            response = await self.memory_tools.search_memory_voice(query)
+            return {"success": True, "message": response}
+        
+        else:
+            return {"success": False, "message": f"Unknown memory action: {action}"}
+    
+    async def _execute_gmail_action(self, action: str, params: dict) -> dict:
+        """Execute Gmail-related actions"""
+        if action == "fetch_email":
+            email = self.gmail.fetch_latest_email()
+            if email:
+                summary = f"From: {email['from']}, Subject: {email['subject']}"
+                return {"success": True, "message": summary}
+            else:
+                return {"success": False, "message": "No emails found"}
+        
+        else:
+            return {"success": False, "message": f"Unknown Gmail action: {action}"}
+    
+    async def process_command(self) -> bool:
+        """
+        Process a single voice command through the full pipeline.
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # 1. Listen
+            self.speak("نعم؟" if self.language == "ar" else "Yes?")
+            user_text = self.listen()
+            
+            if not user_text:
+                self.speak("لم أسمع شيئاً" if self.language == "ar" else "I didn't hear anything")
+                return False
+            
+            # 2. Route & Plan
+            plan = await self.route_and_plan(user_text)
+            
+            # 3. Confirm (if needed)
+            if plan.get("confirmation_needed", True):
+                if not self.confirm_plan(plan):
+                    self.speak("تم الإلغاء" if self.language == "ar" else "Cancelled")
+                    return False
+            
+            # 4. Execute
+            result = await self.execute_plan(plan)
+            
+            # 5. Respond
+            if result.get("success"):
+                message = result.get("message", "تم" if self.language == "ar" else "Done")
+                self.speak(message)
+                return True
+            else:
+                error_msg = result.get("message", "خطأ" if self.language == "ar" else "Error")
+                self.speak(f"خطأ: {error_msg}" if self.language == "ar" else f"Error: {error_msg}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Command processing error: {e}", exc_info=True)
+            self.speak("حدث خطأ" if self.language == "ar" else "An error occurred")
+            return False
     
     async def run_interactive(self):
-        """
-        Run HVA in interactive mode (continuous listening)
-        """
+        """Run HVA in interactive mode (continuous listening)"""
         logger.info("Starting interactive mode...")
-        await self.tts.speak("مرحبا، أنا HVA جاهز للمساعدة")  # "Hello, I'm HVA ready to help"
+        self.speak("مرحباً، أنا HVA جاهز للمساعدة" if self.language == "ar" else "Hello, I'm HVA ready to help")
         
         try:
             while True:
-                success = await self.process_voice_command()
-                
-                # Small pause between commands
-                await asyncio.sleep(1)
+                await self.process_command()
+                await asyncio.sleep(1)  # Brief pause between commands
                 
         except KeyboardInterrupt:
             logger.info("Shutting down...")
-            await self.tts.speak("إلى اللقاء")  # "Goodbye"
-    
-    async def run_single_command(self, command_text: str):
-        """
-        Run a single text command (for testing without voice)
-        
-        Args:
-            command_text: Command text
-        """
-        logger.info(f"Processing text command: {command_text}")
-        
-        try:
-            # Generate execution plan
-            plan = await self.router.generate_execution_plan(command_text)
-            logger.info(f"Plan: {plan}")
-            
-            # Execute (skip confirmation for testing)
-            results = await self.dispatcher.execute_plan(plan)
-            logger.info(f"Results: {results}")
-            
-            return results
-            
-        except Exception as e:
-            logger.error(f"Error: {e}", exc_info=True)
-            return {"error": True, "message": str(e)}
+            self.speak("إلى اللقاء" if self.language == "ar" else "Goodbye")
 
 
 async def main():
     """Main entry point"""
     try:
         hva = HVA()
+        await hva.initialize_async()
         
-        # Check if running in test mode
+        # Check for test mode
         if len(sys.argv) > 1 and sys.argv[1] == "--test":
-            # Test mode: process a single command
-            test_command = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else "List files in Downloads"
-            logger.info(f"Test mode: {test_command}")
-            await hva.run_single_command(test_command)
+            # Test mode: process a single text command
+            test_text = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else "احفظ ملاحظة عن اجتماع اليوم"
+            logger.info(f"Test mode: {test_text}")
+            
+            plan = await hva.route_and_plan(test_text)
+            result = await hva.execute_plan(plan)
+            logger.info(f"Result: {result}")
         else:
             # Interactive mode
             await hva.run_interactive()
