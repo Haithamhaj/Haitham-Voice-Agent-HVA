@@ -168,12 +168,12 @@ class LocalSTT:
 
             # Garbage Filter
             # 1. Very short text (< 4 chars)
-            # 2. Very low confidence (< 0.4)
+            # 2. Very low confidence (< 0.6)
             if len(text) < 4:
                 logger.info("Ignoring short transcript (garbage filter)")
                 return None
                 
-            if avg_prob < 0.4:
+            if avg_prob < 0.6:
                 logger.warning(f"Low confidence ({avg_prob:.2f}). Ignoring.")
                 # Optional: Return a special flag or just None
                 # For now, return None to avoid acting on hallucinations

@@ -40,7 +40,13 @@ def get_best_model(pattern: str, fallback: str) -> str:
         ]
         
         # Filter by pattern
-        matches = [m for m in models if re.search(pattern, m, re.IGNORECASE)]
+        # Exclude 'tts' or 'audio' models which might not support text generation
+        matches = [
+            m for m in models 
+            if re.search(pattern, m, re.IGNORECASE) 
+            and "tts" not in m.lower() 
+            and "audio" not in m.lower()
+        ]
         
         if not matches:
             logger.warning(

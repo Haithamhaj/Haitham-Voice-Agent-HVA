@@ -145,7 +145,7 @@ class Config:
     
     # VAD / Recognition defaults for Command Mode
     VOICE_VAD_CONFIG = {
-        "pause_threshold": 1.5,   # Increased from 0.8s to allow natural pauses
+        "pause_threshold": 1.0,   # Balanced setting
         "energy_threshold": 300,  # Initial energy threshold
         "dynamic_energy_threshold": True,
     }
