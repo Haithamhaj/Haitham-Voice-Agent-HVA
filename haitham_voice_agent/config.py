@@ -157,9 +157,10 @@ class Config:
         },
         "arabic": {
             "primary_backend": "wav2vec2_ar",
-            "min_valid_chars": 6,
+            "min_valid_chars": 8,      # require a bit more than 6
             "require_arabic_chars": True,
-            "min_confidence": 0.4  # Slightly lower default for Wav2Vec2 as it can be strict
+            "min_confidence": 0.7,     # stricter acceptance threshold
+            "log_rejections": True,    # new flag used by the router
         }
     }
     

@@ -161,7 +161,8 @@ class HVA:
         
         if not text:
             # Validation failed or garbage
-            self.speak("ما فهمت كلامك، حاول تعيد الجملة." if self.language == "ar" else "I didn't understand, please repeat.")
+            logger.info("STT returned None (unreliable speech). Asking user to repeat.")
+            self.speak("ما فهمت كلامك، حاول تعيد الجملة بصوت أوضح وأقصر." if self.language == "ar" else "I didn't understand, please repeat clearly.")
             return
 
         logger.info(f"Command: {text}")
@@ -293,7 +294,8 @@ class HVA:
         logger.info(f"Transcript length: {len(transcript) if transcript else 0}")
         
         if not transcript:
-            self.speak("ما قدرت أفرغ الجلسة بشكل واضح." if self.language == "ar" else "Could not transcribe session clearly.")
+            logger.info("Session STT failed or was too noisy.")
+            self.speak("ما قدرت أفرغ الجلسة بشكل واضح. حاول تعيد التسجيل في مكان أهدأ." if self.language == "ar" else "Could not transcribe session clearly. Please try again in a quieter place.")
             return
 
         # Analyze Session
