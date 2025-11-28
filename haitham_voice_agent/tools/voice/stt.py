@@ -136,12 +136,13 @@ class LocalSTT:
             
             # Transcribe
             # beam_size=1 for speed in realtime mode
-            # Force Arabic if language is 'ar' or None (default preference)
-            target_lang = language or "ar"
+            # Force Arabic for robustness as requested
+            target_lang = "ar"
             
             segments, info = model.transcribe(
                 data, 
                 language=target_lang, 
+                task="transcribe",
                 beam_size=1
             )
 
@@ -156,21 +157,18 @@ class LocalSTT:
             
             logger.info(f"Realtime transcription (lang={target_lang}, conf={avg_prob:.2f}): {text}")
 
-            # Fallback logic: If confidence is low (< 0.4) and we forced Arabic, try English
-            # This helps when the user actually spoke English but we forced Arabic
-            if target_lang == "ar" and avg_prob < 0.4:
-                logger.info("Low confidence in Arabic. Attempting English fallback...")
-                segments_en, _ = model.transcribe(
-                    data,
-                    language="en",
-                    beam_size=1
-                )
-                text_en = " ".join(seg.text for seg in segments_en).strip()
-                logger.info(f"English fallback: {text_en}")
+            # Garbage Filter
+            # 1. Very short text (< 4 chars)
+            # 2. Very low confidence (< 0.4)
+            if len(text) < 4:
+                logger.info("Ignoring short transcript (garbage filter)")
+                return None
                 
-                # If English result is non-empty, use it
-                if text_en:
-                    return text_en
+            if avg_prob < 0.4:
+                logger.warning(f"Low confidence ({avg_prob:.2f}). Ignoring.")
+                # Optional: Return a special flag or just None
+                # For now, return None to avoid acting on hallucinations
+                return None
 
             if text:
                 return text

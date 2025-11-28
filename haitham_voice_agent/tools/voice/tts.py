@@ -31,15 +31,21 @@ class TTS:
             logger.warning("Empty text provided to TTS")
             return
         
-        # Select voice based on language
-        voice = Config.TTS_VOICE_AR if language == "ar" else Config.TTS_VOICE_EN
+        # Select voice and rate based on language
+        tts_config = Config.TTS_CONFIG.get(language, Config.TTS_CONFIG["en"])
+        voice = tts_config["voice"]
+        # Use configured rate, or override if rate arg was explicitly passed (though we default to config)
+        # Actually, let's respect the rate argument if it differs from default 200, 
+        # otherwise use config. But the method signature has default 200.
+        # Let's prioritize config rate for better quality control.
+        config_rate = tts_config["rate"]
         
         try:
-            logger.info(f"Speaking ({language}): {text[:50]}...")
+            logger.info(f"Speaking ({language}, voice={voice}, rate={config_rate}): {text[:50]}...")
             
             # Use macOS say command
             subprocess.run(
-                ["say", "-v", voice, "-r", str(rate), text],
+                ["say", "-v", voice, "-r", str(config_rate), text],
                 check=True,
                 capture_output=True
             )

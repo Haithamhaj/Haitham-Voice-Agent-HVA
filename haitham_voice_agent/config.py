@@ -159,6 +159,18 @@ class Config:
     
     # Alternative English voice
     TTS_VOICE_EN_ALT: str = "Alex"
+
+    # Detailed TTS Configuration
+    TTS_CONFIG = {
+        "ar": {
+            "voice": "Majed",
+            "rate": 160  # Slower for clarity
+        },
+        "en": {
+            "voice": "Samantha",
+            "rate": 180  # Standard rate
+        }
+    }
     
     # ==================== PERFORMANCE SETTINGS ====================
     # Timeouts (seconds)
