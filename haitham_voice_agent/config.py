@@ -135,8 +135,8 @@ class Config:
     # Whisper Model Profiles (faster-whisper)
     # Names correspond to official Whisper models: tiny, base, small, medium, large-v2, large-v3
     WHISPER_MODEL_NAMES = {
-        "realtime": "base",     # Fast for interactive commands (small/base)
-        "session":  "medium",   # Accurate for long recordings (medium/large-v3)
+        "realtime": "medium",     # Strong model for interactive commands
+        "session":  "large-v3",   # Heaviest model for long recordings
     }
     
     # VAD / Recognition defaults for Command Mode

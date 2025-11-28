@@ -56,16 +56,32 @@ def init_whisper_models():
 
             if WHISPER_MODELS[profile] is None:
                 logger.info(f"Loading Whisper model for profile '{profile}': {model_name}")
-                # Use CPU with INT8 quantization for speed on standard hardware
-                # On Apple Silicon, it runs decently on CPU. 
-                # Ideally we'd use CoreML or MPS if supported by the library, 
-                # but 'cpu' + 'int8' is a safe, portable default.
-                WHISPER_MODELS[profile] = WhisperModel(
-                    model_name, 
-                    device="cpu", 
-                    compute_type="int8"
-                )
-                logger.info(f"Whisper model '{profile}' loaded successfully")
+                
+                try:
+                    # Attempt to load the configured model
+                    WHISPER_MODELS[profile] = WhisperModel(
+                        model_name, 
+                        device="cpu", 
+                        compute_type="int8"
+                    )
+                    logger.info(f"Whisper model '{profile}' ({model_name}) loaded successfully")
+                    
+                except Exception as e:
+                    # Fallback logic specifically for heavy models
+                    if "large" in model_name:
+                        logger.warning(f"Failed to load heavy model '{model_name}' for '{profile}'. Error: {e}")
+                        logger.info("Attempting fallback to 'medium' model...")
+                        try:
+                            WHISPER_MODELS[profile] = WhisperModel(
+                                "medium", 
+                                device="cpu", 
+                                compute_type="int8"
+                            )
+                            logger.info(f"Fallback model 'medium' loaded for '{profile}'")
+                        except Exception as fallback_error:
+                            logger.error(f"Fallback failed for '{profile}': {fallback_error}")
+                    else:
+                        logger.error(f"Failed to load model '{model_name}' for '{profile}': {e}")
                 
     except Exception as e:
         logger.error(f"Failed to initialize Whisper models: {e}", exc_info=True)
