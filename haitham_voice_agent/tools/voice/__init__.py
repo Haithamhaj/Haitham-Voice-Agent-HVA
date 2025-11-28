@@ -1,6 +1,7 @@
 """Voice tools package"""
 
-from .stt import STT
+from .stt import LocalSTT, init_whisper_models
 from .tts import TTS
+from .recorder import SessionRecorder
 
-__all__ = ["STT", "TTS"]
+__all__ = ["LocalSTT", "TTS", "SessionRecorder", "init_whisper_models"]

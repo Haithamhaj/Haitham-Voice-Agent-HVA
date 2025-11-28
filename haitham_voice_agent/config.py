@@ -130,6 +130,25 @@ class Config:
     STT_LANGUAGE_AR: str = "ar-SA"
     STT_LANGUAGE_EN: str = "en-US"
     
+    # ==================== VOICE & WHISPER CONFIG ====================
+    
+    # Whisper Model Profiles (faster-whisper)
+    # Names correspond to official Whisper models: tiny, base, small, medium, large-v2, large-v3
+    WHISPER_MODEL_NAMES = {
+        "realtime": "base",     # Fast for interactive commands (small/base)
+        "session":  "medium",   # Accurate for long recordings (medium/large-v3)
+    }
+    
+    # VAD / Recognition defaults for Command Mode
+    VOICE_VAD_CONFIG = {
+        "pause_threshold": 0.8,   # Seconds of silence to consider end of speech
+        "energy_threshold": 300,  # Initial energy threshold (auto-adjusted)
+        "dynamic_energy_threshold": True,
+    }
+    
+    # Session recording directory
+    VOICE_SESSION_DIR: Path = HVA_HOME / "sessions"
+    
     # TTS settings (macOS voices)
     TTS_VOICE_AR: str = "Majed"
     TTS_VOICE_EN: str = "Samantha"

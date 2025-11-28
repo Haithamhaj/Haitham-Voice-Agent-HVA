@@ -14,7 +14,7 @@
    brew install portaudio
    
    # Then install Python packages
-   pip install SpeechRecognition pyaudio aiosqlite chromadb google-generativeai openai
+   pip install SpeechRecognition pyaudio aiosqlite chromadb google-generativeai openai faster-whisper soundfile numpy
    ```
 
 3. **macOS** (for TTS using `say` command)
@@ -23,22 +23,26 @@
 
 ## Running Modes
 
-### 1. Interactive Voice Mode
+### 1. Interactive Voice Mode (Command & Session)
 ```bash
 python3 -m haitham_voice_agent.main
 ```
 
-**Flow:**
-1. HVA says: "مرحباً، أنا HVA جاهز للمساعدة"
-2. You speak a command
-3. HVA generates a plan and asks for confirmation
-4. You say "نعم" to confirm
-5. HVA executes and speaks the result
+**Two Modes Supported:**
 
-**Example Commands:**
-- Arabic: "احفظ ملاحظة عن اجتماع اليوم"
-- Arabic: "ابحث عن Mind-Q"
-- Arabic: "اجلب آخر إيميل"
+**A. Command Mode (Realtime):**
+- Uses fast local Whisper model
+- Speak short commands:
+  - "احفظ ملاحظة عن اجتماع اليوم"
+  - "ابحث عن Mind-Q"
+  - "ابدأ جلسة" (Starts Session Mode)
+
+**B. Session Mode (Long Recording):**
+- Trigger: Say "ابدأ جلسة" or "Start Session"
+- Records continuously until you stop
+- Uses accurate local Whisper model (Medium/Large)
+- Analyzes transcript with Gemini (Summary, Decisions, Actions)
+- Saves analysis to Memory
 
 ### 2. Test Mode (No Voice)
 ```bash

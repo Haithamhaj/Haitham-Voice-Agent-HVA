@@ -1,108 +1,187 @@
 """
-Speech-to-Text (STT) Module
+Local Speech-to-Text (STT) Engine
 
-Converts spoken audio to text using Google Speech Recognition API.
-Supports Arabic and English.
+Uses faster-whisper for local transcription.
+Supports two modes:
+1. Realtime: For interactive commands (using VAD)
+2. Session: For long recordings (meetings)
 """
 
-import speech_recognition as sr
+import io
+import os
 import logging
+import speech_recognition as sr
+import soundfile as sf
+import numpy as np
 from typing import Optional, Literal
+
+# Try importing faster_whisper, handle if missing
+try:
+    from faster_whisper import WhisperModel
+    HAS_WHISPER = True
+except ImportError:
+    HAS_WHISPER = False
+
 from haitham_voice_agent.config import Config
 
 logger = logging.getLogger(__name__)
 
-Language = Literal["ar", "en"]
+# Global cache for Whisper model instances
+# Loaded once at startup to avoid reloading latency
+WHISPER_MODELS = {
+    "realtime": None,
+    "session": None,
+}
+
+_recognizer = sr.Recognizer()
 
 
-class STT:
-    """Speech-to-Text handler"""
+def init_whisper_models():
+    """
+    Initialize and cache Whisper models for realtime and session profiles.
+    Must be called ONCE at startup.
+    """
+    global WHISPER_MODELS
+    
+    if not HAS_WHISPER:
+        logger.error("faster-whisper not installed. Local STT will not work.")
+        return
+
+    try:
+        for profile in ("realtime", "session"):
+            model_name = Config.WHISPER_MODEL_NAMES.get(profile)
+            if not model_name:
+                logger.warning(f"No Whisper model configured for profile '{profile}'")
+                continue
+
+            if WHISPER_MODELS[profile] is None:
+                logger.info(f"Loading Whisper model for profile '{profile}': {model_name}")
+                # Use CPU with INT8 quantization for speed on standard hardware
+                # On Apple Silicon, it runs decently on CPU. 
+                # Ideally we'd use CoreML or MPS if supported by the library, 
+                # but 'cpu' + 'int8' is a safe, portable default.
+                WHISPER_MODELS[profile] = WhisperModel(
+                    model_name, 
+                    device="cpu", 
+                    compute_type="int8"
+                )
+                logger.info(f"Whisper model '{profile}' loaded successfully")
+                
+    except Exception as e:
+        logger.error(f"Failed to initialize Whisper models: {e}", exc_info=True)
+
+
+class LocalSTT:
+    """Local STT Handler using faster-whisper"""
     
     def __init__(self):
-        self.recognizer = sr.Recognizer()
-        # Adjust for ambient noise
-        self.recognizer.energy_threshold = 4000
-        self.recognizer.dynamic_energy_threshold = True
-        
-    def listen(
-        self, 
-        language: Language = "en",
-        timeout: int = None,
-        phrase_time_limit: int = None
-    ) -> Optional[str]:
+        if not any(WHISPER_MODELS.values()):
+            init_whisper_models()
+            
+    def listen_realtime(self, language: Optional[str] = None) -> Optional[str]:
         """
-        Listen to microphone and convert speech to text.
+        Command Mode STT:
+        - Uses speech_recognition + Microphone for VAD
+        - Transcribes using local Whisper 'realtime' model
         
         Args:
-            language: "ar" for Arabic, "en" for English
-            timeout: Max seconds to wait for speech to start
-            phrase_time_limit: Max seconds for the phrase
+            language: "ar", "en", or None (auto-detect)
             
         Returns:
-            str: Recognized text or None if failed
+            str: Transcribed text
         """
-        timeout = timeout or Config.STT_TIMEOUT
-        
-        # Map language codes
-        lang_code = Config.STT_LANGUAGE_AR if language == "ar" else Config.STT_LANGUAGE_EN
-        
+        if not HAS_WHISPER:
+            logger.error("faster-whisper missing")
+            return None
+            
+        model = WHISPER_MODELS["realtime"]
+        if model is None:
+            logger.error("Realtime Whisper model not initialized")
+            return None
+
         try:
             with sr.Microphone() as source:
-                logger.info(f"Listening... (language: {language})")
+                # Configure VAD settings from config
+                _recognizer.pause_threshold = Config.VOICE_VAD_CONFIG.get("pause_threshold", 0.8)
+                _recognizer.energy_threshold = Config.VOICE_VAD_CONFIG.get("energy_threshold", 300)
+                _recognizer.dynamic_energy_threshold = Config.VOICE_VAD_CONFIG.get("dynamic_energy_threshold", True)
+
+                logger.info("Listening (Local Whisper)...")
+                # Adjust for ambient noise briefly
+                _recognizer.adjust_for_ambient_noise(source, duration=0.5)
                 
-                # Adjust for ambient noise
-                self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                
-                # Listen
-                audio = self.recognizer.listen(
-                    source,
-                    timeout=timeout,
-                    phrase_time_limit=phrase_time_limit
-                )
-                
-                logger.info("Processing speech...")
-                
-                # Recognize using Google Speech Recognition
-                text = self.recognizer.recognize_google(
-                    audio,
-                    language=lang_code
-                )
-                
-                logger.info(f"Recognized: {text}")
+                audio = _recognizer.listen(source)
+                logger.info("Audio captured, transcribing...")
+
+            # Convert AudioData to numpy array for faster-whisper
+            wav_bytes = audio.get_wav_data()
+            wav_buf = io.BytesIO(wav_bytes)
+            data, samplerate = sf.read(wav_buf)
+            
+            # Transcribe
+            # beam_size=1 for speed in realtime mode
+            segments, info = model.transcribe(
+                data, 
+                language=language, 
+                beam_size=1
+            )
+
+            text = " ".join(seg.text for seg in segments).strip()
+            
+            if text:
+                logger.info(f"Realtime transcription ({info.language}): {text}")
                 return text
-                
+            return None
+            
         except sr.WaitTimeoutError:
             logger.warning("Listening timed out")
             return None
-        except sr.UnknownValueError:
-            logger.warning("Could not understand audio")
-            return None
-        except sr.RequestError as e:
-            logger.error(f"Could not request results from Google Speech Recognition: {e}")
-            return None
         except Exception as e:
-            logger.error(f"STT error: {e}")
+            logger.error(f"Realtime STT error: {e}", exc_info=True)
             return None
-    
-    def listen_from_file(self, audio_file: str, language: Language = "en") -> Optional[str]:
+
+    def transcribe_session(self, file_path: str, language: Optional[str] = None) -> str:
         """
-        Convert audio file to text.
+        Session Mode STT:
+        - Transcribes a full audio file using 'session' model
         
         Args:
-            audio_file: Path to audio file (WAV format)
-            language: "ar" or "en"
+            file_path: Path to WAV file
+            language: "ar", "en", or None
             
         Returns:
-            str: Recognized text or None
+            str: Full transcription
         """
-        lang_code = Config.STT_LANGUAGE_AR if language == "ar" else Config.STT_LANGUAGE_EN
+        if not HAS_WHISPER:
+            return "Error: faster-whisper not installed"
+            
+        model = WHISPER_MODELS["session"]
+        if model is None:
+            # Fallback to realtime model if session model failed to load
+            model = WHISPER_MODELS["realtime"]
+            if model is None:
+                return "Error: No Whisper models initialized"
+            logger.warning("Session model missing, falling back to realtime model")
+
+        if not os.path.exists(file_path):
+            logger.error(f"File not found: {file_path}")
+            return ""
+
+        logger.info(f"Transcribing session file: {file_path}")
         
         try:
-            with sr.AudioFile(audio_file) as source:
-                audio = self.recognizer.record(source)
-                text = self.recognizer.recognize_google(audio, language=lang_code)
-                logger.info(f"Recognized from file: {text}")
-                return text
+            # Transcribe file directly
+            # beam_size=5 for better accuracy in session mode
+            segments, info = model.transcribe(
+                file_path, 
+                language=language,
+                beam_size=5
+            )
+
+            text = " ".join(seg.text for seg in segments).strip()
+            logger.info(f"Session transcription complete. Length: {len(text)} chars")
+            return text
+            
         except Exception as e:
-            logger.error(f"File STT error: {e}")
-            return None
+            logger.error(f"Session transcription error: {e}", exc_info=True)
+            return f"Error transcribing session: {str(e)}"
