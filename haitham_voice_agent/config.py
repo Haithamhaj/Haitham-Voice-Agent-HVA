@@ -7,7 +7,7 @@ Loads environment variables, sets paths, and defines system constants.
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -76,6 +76,51 @@ class Config:
             str: Actual API model string (e.g., "gpt-4o")
         """
         return cls.MODEL_MAPPING.get(logical_name, cls.MODEL_MAPPING["logical.mini"])
+    
+    # ==================== GEMINI MAPPING ====================
+    # Gemini-specific logical model mapping (initialized at startup)
+    # This is populated by calling resolve_gemini_mapping() from tools.gemini
+    GEMINI_MAPPING: Dict[str, str] = {}
+    
+    @classmethod
+    def init_gemini_mapping(cls):
+        """
+        Initialize Gemini model mapping by discovering available models.
+        Should be called once at startup.
+        """
+        try:
+            from haitham_voice_agent.tools.gemini.model_discovery import resolve_gemini_mapping
+            cls.GEMINI_MAPPING = resolve_gemini_mapping()
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to initialize Gemini mapping: {e}. Using fallbacks.")
+            # Safe fallbacks
+            cls.GEMINI_MAPPING = {
+                "logical.gemini.flash": "gemini-2.0-flash-exp",
+                "logical.gemini.pro": "gemini-1.5-pro",
+            }
+    
+    @classmethod
+    def resolve_gemini_model(cls, logical_name: str) -> str:
+        """
+        Resolve a Gemini logical model name to the actual API model string.
+        If the logical name is unknown, fall back to Pro (quality first).
+        
+        Args:
+            logical_name: Logical Gemini model name (e.g., "logical.gemini.flash")
+            
+        Returns:
+            str: Actual API model string (e.g., "gemini-2.0-flash-exp")
+        """
+        # Ensure mapping is initialized
+        if not cls.GEMINI_MAPPING:
+            cls.init_gemini_mapping()
+        
+        # Return mapped value or fallback to Pro
+        return cls.GEMINI_MAPPING.get(
+            logical_name,
+            cls.GEMINI_MAPPING.get("logical.gemini.pro", "gemini-1.5-pro")
+        )
     
     # ==================== VOICE SETTINGS ====================
     # Supported languages
