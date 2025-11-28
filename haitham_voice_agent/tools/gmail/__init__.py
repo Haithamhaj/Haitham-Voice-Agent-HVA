@@ -5,6 +5,7 @@ from .gmail_api_handler import GmailAPIHandler
 from .imap_handler import IMAPHandler
 from .smtp_handler import SMTPHandler
 from .models.email_message import EmailMessage, Draft, Label, Attachment
+from .email_llm import EmailLLMHelpers, get_email_llm_helpers
 
 __all__ = [
     "ConnectionManager",
@@ -14,5 +15,7 @@ __all__ = [
     "EmailMessage",
     "Draft",
     "Label",
-    "Attachment"
+    "Attachment",
+    "EmailLLMHelpers",
+    "get_email_llm_helpers"
 ]
