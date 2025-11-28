@@ -139,8 +139,15 @@ class Config:
     # Whisper Model Profiles (faster-whisper)
     # Names correspond to official Whisper models: tiny, base, small, medium, large-v2, large-v3
     WHISPER_MODEL_NAMES = {
-        "realtime": "medium",     # Strong model for interactive commands
+        "realtime": "large-v3",   # High quality for interactive commands (with fallback to medium)
         "session":  "large-v3",   # Heaviest model for long recordings
+    }
+    
+    # Strict STT Filtering Configuration
+    STT_STRICT_CONFIG = {
+        "min_confidence": 0.70,   # High confidence required
+        "min_length": 6,          # Minimum characters
+        "max_realtime_seconds": 10.0  # Threshold for treating as long speech/note
     }
     
     # VAD / Recognition defaults for Command Mode
@@ -164,7 +171,7 @@ class Config:
     TTS_CONFIG = {
         "ar": {
             "voice": "Majed",
-            "rate": 160  # Slower for clarity
+            "rate": 150  # Slower for clarity
         },
         "en": {
             "voice": "Samantha",

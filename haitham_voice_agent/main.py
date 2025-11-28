@@ -134,11 +134,22 @@ class HVA:
         Command Mode: Listen -> Route -> Execute
         """
         # Listen
-        text = self.stt.listen_realtime(language=self.language)
+        result = self.stt.listen_realtime(language=self.language)
         
-        if not text:
+        if not result:
             return
             
+        text = result["text"]
+        is_long_speech = result.get("is_long_speech", False)
+        
+        if is_long_speech:
+            logger.info(f"Long speech detected ({result['duration']:.2f}s). Treating as memory note.")
+            self.speak("تم حفظ الجلسة كملاحظة طويلة" if self.language == "ar" else "Long session saved as note")
+            
+            # Route directly to memory
+            await self.memory_tools.process_voice_note(text)
+            return
+
         logger.info(f"Command: {text}")
         await self.process_text_command(text)
 

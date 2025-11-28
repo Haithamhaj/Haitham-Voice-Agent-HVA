@@ -103,7 +103,7 @@ class LocalSTT:
         except Exception as e:
             logger.warning(f"Could not list microphones: {e}")
             
-    def listen_realtime(self, language: Optional[str] = None) -> Optional[str]:
+    def listen_realtime(self, language: Optional[str] = None) -> Optional[dict]:
         """
         Command Mode STT:
         - Uses speech_recognition + Microphone for VAD
@@ -113,7 +113,11 @@ class LocalSTT:
             language: "ar", "en", or None (auto-detect)
             
         Returns:
-            str: Transcribed text
+            dict: {
+                "text": str, 
+                "duration": float, 
+                "confidence": float
+            } or None if filtered out
         """
         if not HAS_WHISPER:
             logger.error("faster-whisper missing")
@@ -127,7 +131,7 @@ class LocalSTT:
         try:
             with sr.Microphone() as source:
                 # Configure VAD settings from config
-                _recognizer.pause_threshold = Config.VOICE_VAD_CONFIG.get("pause_threshold", 0.8)
+                _recognizer.pause_threshold = Config.VOICE_VAD_CONFIG.get("pause_threshold", 1.0)
                 _recognizer.energy_threshold = Config.VOICE_VAD_CONFIG.get("energy_threshold", 300)
                 _recognizer.dynamic_energy_threshold = Config.VOICE_VAD_CONFIG.get("dynamic_energy_threshold", True)
 
@@ -138,13 +142,20 @@ class LocalSTT:
                 audio = _recognizer.listen(source)
                 logger.info("Audio captured, transcribing...")
 
-            # Convert AudioData to numpy array for faster-whisper
+            # Calculate duration roughly
+            # AudioData.get_wav_data() returns bytes. 
+            # WAV is usually 16-bit (2 bytes) * sample_rate * channels
+            # sr defaults: 16-bit, mono, 44100Hz usually, but let's check audio.sample_rate
+            # Duration = len(bytes) / (sample_width * sample_rate)
             wav_bytes = audio.get_wav_data()
+            duration = len(wav_bytes) / (audio.sample_width * audio.sample_rate)
+            logger.info(f"Audio duration: {duration:.2f}s")
+            
+            # Convert to file-like object
             wav_buf = io.BytesIO(wav_bytes)
             data, samplerate = sf.read(wav_buf)
             
             # Transcribe
-            # beam_size=1 for speed in realtime mode
             # Force Arabic for robustness as requested
             target_lang = "ar"
             
@@ -152,7 +163,7 @@ class LocalSTT:
                 data, 
                 language=target_lang, 
                 task="transcribe",
-                beam_size=1
+                beam_size=5  # Increased beam size for better quality (large-v3)
             )
 
             # Collect segments and check confidence
@@ -166,21 +177,39 @@ class LocalSTT:
             
             logger.info(f"Realtime transcription (lang={target_lang}, conf={avg_prob:.2f}): {text}")
 
-            # Garbage Filter
-            # 1. Very short text (< 4 chars)
-            # 2. Very low confidence (< 0.6)
-            if len(text) < 4:
-                logger.info("Ignoring short transcript (garbage filter)")
+            # Strict Filtering
+            strict_config = getattr(Config, "STT_STRICT_CONFIG", {
+                "min_confidence": 0.7,
+                "min_length": 6,
+                "max_realtime_seconds": 10.0
+            })
+            
+            # 1. Check if it's long speech (pass through, but flag it)
+            if duration > strict_config["max_realtime_seconds"]:
+                logger.info(f"Long speech detected ({duration:.2f}s). Passing as session note.")
+                return {
+                    "text": text,
+                    "duration": duration,
+                    "confidence": avg_prob,
+                    "is_long_speech": True
+                }
+
+            # 2. Garbage Filter for short commands
+            if len(text) < strict_config["min_length"]:
+                logger.info(f"Ignoring short transcript (< {strict_config['min_length']} chars)")
                 return None
                 
-            if avg_prob < 0.6:
-                logger.warning(f"Low confidence ({avg_prob:.2f}). Ignoring.")
-                # Optional: Return a special flag or just None
-                # For now, return None to avoid acting on hallucinations
+            if avg_prob < strict_config["min_confidence"]:
+                logger.warning(f"Low confidence ({avg_prob:.2f} < {strict_config['min_confidence']}). Ignoring.")
                 return None
 
             if text:
-                return text
+                return {
+                    "text": text,
+                    "duration": duration,
+                    "confidence": avg_prob,
+                    "is_long_speech": False
+                }
             return None
             
         except sr.WaitTimeoutError:

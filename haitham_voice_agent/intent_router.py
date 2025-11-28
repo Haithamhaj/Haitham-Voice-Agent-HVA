@@ -91,16 +91,9 @@ class IntentRouter:
                         "confidence": 1.0
                     }
         
-        # 2. Check for long unrecognized speech -> Treat as Memory Note
-        # If text is long (> 20 chars) and didn't match specific commands,
-        # it's likely a dictation or a thought the user wants to capture.
-        if len(text) > 20:
-            logger.info("Long unrecognized speech detected. Treating as memory note.")
-            return {
-                "action": "save_memory_note",
-                "params": {"content": text},
-                "confidence": 0.8
-            }
+        # 2. (Removed) Check for long unrecognized speech
+        # We now handle long speech in main.py based on duration.
+        # Short unrecognized speech should be treated as unknown to avoid garbage.
             
         # 3. Unknown
         return {

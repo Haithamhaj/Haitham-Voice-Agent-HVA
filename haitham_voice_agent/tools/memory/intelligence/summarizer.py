@@ -24,28 +24,13 @@ class Summarizer:
                 content=content[:8000]  # Truncate if too long
             )
             
-            # Use Gemini for heavy text processing/summarization
-            # But we need JSON output, so GPT might be safer for structure, 
-            # or Gemini with strict instructions. SRS says Gemini for summarization.
-            # Let's try Gemini first, but handle parsing carefully.
-            # Actually, for complex JSON structure, GPT-4o is more reliable.
-            # The SRS says "Gemini (Analytical Tasks): Summarization".
-            # I'll use Gemini but ensure I can parse the JSON.
-            
-            try:
-                response = await self.router.generate_with_gemini(
-                    prompt=prompt,
-                    temperature=0.3,
-                    logical_model="logical.gemini.pro"
-                )
-            except Exception as e:
-                logger.warning(f"Gemini summarization failed: {e}. Falling back to GPT.")
-                # Fallback to GPT
-                response = await self.router.generate_with_gpt(
-                    prompt=prompt,
-                    temperature=0.3,
-                    response_format="json_object"
-                )
+            # Use GPT for summarization to ensure reliable JSON and avoid Gemini TTS model issues
+            # As per latest refactoring plan, we strictly use GPT for this text task.
+            response = await self.router.generate_with_gpt(
+                prompt=prompt,
+                temperature=0.3,
+                response_format="json_object"
+            )
             
             # Parse JSON
             if isinstance(response, str):
