@@ -37,6 +37,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+from haitham_voice_agent.tools.stt_router import transcribe_command, transcribe_session
 from haitham_voice_agent.intent_router import route_command
 
 def validate_config() -> bool:
@@ -133,21 +134,34 @@ class HVA:
         """
         Command Mode: Listen -> Route -> Execute
         """
-        # Listen
-        result = self.stt.listen_realtime(language=self.language)
-        
-        if not result:
+        # Capture Audio
+        capture = self.stt.capture_audio()
+        if not capture:
             return
             
-        text = result["text"]
-        is_long_speech = result.get("is_long_speech", False)
+        audio_bytes, duration = capture
         
-        if is_long_speech:
-            logger.info(f"Long speech detected ({result['duration']:.2f}s). Treating as memory note.")
-            self.speak("تم حفظ الجلسة كملاحظة طويلة" if self.language == "ar" else "Long session saved as note")
+        # Check for long speech (treat as note)
+        strict_config = getattr(Config, "STT_STRICT_CONFIG", {"max_realtime_seconds": 10.0})
+        if duration > strict_config["max_realtime_seconds"]:
+            logger.info(f"Long speech detected ({duration:.2f}s). Treating as memory note.")
             
-            # Route directly to memory
-            await self.memory_tools.process_voice_note(text)
+            # Use session transcriber for better quality on long audio
+            text = transcribe_session(audio_bytes, duration)
+            
+            if text:
+                self.speak("تم حفظ الجلسة كملاحظة طويلة" if self.language == "ar" else "Long session saved as note")
+                await self.memory_tools.process_voice_note(text)
+            else:
+                self.speak("ما قدرت أفرغ الجلسة بشكل واضح." if self.language == "ar" else "Could not transcribe session clearly.")
+            return
+
+        # Short Command
+        text = transcribe_command(audio_bytes, duration)
+        
+        if not text:
+            # Validation failed or garbage
+            self.speak("ما فهمت كلامك، حاول تعيد الجملة." if self.language == "ar" else "I didn't understand, please repeat.")
             return
 
         logger.info(f"Command: {text}")
@@ -190,7 +204,7 @@ class HVA:
             elif intent["action"] == "summarize_latest_email":
                 # Fallback to planner for complex tasks
                 pass 
-
+        
         # 2. LLM Routing (Fallback / Complex Tasks)
         # Route & Plan
         plan = await self.plan_command(text)
@@ -257,11 +271,29 @@ class HVA:
         self.speak("تم إيقاف التسجيل. جاري المعالجة..." if self.language == "ar" else "Recording stopped. Processing...")
         
         # Transcribe
-        transcript = self.stt.transcribe_session(final_path, language=self.language)
-        logger.info(f"Transcript length: {len(transcript)}")
+        # Read file to bytes
+        try:
+            with open(final_path, "rb") as f:
+                audio_bytes = f.read()
+                
+            # Calculate duration roughly (optional, or pass 0 if not needed by router logic except for logging)
+            # We can get duration from file size / rate
+            # Wav file header has size, but let's just pass 0 or estimate
+            # Or use soundfile to get duration
+            import soundfile as sf
+            info = sf.info(final_path)
+            duration = info.duration
+            
+            transcript = transcribe_session(audio_bytes, duration)
+            
+        except Exception as e:
+            logger.error(f"Failed to read session file: {e}")
+            transcript = None
+
+        logger.info(f"Transcript length: {len(transcript) if transcript else 0}")
         
         if not transcript:
-            self.speak("لم يتم استخراج نص" if self.language == "ar" else "No text extracted")
+            self.speak("ما قدرت أفرغ الجلسة بشكل واضح." if self.language == "ar" else "Could not transcribe session clearly.")
             return
 
         # Analyze Session

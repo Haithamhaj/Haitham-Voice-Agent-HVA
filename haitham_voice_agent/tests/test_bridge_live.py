@@ -6,6 +6,7 @@ and retrieving it via semantic search.
 """
 
 import asyncio
+import pytest
 import logging
 from unittest.mock import Mock
 from haitham_voice_agent.tools.gmail.memory_integration import GmailMemoryBridge
@@ -16,6 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.asyncio
 async def test_bridge_live():
     """
     Test the Gmail -> Memory bridge with a mock email.

@@ -142,6 +142,26 @@ class Config:
         "realtime": "large-v3",   # High quality for interactive commands (with fallback to medium)
         "session":  "large-v3",   # Heaviest model for long recordings
     }
+
+    # ==================== STT ROUTER CONFIG ====================
+    W2V2_AR_MODEL_NAME: str = "elgeish/wav2vec2-large-xlsr-53-levantine-arabic"
+    
+    STT_ROUTER_CONFIG = {
+        "offline_mode": True,  # everything is local (Whisper/Wav2Vec2)
+        "lang_detect": {
+            "max_seconds": 5.0,
+            "min_confidence": 0.6
+        },
+        "english": {
+            "backend": "whisper_en"
+        },
+        "arabic": {
+            "primary_backend": "wav2vec2_ar",
+            "min_valid_chars": 6,
+            "require_arabic_chars": True,
+            "min_confidence": 0.4  # Slightly lower default for Wav2Vec2 as it can be strict
+        }
+    }
     
     # Strict STT Filtering Configuration
     STT_STRICT_CONFIG = {

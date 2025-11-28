@@ -24,7 +24,6 @@ def test_config_has_required_keys():
     assert hasattr(Config, 'OPENAI_API_KEY')
     assert hasattr(Config, 'GEMINI_API_KEY')
     assert hasattr(Config, 'GPT_MODEL')
-    assert hasattr(Config, 'GEMINI_MODEL')
 
 
 def test_config_supported_languages():

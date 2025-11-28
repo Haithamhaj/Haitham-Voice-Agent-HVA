@@ -10,7 +10,7 @@ Verifies:
 import os
 import pytest
 import asyncio
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 from pathlib import Path
 
 from haitham_voice_agent.tools.voice import LocalSTT, SessionRecorder, init_whisper_models
@@ -53,7 +53,7 @@ class TestLocalVoice:
             hva = HVA()
             
             # Mock router response
-            hva.llm_router.generate_with_gpt = Mock(return_value={
+            hva.llm_router.generate_with_gpt = AsyncMock(return_value={
                 "intent": "Test Intent",
                 "tool": "memory",
                 "action": "save_note",
@@ -62,7 +62,7 @@ class TestLocalVoice:
             })
             
             # Mock execution
-            hva.memory_tools.process_voice_note = Mock(return_value={"success": True, "message": "Saved"})
+            hva.memory_tools.process_voice_note = AsyncMock(return_value={"success": True, "message": "Saved"})
             
             # Run plan
             plan = await hva.plan_command("Test command")

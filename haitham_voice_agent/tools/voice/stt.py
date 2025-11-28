@@ -103,6 +103,38 @@ class LocalSTT:
         except Exception as e:
             logger.warning(f"Could not list microphones: {e}")
             
+    def capture_audio(self) -> Optional[tuple[bytes, float]]:
+        """
+        Captures audio from the microphone until silence is detected.
+        Returns (audio_bytes, duration_seconds) or None if capture failed.
+        """
+        try:
+            with sr.Microphone() as source:
+                # Configure VAD settings from config
+                _recognizer.pause_threshold = Config.VOICE_VAD_CONFIG.get("pause_threshold", 1.0)
+                _recognizer.energy_threshold = Config.VOICE_VAD_CONFIG.get("energy_threshold", 300)
+                _recognizer.dynamic_energy_threshold = Config.VOICE_VAD_CONFIG.get("dynamic_energy_threshold", True)
+
+                logger.info("Listening (VAD)...")
+                # Adjust for ambient noise briefly
+                _recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                
+                audio = _recognizer.listen(source)
+                logger.info("Audio captured.")
+
+            # Calculate duration
+            wav_bytes = audio.get_wav_data()
+            duration = len(wav_bytes) / (audio.sample_width * audio.sample_rate)
+            
+            return wav_bytes, duration
+            
+        except sr.WaitTimeoutError:
+            logger.warning("Listening timed out")
+            return None
+        except Exception as e:
+            logger.error(f"Audio capture error: {e}", exc_info=True)
+            return None
+
     def listen_realtime(self, language: Optional[str] = None) -> Optional[dict]:
         """
         Command Mode STT:

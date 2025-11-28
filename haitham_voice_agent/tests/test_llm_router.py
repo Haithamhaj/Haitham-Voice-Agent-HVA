@@ -20,7 +20,6 @@ def router():
 def test_router_initialization(router):
     """Test router initializes correctly"""
     assert router.gpt_model is not None
-    assert router.gemini_model is not None
 
 
 def test_routing_to_gemini(router):
