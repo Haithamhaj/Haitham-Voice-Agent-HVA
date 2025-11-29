@@ -62,6 +62,29 @@ class IntentRouter:
                 r"beautify transcript",
                 r"format transcript",
                 r"clean transcript"
+            ],
+            "create_task": [
+                r"أضف مهمة",
+                r"سجل مهمة",
+                r"مهمة جديدة",
+                r"add task",
+                r"new task",
+                r"create task"
+            ],
+            "list_tasks": [
+                r"اعرض المهام",
+                r"ما هي مهامي",
+                r"قائمة المهام",
+                r"list tasks",
+                r"show tasks",
+                r"my tasks"
+            ],
+            "complete_task": [
+                r"أكمل مهمة",
+                r"انهي مهمة",
+                r"complete task",
+                r"finish task",
+                r"mark task as done"
             ]
         }
 

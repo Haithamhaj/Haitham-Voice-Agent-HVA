@@ -22,7 +22,7 @@ class VoiceMemoryTools:
             
     async def process_voice_note(self, audio_text: str) -> Dict[str, Any]:
         """
-        Process a raw voice note and save it as a memory.
+        Process a raw voice note and save it as a memory AND a local Markdown file.
         
         Args:
             audio_text: The transcribed text from STT
@@ -35,7 +35,7 @@ class VoiceMemoryTools:
             
             logger.info(f"Processing voice note: {audio_text[:50]}...")
             
-            # Save to memory
+            # Save to memory (this handles classification and summarization)
             memory = await self.memory_system.add_memory(
                 content=audio_text,
                 source=MemorySource.VOICE,
@@ -43,11 +43,53 @@ class VoiceMemoryTools:
             )
             
             if memory:
+                # --- NEW: Save to Local Workspace as Markdown ---
+                from haitham_voice_agent.tools.workspace_manager import workspace_manager
+                from datetime import datetime
+                
+                # Determine project (fallback to 'inbox' if None or 'unknown')
+                project_id = memory.project if memory.project and memory.project.lower() != "unknown" else "inbox"
+                
+                # Ensure project structure
+                workspace_manager.ensure_project_structure(project_id)
+                
+                # Generate filename
+                date_str = datetime.now().strftime("%Y-%m-%d")
+                # Create a slug from the ultra_brief or first few words
+                slug = memory.ultra_brief.replace(" ", "_")[:30] if memory.ultra_brief else "voice_note"
+                slug = workspace_manager._sanitize_filename(slug)
+                filename = f"{date_str}_{slug}.md"
+                
+                file_path = workspace_manager.project_notes_dir(project_id) / filename
+                
+                # Content
+                md_content = f"""# {memory.ultra_brief or 'Voice Note'}
+Date: {date_str}
+Project: {project_id}
+Source: Voice
+
+## Content
+{audio_text}
+
+## Summary
+{memory.summary}
+
+## Decisions
+{self._format_list(memory.decisions)}
+
+## Next Actions
+{self._format_list(memory.next_actions)}
+"""
+                # Write file
+                file_path.write_text(md_content, encoding="utf-8")
+                logger.info(f"Saved Markdown note to: {file_path}")
+                
                 return {
                     "success": True,
-                    "message": f"Saved to {memory.project}",
+                    "message": f"Saved to {project_id}",
                     "memory_id": memory.id,
-                    "summary": memory.ultra_brief
+                    "summary": memory.ultra_brief,
+                    "file_path": str(file_path)
                 }
             else:
                 return {
@@ -61,6 +103,11 @@ class VoiceMemoryTools:
                 "success": False,
                 "message": f"Error: {str(e)}"
             }
+
+    def _format_list(self, items: Optional[list]) -> str:
+        if not items:
+            return "- None"
+        return "\n".join([f"- {item}" for item in items])
 
     async def search_memory_voice(self, query_text: str) -> str:
         """

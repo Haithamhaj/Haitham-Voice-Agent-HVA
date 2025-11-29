@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 from haitham_voice_agent.tools.stt_router import transcribe_command, transcribe_session
 from haitham_voice_agent.intent_router import route_command
 from haitham_voice_agent.tools.arabic_normalizer import normalize_arabic_text
+from haitham_voice_agent.tools.tasks.task_manager import task_manager
 
 def validate_config() -> bool:
     """Validates the application configuration."""
@@ -232,6 +233,27 @@ class HVA:
                 else:
                     self.speak("لا يوجد ملاحظات سابقة" if self.language == "ar" else "No previous notes")
                 return 
+
+            elif intent["action"] == "create_task":
+                # Extract title from text (simple heuristic: everything after "add task" or similar)
+                # For now, just use the whole text or ask LLM to parse. 
+                # Let's use the planner to extract details properly if confidence is high but params are missing.
+                # But since we are in deterministic block, we might not have params.
+                # Let's fall through to planner for extraction OR do simple extraction here.
+                # Simple extraction:
+                pass # Fall through to planner to extract title/project/date
+
+            elif intent["action"] == "list_tasks":
+                tasks = task_manager.list_tasks(status="open")
+                if not tasks:
+                    self.speak("لا يوجد مهام مفتوحة" if self.language == "ar" else "No open tasks")
+                else:
+                    count = len(tasks)
+                    self.speak(f"لديك {count} مهام مفتوحة." if self.language == "ar" else f"You have {count} open tasks.")
+                    # List first 3
+                    for t in tasks[:3]:
+                        self.speak(f"- {t.title}")
+                return
         
         # 2. LLM Routing (Fallback / Complex Tasks)
         # Route & Plan
@@ -433,6 +455,22 @@ Generate execution plan JSON:
     "parameters": {{}},
     "confirmation_needed": boolean
 }}
+        prompt = f"""
+User said: "{text}"
+Generate execution plan JSON:
+{{
+    "intent": "description",
+    "tool": "memory|gmail|tasks|other",
+    "action": "save_note|search|fetch_email|send_email|create_task|list_tasks|complete_task",
+    "parameters": {{
+        "title": "task title",
+        "project_id": "project slug (optional)",
+        "due_date": "ISO date (optional)",
+        "query": "search query",
+        "content": "note content"
+    }},
+    "confirmation_needed": boolean
+}}
 """
         response = await self.llm_router.generate_with_gpt(prompt)
         
@@ -478,7 +516,35 @@ Generate execution plan JSON:
                 if email:
                     return {"success": True, "message": f"Email from {email['from']}: {email['subject']}"}
                 return {"success": False, "message": "No emails found"}
+        
+        elif tool == "tasks":
+            if action == "create_task":
+                title = params.get("title") or plan.get("intent")
+                project = params.get("project_id", "inbox")
+                t = task_manager.create_task(title=title, project_id=project, language=self.language)
+                return {"success": True, "message": f"Task created in {project}" if self.language == "en" else f"تم إضافة المهمة في {project}"}
+            
+            elif action == "list_tasks":
+                tasks = task_manager.list_tasks(status="open")
+                if not tasks:
+                    return {"success": True, "message": "No open tasks" if self.language == "en" else "لا يوجد مهام مفتوحة"}
+                msg = f"Found {len(tasks)} tasks. " + ", ".join([t.title for t in tasks[:3]])
+                return {"success": True, "message": msg}
                 
+            elif action == "complete_task":
+                # This is tricky without ID. We need to find by title similarity.
+                # For now, just say not implemented fully via voice without ID context.
+                # Or try to match title.
+                title = params.get("title")
+                if title:
+                    # Simple fuzzy match
+                    tasks = task_manager.list_tasks(status="open")
+                    for t in tasks:
+                        if title.lower() in t.title.lower():
+                            task_manager.complete_task(t.id, t.project_id or "inbox")
+                            return {"success": True, "message": f"Completed task: {t.title}"}
+                return {"success": False, "message": "Task not found"}
+
         return {"success": False, "message": "Unknown action"}
 
     def _speak_result(self, result: dict):
