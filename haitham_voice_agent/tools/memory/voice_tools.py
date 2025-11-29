@@ -109,12 +109,13 @@ Source: Voice
             return "- None"
         return "\n".join([f"- {item}" for item in items])
 
-    async def search_memory_voice(self, query_text: str) -> str:
+    async def search_memory_voice(self, query_text: str, language: str = "en") -> str:
         """
         Search memories via voice and return a spoken response.
         
         Args:
             query_text: The search query
+            language: "ar" or "en"
             
         Returns:
             str: The response text to be spoken
@@ -125,21 +126,27 @@ Source: Voice
             results = await self.memory_system.search_memories(query_text, limit=3)
             
             if not results:
-                return "I couldn't find any relevant memories."
+                return "لم أجد أي ملاحظات مرتبطة." if language == "ar" else "I couldn't find any relevant memories."
             
             # Format response
-            response = f"I found {len(results)} relevant items. "
-            
-            # Top result details
-            top = results[0]
-            response += f"The most relevant is from {top.project}: {top.ultra_brief}. "
-            
-            if len(results) > 1:
-                response += "I also found related notes about " + \
-                           ", ".join([r.topic for r in results[1:]]) + "."
+            if language == "ar":
+                response = f"وجدت {len(results)} نتائج. "
+                top = results[0]
+                response += f"الأهم هي من مشروع {top.project}: {top.ultra_brief}. "
+                if len(results) > 1:
+                    topics = [r.topic for r in results[1:]]
+                    # Simple join for Arabic
+                    response += "وجدت أيضاً ملاحظات عن: " + "، ".join(topics)
+            else:
+                response = f"I found {len(results)} relevant items. "
+                top = results[0]
+                response += f"The most relevant is from {top.project}: {top.ultra_brief}. "
+                if len(results) > 1:
+                    response += "I also found related notes about " + \
+                               ", ".join([r.topic for r in results[1:]]) + "."
                            
             return response
             
         except Exception as e:
             logger.error(f"Voice search failed: {e}")
-            return "I encountered an error while searching your memories."
+            return "واجهت مشكلة في البحث." if language == "ar" else "I encountered an error while searching your memories."

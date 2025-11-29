@@ -497,7 +497,7 @@ Generate execution plan JSON:
                 return await self.memory_tools.process_voice_note(content)
             elif action == "search":
                 query = params.get("query") or plan.get("intent")
-                res = await self.memory_tools.search_memory_voice(query)
+                res = await self.memory_tools.search_memory_voice(query, language=self.language)
                 return {"success": True, "message": res}
                 
         elif tool == "gmail":
