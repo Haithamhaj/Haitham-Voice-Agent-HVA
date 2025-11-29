@@ -144,7 +144,7 @@ class Config:
     }
 
     # ==================== STT ROUTER CONFIG ====================
-    W2V2_AR_MODEL_NAME: str = "elgeish/wav2vec2-large-xlsr-53-levantine-arabic"
+    W2V2_AR_MODEL_NAME: str = "jonatasgrosman/wav2vec2-large-xlsr-53-arabic"
     
     STT_ROUTER_CONFIG = {
         "offline_mode": True,  # everything is local (Whisper/Wav2Vec2)

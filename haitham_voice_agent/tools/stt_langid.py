@@ -7,6 +7,14 @@ from haitham_voice_agent.tools.voice.stt import WHISPER_MODELS, init_whisper_mod
 
 logger = logging.getLogger(__name__)
 
+def _ensure_float32(audio: np.ndarray) -> np.ndarray:
+    """Ensure audio is float32 for ONNX/Whisper compatibility."""
+    if audio is None:
+        return audio
+    if audio.dtype != np.float32:
+        return audio.astype(np.float32)
+    return audio
+
 def detect_language_whisper(audio_bytes: bytes, total_duration: float) -> tuple[str, float]:
     """
     Uses the existing faster-whisper model ONLY to detect language.
@@ -40,6 +48,9 @@ def detect_language_whisper(audio_bytes: bytes, total_duration: float) -> tuple[
         max_samples = int(max_seconds * sample_rate)
         if len(audio_data) > max_samples:
             audio_data = audio_data[:max_samples]
+            
+        # Ensure float32 for ONNX
+        audio_data = _ensure_float32(audio_data)
             
         # Detect language
         # faster-whisper's detect_language returns (probabilities, language_info)? 
