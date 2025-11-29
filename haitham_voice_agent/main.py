@@ -259,6 +259,18 @@ class HVA:
                         self.speak(f"- {t.title}")
                 return
         
+            elif action == "search_notes":
+                # Default search for "last notes" or just general listing
+                # We can search for "*" or just fetch recent
+                # For now, let's search for "note" or "ملاحظة" to get everything, or rely on empty query if supported
+                # But search_memories usually needs a query.
+                # Let's assume the user wants recent notes.
+                query = "recent" # The memory system might not support this keyword specially, but let's try or use empty
+                # Actually, let's just use the text itself as query if it's specific, or "note" if generic
+                res = await self.memory_tools.search_memory_voice("note", language=self.language)
+                self.speak(res)
+                return
+
         # 2. LLM Routing (Fallback / Complex Tasks)
         # Route & Plan
         plan = await self.plan_command(text)

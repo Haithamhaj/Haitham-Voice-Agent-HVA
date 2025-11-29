@@ -119,6 +119,15 @@ class IntentRouter:
                 r"mute",
                 r"unmute",
                 r"sleep display"
+            ],
+            "search_notes": [
+                r"ايش اخر الملاحظات",
+                r"شو اخر الملاحظات",
+                r"اعرض الملاحظات",
+                r"ابحث في الملاحظات",
+                r"what are the last notes",
+                r"list notes",
+                r"search notes"
             ]
         }
 
@@ -196,7 +205,19 @@ def detect_arabic_save_note(text: str) -> bool:
     if not has_arabic:
         return False
 
-    if _contains_any(text, AR_SAVE_KEYWORDS) or "ملاحظة" in text:
+    # If it's a question about notes, it's NOT a save command
+    if any(q in text for q in ["ايش", "ما هي", "شو", "اعرض", "ابحث", "what", "show", "list"]):
+        return False
+
+    # Must contain a save keyword AND "note" keyword, OR be a direct command
+    has_save = _contains_any(text, AR_SAVE_KEYWORDS)
+    has_note = "ملاحظة" in text or "ملاحظات" in text or "note" in text.lower()
+    
+    if has_save and has_note:
+        return True
+        
+    # Also catch "سجل هذا" or just "ملاحظة: ..."
+    if text.strip().startswith("ملاحظة"):
         return True
 
     return False
