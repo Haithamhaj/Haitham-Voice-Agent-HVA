@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 from haitham_voice_agent.tools.stt_router import transcribe_command, transcribe_session
 from haitham_voice_agent.intent_router import route_command
+from haitham_voice_agent.tools.arabic_normalizer import normalize_arabic_text
 
 def validate_config() -> bool:
     """Validates the application configuration."""
@@ -165,7 +166,13 @@ class HVA:
             self.speak("ما فهمت كلامك، حاول تعيد الجملة بصوت أوضح وأقصر." if self.language == "ar" else "I didn't understand, please repeat clearly.")
             return
 
-        logger.info(f"Command: {text}")
+        logger.info(f"Command (Raw): {text}")
+        
+        # Normalize if Arabic
+        if self.language == "ar":
+            text = await normalize_arabic_text(text, mode="command")
+            logger.info(f"Command (Normalized): {text}")
+            
         await self.process_text_command(text)
 
     async def process_text_command(self, text: str):
@@ -205,6 +212,26 @@ class HVA:
             elif intent["action"] == "summarize_latest_email":
                 # Fallback to planner for complex tasks
                 pass 
+                
+            elif intent["action"] == "beautify_transcript":
+                # On-demand normalization
+                self.speak("جاري تحسين النص..." if self.language == "ar" else "Beautifying transcript...")
+                # We assume the user wants to beautify the LAST session or note.
+                # For now, let's just beautify the current text command if it was long, 
+                # OR we need to fetch the last memory.
+                # Given the prompt, let's just say we support it but maybe need a target.
+                # If this was a voice command "beautify this", "this" is the command itself which is short.
+                # Realistically, this would apply to a stored memory.
+                # Let's implement a simple version that fetches the last voice note.
+                last_note = await self.memory_tools.get_last_voice_note()
+                if last_note:
+                    normalized = await normalize_arabic_text(last_note, mode="session") # Force session mode for length
+                    self.speak("النص المحسن:" if self.language == "ar" else "Beautified text:")
+                    print(f"\n--- Beautified Transcript ---\n{normalized}\n-----------------------------")
+                    # Optionally update the memory
+                else:
+                    self.speak("لا يوجد ملاحظات سابقة" if self.language == "ar" else "No previous notes")
+                return 
         
         # 2. LLM Routing (Fallback / Complex Tasks)
         # Route & Plan

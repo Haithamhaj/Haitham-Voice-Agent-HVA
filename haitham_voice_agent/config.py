@@ -170,6 +170,25 @@ class Config:
         "min_length": 6,          # Minimum characters
         "max_realtime_seconds": 10.0  # Threshold for treating as long speech/note
     }
+
+    # Arabic Normalization Configuration
+    AR_NORMALIZATION = {
+        "enabled": True,
+        "mode_command": {
+            "enabled": True,
+            "max_chars": 200,
+            "model_logical": "logical.nano", # Maps to gpt-4o-mini
+            "temperature": 0.1
+        },
+        "mode_session": {
+            "enabled": False,           # IMPORTANT: disabled by default
+            "max_chars": 2000,
+            "model_logical": "logical.nano",
+            "temperature": 0.1
+        },
+        "min_ar_chars": 10,
+        "min_length_for_correction": 10
+    }
     
     # VAD / Recognition defaults for Command Mode
     VOICE_VAD_CONFIG = {

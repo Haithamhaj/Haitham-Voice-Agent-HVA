@@ -54,6 +54,14 @@ class IntentRouter:
                 r"لخّص آخر إيميل",
                 r"ملخص آخر إيميل",
                 r"summarize latest email"
+            ],
+            "beautify_transcript": [
+                r"رتب النص",
+                r"حسن النص",
+                r"جمل النص",
+                r"beautify transcript",
+                r"format transcript",
+                r"clean transcript"
             ]
         }
 
