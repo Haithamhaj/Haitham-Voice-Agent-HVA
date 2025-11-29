@@ -450,16 +450,6 @@ User said: "{text}"
 Generate execution plan JSON:
 {{
     "intent": "description",
-    "tool": "memory|gmail|other",
-    "action": "save_note|search|fetch_email|send_email",
-    "parameters": {{}},
-    "confirmation_needed": boolean
-}}
-        prompt = f"""
-User said: "{text}"
-Generate execution plan JSON:
-{{
-    "intent": "description",
     "tool": "memory|gmail|tasks|other",
     "action": "save_note|search|fetch_email|send_email|create_task|list_tasks|complete_task",
     "parameters": {{
