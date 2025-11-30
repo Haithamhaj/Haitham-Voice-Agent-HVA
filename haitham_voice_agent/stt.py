@@ -17,12 +17,12 @@ from haitham_voice_agent.tools.stt_router import transcribe_command
 
 logger = logging.getLogger(__name__)
 
-def listen_once(duration: int = 8) -> Optional[str]:
+def listen_once(duration: int = 10) -> Optional[str]:
     """
     Listen for a single command and transcribe it.
     
     Args:
-        duration: Recording duration in seconds (default: 8)
+        duration: Recording duration in seconds (default: 10)
         
     Returns:
         str: Transcribed text or None if failed/empty

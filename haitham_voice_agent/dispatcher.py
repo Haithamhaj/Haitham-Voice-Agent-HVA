@@ -26,10 +26,9 @@ class ToolDispatcher:
         """Register default system tools"""
         from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
         from haitham_voice_agent.tools.gmail.connection_manager import ConnectionManager
-        from haitham_voice_agent.tools.files import FileTools
         from haitham_voice_agent.tools.tasks.task_manager import task_manager
         from haitham_voice_agent.tools.system_tools import SystemTools
-        from haitham_voice_agent.tools.browser.browser_tools import BrowserTools
+        from haitham_voice_agent.tools.browser import BrowserTools
         
         # Initialize tools
         # Note: Some might need async init, but for now we register the instances
