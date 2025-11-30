@@ -91,6 +91,11 @@ class HVA:
         self.file_tools = FileTools()
         self.system_tools = SystemTools()
         
+        # Initialize System Awareness (New)
+        from haitham_voice_agent.tools.system_awareness import get_system_awareness
+        self.system_awareness = get_system_awareness()
+        self.system_awareness.start()
+        
         # State
         self.language = "ar"  # Default language
         self.is_running = True
@@ -837,19 +842,20 @@ Output format: JSON
                 
             elif action == "search_files":
                 pattern = params.get("pattern") or params.get("query") or "*"
-                res = await self.file_tools.search_files(directory, pattern)
-                if res.get("error"):
-                    return {"success": False, "message": res["message"]}
                 
-                matches = res["matches"]
+                # Use System Awareness (Layer 2 & 3)
+                matches = self.system_awareness.find_file(pattern)
+                
                 if not matches:
                     return {"success": True, "message": "No matches found" if self.language == "en" else "لم أجد أي ملفات"}
                 
-                count = res["count"]
+                count = len(matches)
                 msg = f"Found {count} matches. " if self.language == "en" else f"وجدت {count} ملفات. "
                 names = [f["name"] for f in matches[:5]]
                 msg += ", ".join(names)
-                return {"success": True, "message": msg}
+                
+                # Return list for GUI
+                return {"success": True, "message": msg, "data": matches}
                 
             elif action == "create_folder":
                 # Handle nested paths: "folder X inside folder Y"
@@ -882,6 +888,14 @@ Output format: JSON
                 app = params.get("app_name") or plan.get("intent")
                 # Clean up intent if it contains "open"
                 app = app.replace("open ", "").replace("افتح ", "").replace("شغل ", "")
+                
+                # Check System Profile (Layer 1)
+                path = self.system_awareness.get_app_path(app)
+                if path:
+                    logger.info(f"Opening app from profile: {path}")
+                    return await self.system_tools.open_app(path) # Pass full path
+                    
+                # Fallback to name
                 return await self.system_tools.open_app(app)
             
             elif action == "set_volume":
