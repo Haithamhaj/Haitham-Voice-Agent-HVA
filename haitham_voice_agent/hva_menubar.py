@@ -269,52 +269,53 @@ class HVAMenuBarApp(rumps.App):
             # Process command
             print(f"⚙️  Processing: {command}")
             
-            # --- 1. Ollama Orchestrator (Local Intelligence) ---
-            from haitham_voice_agent.ollama_orchestrator import get_orchestrator
-            orchestrator = get_orchestrator()
-            
-            # Run async classification in sync context
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
             try:
-                classification = loop.run_until_complete(orchestrator.classify_request(command))
-            finally:
-                loop.close()
+                # --- 1. Ollama Orchestrator (Local Intelligence) ---
+                from haitham_voice_agent.ollama_orchestrator import get_orchestrator
+                orchestrator = get_orchestrator()
                 
-            plan = None
-            
-            if classification.get("type") == "direct_response":
-                print("Ollama handled request directly.")
-                self.gui_queue.put(('add_message', 'assistant', classification["response"], True))
-                # Speak it too
-                self.tts.speak(classification["response"])
-                self.is_listening = False # Reset listening state
-                return
-                
-            elif classification.get("type") == "execute_command":
-                print(f"Ollama identified command: {classification['intent']}")
-                plan = {
-                    "intent": classification["intent"],
-                    "tool": "system", 
-                    "action": classification["intent"],
-                    "parameters": classification.get("parameters", {}),
-                    "confirmation_needed": False
-                }
-            
-            else:
-                # Delegate to GPT
-                print(f"Ollama delegated to: {classification.get('delegate_to')}")
-                
-                # Get router instance
-                router = llm_router.get_router()
-                
-                # Generate execution plan (run async in sync context)
+                # Run async classification in sync context
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
-                    plan = loop.run_until_complete(router.generate_execution_plan(command))
+                    classification = loop.run_until_complete(orchestrator.classify_request(command))
                 finally:
                     loop.close()
+                    
+                plan = None
+                
+                if classification.get("type") == "direct_response":
+                    print("Ollama handled request directly.")
+                    self.gui_queue.put(('add_message', 'assistant', classification["response"], True))
+                    # Speak it too
+                    self.tts.speak(classification["response"])
+                    self.is_listening = False # Reset listening state
+                    return
+                    
+                elif classification.get("type") == "execute_command":
+                    print(f"Ollama identified command: {classification['intent']}")
+                    plan = {
+                        "intent": classification["intent"],
+                        "tool": "system", 
+                        "action": classification["intent"],
+                        "parameters": classification.get("parameters", {}),
+                        "confirmation_needed": False
+                    }
+                
+                else:
+                    # Delegate to GPT
+                    print(f"Ollama delegated to: {classification.get('delegate_to')}")
+                    
+                    # Get router instance
+                    router = llm_router.get_router()
+                    
+                    # Generate execution plan (run async in sync context)
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        plan = loop.run_until_complete(router.generate_execution_plan(command))
+                    finally:
+                        loop.close()
                 
                 if not plan:
                     self.gui_queue.put(('add_message', 'error', 'لم أفهم الأمر / Could not understand command', True))
