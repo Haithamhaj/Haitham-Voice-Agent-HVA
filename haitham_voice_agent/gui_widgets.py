@@ -3,12 +3,13 @@ from tkinter import ttk, font
 import math
 
 # Modern Color Palette (Shared)
+# Modern Color Palette (Shared) - High Contrast
 COLORS = {
     'bg': '#1e1e2e',          # Dark blue-grey background
-    'header_bg': '#181825',   # Slightly darker header
+    'header_bg': '#11111b',   # Darker header for contrast
     'card_bg': '#313244',     # Card background
-    'text_fg': '#cdd6f4',     # Soft white text
-    'text_sub': '#a6adc8',    # Subtext grey
+    'text_fg': '#ffffff',     # Pure white text for maximum readability
+    'text_sub': '#bac2de',    # Lighter grey for subtext
     'accent': '#89b4fa',      # Blue accent
     'success': '#a6e3a1',     # Green
     'warning': '#f9e2af',     # Yellow

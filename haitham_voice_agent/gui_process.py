@@ -357,8 +357,11 @@ class HVAWindow:
         self.chat_widget.add_message(sender, text, timestamp)
         
         if auto_close and not self.is_pinned:
-            if self.auto_close_timer: self.window.after_cancel(self.auto_close_timer)
-            self.auto_close_timer = self.window.after(15000, self.close_window)
+            # Default to NOT auto-closing for now to prevent "disappearing" issues
+            # Only auto-close if explicitly requested and pinned is false
+            pass 
+            # if self.auto_close_timer: self.window.after_cancel(self.auto_close_timer)
+            # self.auto_close_timer = self.window.after(60000, self.close_window)
 
     def show_listening_internal(self):
         if not self.window: self.create_window()
