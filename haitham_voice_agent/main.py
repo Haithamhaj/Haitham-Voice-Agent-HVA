@@ -520,7 +520,7 @@ Output Schema (JSON):
 {{
     "intent": "Brief description of what the user wants",
     "tool": "memory|gmail|tasks|files|system|other",
-    "action": "save_note|search|fetch_email|send_email|create_task|list_tasks|complete_task|list_files|search_files|open_app|set_volume|mute|unmute|sleep_display",
+    "action": "save_note|search|fetch_email|send_email|create_task|list_tasks|complete_task|list_files|search_files|create_folder|open_app|set_volume|mute|unmute|sleep_display",
     "parameters": {{
         "title": "Task title",
         "project_id": "Project name (e.g. 'work', 'personal')",
@@ -536,11 +536,12 @@ Output Schema (JSON):
 }}
 
 Examples:
-1. "Open a new folder inside Haitham folder" -> {{ "tool": "files", "action": "list_files", "parameters": {{ "directory": "Haitham" }} }} (Assuming user wants to see it, or if they meant 'create', we might need a new action. For now, map 'open folder' to 'list_files')
-2. "Open Google Chrome" -> {{ "tool": "system", "action": "open_app", "parameters": {{ "app_name": "Google Chrome" }} }}
-3. "Search for main.py in development" -> {{ "tool": "files", "action": "search_files", "parameters": {{ "directory": "development", "pattern": "main.py" }} }}
-4. "Turn up the volume" -> {{ "tool": "system", "action": "set_volume", "parameters": {{ "level": null }} }} (System will handle increment)
-5. "Add a task to buy milk tomorrow" -> {{ "tool": "tasks", "action": "create_task", "parameters": {{ "title": "Buy milk", "due_date": "tomorrow" }} }}
+1. "Open a new folder inside Haitham folder" -> {{ "tool": "files", "action": "create_folder", "parameters": {{ "directory": "Haitham/New Folder" }} }} (If name not specified, ask or infer)
+2. "Create folder named Tasks in Haitham" -> {{ "tool": "files", "action": "create_folder", "parameters": {{ "directory": "Haitham/Tasks" }} }}
+3. "Open Google Chrome" -> {{ "tool": "system", "action": "open_app", "parameters": {{ "app_name": "Google Chrome" }} }}
+4. "Search for main.py in development" -> {{ "tool": "files", "action": "search_files", "parameters": {{ "directory": "development", "pattern": "main.py" }} }}
+5. "Turn up the volume" -> {{ "tool": "system", "action": "set_volume", "parameters": {{ "level": null }} }} (System will handle increment)
+6. "Add a task to buy milk tomorrow" -> {{ "tool": "tasks", "action": "create_task", "parameters": {{ "title": "Buy milk", "due_date": "tomorrow" }} }}
 
 Generate the JSON plan:
 """
@@ -654,6 +655,33 @@ Generate the JSON plan:
                 names = [f["name"] for f in matches[:5]]
                 msg += ", ".join(names)
                 return {"success": True, "message": msg}
+                
+            elif action == "create_folder":
+                # Handle nested paths: "folder X inside folder Y"
+                # The LLM should ideally give us "Y/X" in the directory param.
+                # But we need to resolve the base path.
+                raw_dir = params.get("directory", "")
+                
+                # Simple resolution: split by / and resolve first part if it's a known alias
+                parts = raw_dir.split("/")
+                base = self._resolve_path(parts[0])
+                
+                if len(parts) > 1:
+                    # Reconstruct path: base + rest
+                    # Remove ~ if present in base to avoid double expansion issues later if using Path
+                    # But _resolve_path returns ~/... so we should be careful.
+                    # Let's just use the resolved base and append the rest.
+                    # If base is "~", we keep it. If base is "~/Downloads", we keep it.
+                    # We just replace the first part.
+                    full_path = f"{base}/{'/'.join(parts[1:])}"
+                else:
+                    full_path = base
+                    
+                res = await self.file_tools.create_folder(full_path)
+                if res.get("error"):
+                    return {"success": False, "message": res["message"]}
+                
+                return {"success": True, "message": f"Created folder: {full_path}" if self.language == "en" else f"تم إنشاء المجلد: {full_path}"}
 
         elif tool == "system":
             if action == "open_app":

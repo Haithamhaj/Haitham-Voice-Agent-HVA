@@ -78,7 +78,7 @@ Source: Voice
 {self._format_list(memory.decisions)}
 
 ## Next Actions
-{self._format_list(memory.next_actions)}
+{self._format_list(memory.action_items)}
 """
                 # Write file
                 file_path.write_text(md_content, encoding="utf-8")
