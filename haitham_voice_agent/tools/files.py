@@ -25,6 +25,7 @@ class FileTools:
         self,
         directory: str = None,
         folder_name: str = None,
+        folder: str = None,
         pattern: Optional[str] = None,
         recursive: bool = False
     ) -> Dict[str, Any]:
@@ -34,6 +35,7 @@ class FileTools:
         Args:
             directory: Directory path
             folder_name: Alias for directory
+            folder: Alias for directory
             pattern: Optional glob pattern (e.g., "*.pdf")
             recursive: Search recursively
             
@@ -42,7 +44,7 @@ class FileTools:
         """
         try:
             # Handle aliases
-            actual_dir = directory or folder_name
+            actual_dir = directory or folder_name or folder
             
             # Handle "None" string from LLM
             if actual_dir == "None":
@@ -52,10 +54,15 @@ class FileTools:
             if not actual_dir:
                 actual_dir = "~"
             
-            # Smart Alias: Map user name to home directory
+            # Smart Alias: Map user name and Arabic "Haitham" to home directory
             import getpass
             current_user = getpass.getuser()
-            if actual_dir.lower() == current_user.lower() or actual_dir.lower() == "haitham":
+            
+            # Normalize input
+            dir_lower = actual_dir.lower().strip()
+            
+            # Check for English "haitham", Arabic "هيثم", or current username
+            if dir_lower == current_user.lower() or dir_lower == "haitham" or dir_lower == "هيثم":
                 logger.info(f"Mapping '{actual_dir}' to Home Directory")
                 actual_dir = "~"
                 
@@ -93,7 +100,16 @@ class FileTools:
             
             logger.info(f"Listed {len(files)} files in {directory}")
             
+            # Format file list for display
+            file_names = [f["name"] for f in files]
+            display_text = "\n".join(file_names[:10])  # Show first 10
+            if len(files) > 10:
+                display_text += f"\n... and {len(files)-10} more"
+            
             return {
+                "success": True,
+                "message": f"Found {len(files)} files in {dir_path.name}",
+                "data": display_text,
                 "directory": str(dir_path),
                 "files": files,
                 "count": len(files)
@@ -102,6 +118,7 @@ class FileTools:
         except Exception as e:
             logger.error(f"Failed to list files: {e}")
             return {
+                "success": False,
                 "error": True,
                 "message": str(e)
             }

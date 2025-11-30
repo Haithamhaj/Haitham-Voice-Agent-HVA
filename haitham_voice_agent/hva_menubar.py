@@ -30,14 +30,19 @@ class HVAMenuBarApp(rumps.App):
         
         # Start GUI Process
         self.gui_queue = multiprocessing.Queue()
-        self.gui_process = multiprocessing.Process(target=run_gui_process, args=(self.gui_queue,))
+        self.cmd_queue = multiprocessing.Queue()
+        self.gui_process = multiprocessing.Process(target=run_gui_process, args=(self.gui_queue, self.cmd_queue))
         self.gui_process.daemon = True
         self.gui_process.start()
         
         self.detector = get_detector()
         self.is_listening = False
-        
         self.listen_thread = None
+        
+        # Start command listener thread (for manual input from GUI)
+        self.cmd_thread = threading.Thread(target=self._listen_for_gui_commands)
+        self.cmd_thread.daemon = True
+        self.cmd_thread.start()
         
         # Menu items
         self.menu = [
@@ -52,6 +57,78 @@ class HVAMenuBarApp(rumps.App):
             rumps.MenuItem("⏹️  Quit", callback=self.quit_app),
         ]
         
+    def _listen_for_gui_commands(self):
+        """Listen for commands sent from the GUI (Manual Input)"""
+        while True:
+            try:
+                cmd_type, content = self.cmd_queue.get()
+                if cmd_type == 'command':
+                    print(f"⌨️  Manual Command: {content}")
+                    # Process the command directly
+                    threading.Thread(target=self._process_text_command, args=(content,)).start()
+            except Exception as e:
+                print(f"Error in command listener: {e}")
+                
+    def _process_text_command(self, text):
+        """Process a text command (same logic as voice but skips STT)"""
+        try:
+            # Detect wake word (optional for manual input, but good for consistency)
+            has_wake_word, command = self.detector.detect(text)
+            if not has_wake_word:
+                command = text
+                
+            print(f"⚙️  Processing Manual: {command}")
+            
+            # Get router instance
+            router = llm_router.get_router()
+            
+            # Generate execution plan
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                plan = loop.run_until_complete(router.generate_execution_plan(command))
+            finally:
+                loop.close()
+            
+            if not plan:
+                self.gui_queue.put(('add_message', 'error', 'لم أفهم الأمر / Could not understand command', True))
+                return
+            
+            # Show plan intent
+            intent = plan.get('intent', 'unknown')
+            self.gui_queue.put(('add_message', 'info', f"Intent: {intent}", False))
+            
+            # Execute action
+            result = dispatch_action(plan)
+            
+            # Show result
+            if result.get('success'):
+                response = result.get('message', 'تم التنفيذ بنجاح')
+                self.gui_queue.put(('add_message', 'assistant', response, True))
+                
+                # Show additional info if available
+                if 'data' in result:
+                    data_str = str(result['data'])
+                    # Check if it looks like a file list (contains newlines and filenames)
+                    if '\n' in data_str and ('.txt' in data_str or '.pdf' in data_str or '.py' in data_str):
+                         self.gui_queue.put(('add_message', 'file_list', data_str, True))
+                    else:
+                         self.gui_queue.put(('add_message', 'success', data_str[:200], True))
+            else:
+                error_msg = result.get('message', 'حدث خطأ')
+                self.gui_queue.put(('add_message', 'error', error_msg, True))
+            
+            # Notification
+            rumps.notification(
+                title="✅ HVA Done",
+                subtitle="",
+                message="تم تنفيذ الأمر / Command executed"
+            )
+            
+        except Exception as e:
+            print(f"❌ Error processing manual command: {e}")
+            self.gui_queue.put(('add_message', 'error', f'خطأ: {str(e)}', True))
+
     def start_listening(self, _):
         """Start listening for voice command"""
         print(f"🎤 start_listening called. is_listening={self.is_listening}")
@@ -81,13 +158,7 @@ class HVAMenuBarApp(rumps.App):
     def _listen_and_process(self):
         """Listen for voice and process command"""
         try:
-            # Show listening indicator
-            rumps.notification(
-                title="🎤 HVA Listening",
-                subtitle="",
-                message="تحدث الآن... Speak now..."
-            )
-            
+            # Show listening indicator (Pulse)
             self.gui_queue.put(('show_listening',))
             
             # Listen for voice
@@ -149,8 +220,12 @@ class HVAMenuBarApp(rumps.App):
                     
                     # Show additional info if available
                     if 'data' in result:
-                        data_str = str(result['data'])[:200]  # Limit length
-                        self.gui_queue.put(('add_message', 'success', data_str, True))
+                        data_str = str(result['data'])
+                        # Check if it looks like a file list
+                        if '\n' in data_str and ('.txt' in data_str or '.pdf' in data_str or '.py' in data_str):
+                             self.gui_queue.put(('add_message', 'file_list', data_str, True))
+                        else:
+                             self.gui_queue.put(('add_message', 'success', data_str[:200], True))
                 else:
                     error_msg = result.get('message', 'حدث خطأ')
                     self.gui_queue.put(('add_message', 'error', error_msg, True))
