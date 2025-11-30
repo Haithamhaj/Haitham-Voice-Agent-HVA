@@ -43,6 +43,7 @@ from haitham_voice_agent.tools.arabic_normalizer import normalize_arabic_text
 from haitham_voice_agent.tools.tasks.task_manager import task_manager
 from haitham_voice_agent.tools.files import FileTools
 from haitham_voice_agent.tools.system_tools import SystemTools
+from haitham_voice_agent.tools.smart_organizer import get_organizer
 
 def validate_config() -> bool:
     """Validates the application configuration."""
@@ -511,10 +512,17 @@ Output format: JSON
 - sleep_display: إطفاء الشاشة
 - الكلمات الدالة: "افتح"، "شغّل"، "الصوت"، "الشاشة"
 
+## 6. organizer (المنظم الذكي)
+- organize_downloads: ترتيب مجلد التنزيلات
+- clean_desktop: تنظيف سطح المكتب
+- الكلمات الدالة: "رتب التنزيلات"، "نظف سطح المكتب"، "فرز الملفات"
+
 # قواعد مهمة:
 1. "افتح مجلد جديد" أو "أنشئ مجلد" = files.create_folder (ليس memory!)
 2. "افتح تطبيق" أو "شغّل برنامج" = system.open_app
 3. "احفظ ملاحظة" أو "سجّل فكرة" = memory.save_note
+4. "رتب التنزيلات" = organizer.organize_downloads
+5. "نظف سطح المكتب" = organizer.clean_desktop
 4. إذا ذكر اسم "هيثم" أو "هيم" كمجلد = يقصد مجلد المستخدم الرئيسي ~/
 5. **"داخل" تعني مسار متداخل:** "ملف X داخل مجلد Y" = "Y/X" (مهم جداً!)
    - مثال: "ملف العمل داخل مجلد هيثم" → directory: "هيثم/العمل"
@@ -798,6 +806,31 @@ Output format: JSON
                         else:
                             level = 50
                 return await self.system_tools.set_volume(int(level))
+                
+        elif tool == "organizer":
+            organizer = get_organizer()
+            
+            if action == "organize_downloads":
+                res = organizer.organize_downloads()
+                if "error" in res:
+                    return {"success": False, "message": res["error"]}
+                    
+                # Format report
+                msg = f"Downloads Organized.\nTotal Moved: {res['total_moved']}\n"
+                for cat, count in res["categories"].items():
+                    msg += f"- {cat}: {count}\n"
+                return {"success": True, "message": msg, "data": msg} # data for GUI
+                
+            elif action == "clean_desktop":
+                res = organizer.clean_desktop()
+                msg = f"Desktop Cleaned.\nTotal Moved: {res['total_moved']}\n"
+                if res["screenshots_moved"] > 0:
+                    msg += f"- Screenshots: {res['screenshots_moved']}\n"
+                if res["misc_moved"] > 0:
+                    msg += f"- Misc Files: {res['misc_moved']}\n"
+                    msg += f"Moved to: {Path(res['dest_folder']).name}"
+                return {"success": True, "message": msg, "data": msg}
+
             
             elif action == "mute":
                 return await self.system_tools.mute_volume()

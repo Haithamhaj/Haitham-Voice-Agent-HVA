@@ -18,6 +18,7 @@ from haitham_voice_agent.gui_process import run_gui_process
 from haitham_voice_agent.wake_word import get_detector
 from haitham_voice_agent import stt, llm_router
 from haitham_voice_agent.dispatcher import dispatch_action
+from haitham_voice_agent.tts import get_tts
 
 
 class HVAMenuBarApp(rumps.App):
@@ -34,6 +35,10 @@ class HVAMenuBarApp(rumps.App):
         self.gui_process = multiprocessing.Process(target=run_gui_process, args=(self.gui_queue, self.cmd_queue))
         self.gui_process.daemon = True
         self.gui_process.start()
+        
+        # Setup TTS Callback
+        self.tts = get_tts()
+        self.tts.set_callback(self._on_tts_speak)
         
         self.detector = get_detector()
         self.is_listening = False
@@ -56,6 +61,12 @@ class HVAMenuBarApp(rumps.App):
             rumps.separator,
             rumps.MenuItem("⏹️  Quit", callback=self.quit_app),
         ]
+
+    def _on_tts_speak(self, text):
+        """Callback when TTS speaks (or would speak)"""
+        # Forward to GUI as assistant message
+        # We use auto_close=False so user can read it
+        self.gui_queue.put(('add_message', 'assistant', text, False))
         
     def _listen_for_gui_commands(self):
         """Listen for commands sent from the GUI (Manual Input)"""
@@ -224,8 +235,11 @@ class HVAMenuBarApp(rumps.App):
                         # Check if it looks like a file list
                         if '\n' in data_str and ('.txt' in data_str or '.pdf' in data_str or '.py' in data_str):
                              self.gui_queue.put(('add_message', 'file_list', data_str, True))
+                        elif "Organized" in data_str or "Cleaned" in data_str:
+                             # Show full report for organizer
+                             self.gui_queue.put(('add_message', 'success', data_str, True))
                         else:
-                             self.gui_queue.put(('add_message', 'success', data_str[:200], True))
+                             self.gui_queue.put(('add_message', 'success', data_str[:500], True))
                 else:
                     error_msg = result.get('message', 'حدث خطأ')
                     self.gui_queue.put(('add_message', 'error', error_msg, True))

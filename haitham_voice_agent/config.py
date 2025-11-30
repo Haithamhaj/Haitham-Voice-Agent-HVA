@@ -219,6 +219,22 @@ class Config:
         }
     }
     
+    # ==================== AUDIO FEEDBACK SETTINGS ====================
+    # Enable/Disable Text-to-Speech (Visual Mode: False)
+    TTS_ENABLED: bool = False
+    
+    # Enable/Disable Sound Effects (Ping, Success, Error)
+    SOUND_EFFECTS_ENABLED: bool = True
+    
+    # macOS System Sounds (using afplay)
+    SOUNDS = {
+        "start_listening": "/System/Library/Sounds/Tink.aiff",
+        "processing": "/System/Library/Sounds/Pop.aiff",
+        "success": "/System/Library/Sounds/Glass.aiff",
+        "error": "/System/Library/Sounds/Basso.aiff",
+        "notification": "/System/Library/Sounds/Ping.aiff"
+    }
+    
     # ==================== PERFORMANCE SETTINGS ====================
     # Timeouts (seconds)
     STT_TIMEOUT: int = 10
