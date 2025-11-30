@@ -278,7 +278,7 @@ class HVAWindow:
             self.status_widget.update_stats(cpu, ram)
             
         if self.window:
-            self.window.after(2000, self.update_system_stats)
+            self.window.after(5000, self.update_system_stats)
 
     def draw_pulse(self, active=False):
         """Draw the pulsing circle"""
