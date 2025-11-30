@@ -150,3 +150,11 @@ Source: Voice
         except Exception as e:
             logger.error(f"Voice search failed: {e}")
             return "واجهت مشكلة في البحث." if language == "ar" else "I encountered an error while searching your memories."
+
+    # Aliases for LLM compatibility
+    save_note = process_voice_note
+    save_note_local = process_voice_note
+    search = search_memory_voice
+    semantic_query_local = search_memory_voice
+    get_notes = search_memory_voice
+    get_notes_local = search_memory_voice

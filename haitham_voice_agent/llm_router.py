@@ -226,7 +226,7 @@ Available tools:
 - browser: open_url, search_google
 - terminal: (safe commands only: ls, pwd, echo, whoami, df)
 - gmail: fetch_latest_email, search_emails, create_draft, send_draft (requires confirmation)
-- memory: save_note_local, get_notes_local, semantic_query_local
+- memory: save_note, search, get_notes
 
 CRITICAL RULES:
 - ALWAYS set requires_confirmation=true for: delete, send email, destructive operations
