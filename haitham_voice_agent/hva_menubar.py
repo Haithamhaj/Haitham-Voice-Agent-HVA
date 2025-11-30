@@ -8,12 +8,13 @@ import threading
 import sys
 import os
 import asyncio
+import multiprocessing
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from haitham_voice_agent.simple_gui import get_window
+from haitham_voice_agent.gui_process import run_gui_process
 from haitham_voice_agent.wake_word import get_detector
 from haitham_voice_agent import stt, llm_router
 from haitham_voice_agent.dispatcher import dispatch_action
@@ -27,7 +28,12 @@ class HVAMenuBarApp(rumps.App):
             quit_button=None
         )
         
-        self.window = get_window()
+        # Start GUI Process
+        self.gui_queue = multiprocessing.Queue()
+        self.gui_process = multiprocessing.Process(target=run_gui_process, args=(self.gui_queue,))
+        self.gui_process.daemon = True
+        self.gui_process.start()
+        
         self.detector = get_detector()
         self.is_listening = False
         
@@ -65,15 +71,14 @@ class HVAMenuBarApp(rumps.App):
                 message="تحدث الآن... Speak now..."
             )
             
-            self.window.create_window()
-            self.window.show_listening()
+            self.gui_queue.put(('show_listening',))
             
             # Listen for voice
             print("🎤 Listening...")
             text = stt.listen_once()
             
             if not text:
-                self.window.add_message('error', 'لم أسمع شيئاً / No speech detected')
+                self.gui_queue.put(('add_message', 'error', 'لم أسمع شيئاً / No speech detected', True))
                 self.is_listening = False
                 return
             
@@ -83,14 +88,14 @@ class HVAMenuBarApp(rumps.App):
             has_wake_word, command = self.detector.detect(text)
             
             if has_wake_word:
-                self.window.add_message('user', command)
+                self.gui_queue.put(('add_message', 'user', command, False))
             else:
                 # No wake word, use full text as command
-                self.window.add_message('user', text)
+                self.gui_queue.put(('add_message', 'user', text, False))
                 command = text
             
             # Show processing
-            self.window.show_processing()
+            self.gui_queue.put(('show_processing',))
             
             # Process command
             print(f"⚙️  Processing: {command}")
@@ -100,7 +105,6 @@ class HVAMenuBarApp(rumps.App):
                 router = llm_router.get_router()
                 
                 # Generate execution plan (run async in sync context)
-                # We need a new loop for this thread
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
@@ -109,13 +113,13 @@ class HVAMenuBarApp(rumps.App):
                     loop.close()
                 
                 if not plan:
-                    self.window.add_message('error', 'لم أفهم الأمر / Could not understand command')
+                    self.gui_queue.put(('add_message', 'error', 'لم أفهم الأمر / Could not understand command', True))
                     self.is_listening = False
                     return
                 
                 # Show plan intent
                 intent = plan.get('intent', 'unknown')
-                self.window.add_message('info', f"Intent: {intent}")
+                self.gui_queue.put(('add_message', 'info', f"Intent: {intent}", False))
                 
                 # Execute action
                 result = dispatch_action(plan)
@@ -123,15 +127,15 @@ class HVAMenuBarApp(rumps.App):
                 # Show result
                 if result.get('success'):
                     response = result.get('message', 'تم التنفيذ بنجاح')
-                    self.window.add_message('assistant', response)
+                    self.gui_queue.put(('add_message', 'assistant', response, True))
                     
                     # Show additional info if available
                     if 'data' in result:
                         data_str = str(result['data'])[:200]  # Limit length
-                        self.window.add_message('success', data_str)
+                        self.gui_queue.put(('add_message', 'success', data_str, True))
                 else:
                     error_msg = result.get('message', 'حدث خطأ')
-                    self.window.add_message('error', error_msg)
+                    self.gui_queue.put(('add_message', 'error', error_msg, True))
                 
                 # Notification
                 rumps.notification(
@@ -142,25 +146,22 @@ class HVAMenuBarApp(rumps.App):
                 
             except Exception as e:
                 print(f"❌ Error processing command: {e}")
-                self.window.add_message('error', f'خطأ: {str(e)}')
+                self.gui_queue.put(('add_message', 'error', f'خطأ: {str(e)}', True))
                 
         except Exception as e:
             print(f"❌ Error in listen_and_process: {e}")
-            self.window.add_message('error', f'خطأ: {str(e)}')
+            self.gui_queue.put(('add_message', 'error', f'خطأ: {str(e)}', True))
         
         finally:
             self.is_listening = False
     
     def show_window(self, _):
         """Show the GUI window"""
-        if not self.window.window:
-            self.window.create_window()
-        self.window.window.deiconify()
-        self.window.window.lift()
+        self.gui_queue.put(('show',))
     
     def clear_history(self, _):
         """Clear the window history"""
-        self.window.clear_text()
+        self.gui_queue.put(('clear',))
         rumps.notification(
             title="🗑️  HVA",
             subtitle="",
@@ -183,11 +184,16 @@ class HVAMenuBarApp(rumps.App):
     
     def quit_app(self, _):
         """Quit the application"""
+        if self.gui_process:
+            self.gui_process.terminate()
         rumps.quit_application()
 
 
 def main():
     """Main entry point"""
+    # Fix for multiprocessing on macOS
+    multiprocessing.set_start_method('spawn', force=True)
+    
     app = HVAMenuBarApp()
     
     # Register global hotkey (Cmd+Shift+H)

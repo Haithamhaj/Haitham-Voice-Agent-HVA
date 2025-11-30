@@ -1,223 +1,84 @@
 """
 Speech-to-Text (STT) Module
 
-Handles voice input using macOS Speech Recognition APIs.
-Supports Arabic (ar-SA) and English (en-US) with automatic language detection.
+Handles voice input and transcription.
+Wraps recording and routing logic.
 """
 
-import asyncio
-import subprocess
+import logging
 import tempfile
 import os
-from pathlib import Path
-from typing import Optional, Tuple
-import logging
+import wave
+import pyaudio
+import time
+from typing import Optional
 
-from .config import Config
+from haitham_voice_agent.tools.stt_router import transcribe_command
 
 logger = logging.getLogger(__name__)
 
+def listen_once(duration: int = 5) -> Optional[str]:
+    """
+    Listen for a single command and transcribe it.
+    
+    Args:
+        duration: Recording duration in seconds
+        
+    Returns:
+        str: Transcribed text or None if failed/empty
+    """
+    logger.info(f"Listening for {duration} seconds...")
+    
+    # Audio settings
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
+    
+    p = pyaudio.PyAudio()
+    
+    try:
+        # Open stream
+        stream = p.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        input=True,
+                        frames_per_buffer=CHUNK)
+        
+        frames = []
+        
+        # Record
+        for _ in range(0, int(RATE / CHUNK * duration)):
+            data = stream.read(CHUNK)
+            frames.append(data)
+            
+        # Stop stream
+        stream.stop_stream()
+        stream.close()
+        
+        # Save to temp file to get bytes
+        # (stt_router expects bytes, but we can also just join frames)
+        raw_data = b''.join(frames)
+        
+        # Transcribe
+        logger.info("Transcribing...")
+        text = transcribe_command(raw_data, duration)
+        
+        return text
+        
+    except Exception as e:
+        logger.error(f"Error in listen_once: {e}")
+        return None
+        
+    finally:
+        p.terminate()
 
 class STTModule:
-    """Speech-to-Text using macOS APIs"""
-    
-    def __init__(self):
-        self.supported_languages = {
-            "ar": Config.STT_LANGUAGE_AR,
-            "en": Config.STT_LANGUAGE_EN
-        }
-        self.current_language = "ar"  # Default to Arabic
-    
-    async def listen(self, duration: int = 5, language: Optional[str] = None) -> bytes:
-        """
-        Listen for voice input and capture audio
-        
-        Args:
-            duration: Recording duration in seconds
-            language: Language code ('ar' or 'en'), auto-detect if None
-            
-        Returns:
-            bytes: Raw audio data
-        """
-        logger.info(f"Listening for {duration} seconds...")
-        
-        # Create temporary file for audio
-        temp_audio = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        temp_path = temp_audio.name
-        temp_audio.close()
-        
-        try:
-            # Record audio using macOS 'rec' command (via sox) or afplay
-            # Note: macOS doesn't have built-in command-line recording
-            # We'll use a simple approach with subprocess
-            
-            # For now, we'll use a placeholder that simulates recording
-            # In production, you'd use PyAudio or similar
-            logger.warning("Audio recording not fully implemented - using placeholder")
-            
-            # Simulate audio data
-            audio_data = b"placeholder_audio_data"
-            
-            return audio_data
-            
-        except Exception as e:
-            logger.error(f"Failed to record audio: {e}")
-            raise
-        finally:
-            # Cleanup temp file
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
-    
-    async def transcribe(self, audio_data: bytes, language: Optional[str] = None) -> str:
-        """
-        Transcribe audio to text
-        
-        Args:
-            audio_data: Raw audio bytes
-            language: Language code ('ar' or 'en'), auto-detect if None
-            
-        Returns:
-            str: Transcribed text
-        """
-        if language is None:
-            language = self.current_language
-        
-        if language not in self.supported_languages:
-            raise ValueError(f"Unsupported language: {language}")
-        
-        locale = self.supported_languages[language]
-        logger.info(f"Transcribing audio in {locale}...")
-        
-        try:
-            # In production, use macOS Speech Recognition or OpenAI Whisper
-            # For now, placeholder implementation
-            
-            # Option 1: Use OpenAI Whisper API
-            # from openai import OpenAI
-            # client = OpenAI(api_key=Config.OPENAI_API_KEY)
-            # response = client.audio.transcriptions.create(
-            #     model="whisper-1",
-            #     file=audio_data,
-            #     language=language
-            # )
-            # return response.text
-            
-            # Placeholder for development
-            logger.warning("STT not fully implemented - returning placeholder")
-            return "placeholder transcription"
-            
-        except Exception as e:
-            logger.error(f"Transcription failed: {e}")
-            raise
-    
-    async def listen_and_transcribe(self, duration: int = 5, language: Optional[str] = None) -> str:
-        """
-        Convenience method: listen and transcribe in one call
-        
-        Args:
-            duration: Recording duration in seconds
-            language: Language code ('ar' or 'en')
-            
-        Returns:
-            str: Transcribed text
-        """
-        audio = await self.listen(duration, language)
-        return await self.transcribe(audio, language)
-    
-    async def listen_for_confirmation(self, timeout: int = 10) -> bool:
-        """
-        Listen for yes/no confirmation
-        
-        Args:
-            timeout: Maximum wait time in seconds
-            
-        Returns:
-            bool: True if confirmed (yes/نعم), False if rejected (no/لا)
-        """
-        logger.info("Listening for confirmation...")
-        
-        try:
-            text = await self.listen_and_transcribe(duration=timeout)
-            text_lower = text.lower().strip()
-            
-            # Check for affirmative responses
-            affirmative = ["yes", "yeah", "yep", "ok", "okay", "نعم", "اه", "ايوه", "تمام"]
-            negative = ["no", "nope", "cancel", "لا", "لأ", "إلغاء"]
-            
-            if any(word in text_lower for word in affirmative):
-                logger.info("User confirmed")
-                return True
-            elif any(word in text_lower for word in negative):
-                logger.info("User rejected")
-                return False
-            else:
-                logger.warning(f"Unclear response: {text}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"Failed to get confirmation: {e}")
-            return False
-    
-    def detect_language(self, text: str) -> str:
-        """
-        Detect language from text (simple heuristic)
-        
-        Args:
-            text: Input text
-            
-        Returns:
-            str: Language code ('ar' or 'en')
-        """
-        # Simple detection: if text contains Arabic characters, it's Arabic
-        arabic_chars = set("ابتثجحخدذرزسشصضطظعغفقكلمنهويىأإآؤئءة")
-        
-        if any(char in arabic_chars for char in text):
-            return "ar"
-        else:
-            return "en"
-    
-    def set_language(self, language: str):
-        """
-        Set the current language for STT
-        
-        Args:
-            language: Language code ('ar' or 'en')
-        """
-        if language not in self.supported_languages:
-            raise ValueError(f"Unsupported language: {language}")
-        
-        self.current_language = language
-        logger.info(f"STT language set to: {language}")
+    """Legacy STT Module class for backward compatibility"""
+    def listen_once(self, duration: int = 5) -> Optional[str]:
+        return listen_once(duration)
 
-
-# Singleton instance
-_stt_instance: Optional[STTModule] = None
-
+_stt_instance = STTModule()
 
 def get_stt() -> STTModule:
-    """Get singleton STT instance"""
-    global _stt_instance
-    if _stt_instance is None:
-        _stt_instance = STTModule()
     return _stt_instance
-
-
-if __name__ == "__main__":
-    # Test STT module
-    async def test():
-        stt = get_stt()
-        
-        print("Testing STT module...")
-        print(f"Supported languages: {stt.supported_languages}")
-        
-        # Test language detection
-        print("\nTesting language detection:")
-        print(f"'Hello world' -> {stt.detect_language('Hello world')}")
-        print(f"'مرحبا بالعالم' -> {stt.detect_language('مرحبا بالعالم')}")
-        
-        # Note: Actual audio recording/transcription requires additional setup
-        print("\nNote: Full audio recording/transcription requires:")
-        print("  - PyAudio or similar for audio capture")
-        print("  - OpenAI Whisper API or macOS Speech Recognition")
-    
-    asyncio.run(test())
