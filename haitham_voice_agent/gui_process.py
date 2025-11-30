@@ -167,7 +167,8 @@ class HVAWindow:
         if self.is_pinned:
             self.pin_button.configure(text="📍 Pinned", bg=COLORS['user_bubble'], fg=COLORS['header_bg'])
             if self.auto_close_timer:
-                self.auto_close_timer.cancel()
+                self.window.after_cancel(self.auto_close_timer)
+                self.auto_close_timer = None
         else:
             self.pin_button.configure(text="📌 Pin", bg=COLORS['button_bg'], fg=COLORS['button_fg'])
             
@@ -179,7 +180,8 @@ class HVAWindow:
             
     def close_window(self):
         if self.auto_close_timer:
-            self.auto_close_timer.cancel()
+            self.window.after_cancel(self.auto_close_timer)
+            self.auto_close_timer = None
         if self.window:
             self.window.withdraw() # Hide instead of destroy to keep app running
             
@@ -214,9 +216,8 @@ class HVAWindow:
         
         if auto_close and not self.is_pinned:
             if self.auto_close_timer:
-                self.auto_close_timer.cancel()
-            self.auto_close_timer = threading.Timer(15.0, self.close_window)
-            self.auto_close_timer.start()
+                self.window.after_cancel(self.auto_close_timer)
+            self.auto_close_timer = self.window.after(15000, self.close_window)
 
     def show_listening_internal(self):
         if not self.window:
