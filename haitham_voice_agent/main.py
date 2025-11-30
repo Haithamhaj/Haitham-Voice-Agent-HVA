@@ -547,35 +547,49 @@ Output format: JSON
 2. "افتح تطبيق" أو "شغّل برنامج" = system.open_app
 3. "احفظ ملاحظة" أو "سجّل فكرة" = memory.save_note
 4. إذا ذكر اسم "هيثم" أو "هيم" كمجلد = يقصد مجلد المستخدم الرئيسي ~/
-5. "داخل" تعني مسار متداخل: "مجلد X داخل مجلد Y" = Y/X
+5. **"داخل" تعني مسار متداخل:** "ملف X داخل مجلد Y" = "Y/X" (مهم جداً!)
+   - مثال: "ملف العمل داخل مجلد هيثم" → directory: "هيثم/العمل"
+   - مثال: "مجلد المهام داخل التنزيلات" → directory: "~/Downloads/المهام"
 
 # أمثلة:
 
 مثال 1:
 المستخدم: "افتح مجلد جديد داخل مجلد هيثم باسم المهام"
-{{
+{
     "intent": "إنشاء مجلد جديد باسم المهام داخل المجلد الرئيسي",
     "tool": "files",
     "action": "create_folder",
-    "parameters": {{
-        "directory": "~/المهام"
-    }},
+    "parameters": {
+        "directory": "هيثم/المهام"
+    },
     "confirmation_needed": false
-}}
+}
 
 مثال 2:
+المستخدم: "افتح ملف جديد باسم العمل داخل مجلد هيثم"
+{
+    "intent": "إنشاء ملف العمل داخل مجلد هيثم",
+    "tool": "files",
+    "action": "create_folder",
+    "parameters": {
+        "directory": "هيثم/العمل"
+    },
+    "confirmation_needed": false
+}
+
+مثال 3:
 المستخدم: "أنشئ مجلداً جديداً باسم المشاريع في التنزيلات"
-{{
+{
     "intent": "إنشاء مجلد المشاريع في Downloads",
     "tool": "files",
     "action": "create_folder",
-    "parameters": {{
+    "parameters": {
         "directory": "~/Downloads/المشاريع"
-    }},
+    },
     "confirmation_needed": false
-}}
+}
 
-مثال 3:
+مثال 4:
 المستخدم: "شغّل متصفح كروم"
 {{
     "intent": "فتح متصفح Google Chrome",

@@ -6,6 +6,7 @@ from haitham_voice_agent.config import Config
 from haitham_voice_agent.tools.stt_langid import detect_language_whisper
 from haitham_voice_agent.tools.stt_whisper_en import transcribe_english_whisper
 from haitham_voice_agent.tools.stt_google import transcribe_arabic_google
+from haitham_voice_agent.tools.stt_whisper_ar import transcribe_arabic_whisper
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +118,9 @@ def transcribe_session(audio_bytes: bytes, duration_seconds: float) -> Optional[
             
         return text
     else:
-        # Use Google Cloud STT Arabic for full session
-        logger.info("Session: Using Google Cloud STT Arabic")
-        text, conf = transcribe_arabic_google(audio_bytes, duration_seconds)
+        # Use Whisper large-v3 Arabic for full session (local, free, private)
+        logger.info("Session: Using Whisper large-v3 Arabic (local)")
+        text, conf = transcribe_arabic_whisper(audio_bytes, duration_seconds)
         
         # For sessions, we use the same validation logic
         if _validate_arabic_transcript(text, conf, config["arabic"]):
