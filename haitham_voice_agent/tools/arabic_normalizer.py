@@ -5,6 +5,42 @@ from haitham_voice_agent.llm_router import LLMRouter
 
 logger = logging.getLogger(__name__)
 
+# Common STT errors and their corrections
+COMMON_CORRECTIONS = {
+    # File/folder related
+    "لمَ نف": "ملف",
+    "لم نف": "ملف",
+    "منف": "ملف",
+    
+    # Name variations
+    "بسم": "باسم",
+    "بإسم": "باسم",
+    "هيذم": "هيثم",
+    "هيَم": "هيثم",
+    "هيذام": "هيثم",
+    
+    # Common words
+    "داخر": "داخل",
+    "مُجلد": "مجلد",
+    "مُجلدة": "مجلد",
+    
+    # Action verbs
+    "إفتح": "افتح",
+    "إنشئ": "انشئ",
+    "أنشئ": "انشئ",
+}
+
+def _apply_common_corrections(text: str) -> str:
+    """
+    Apply common STT error corrections before LLM normalization.
+    This helps reduce LLM hallucinations and improves accuracy.
+    """
+    corrected = text
+    for error, correction in COMMON_CORRECTIONS.items():
+        corrected = corrected.replace(error, correction)
+    return corrected
+
+
 async def normalize_arabic_text(text: str, mode: str = "command") -> str:
     """
     Normalize Arabic text using LLM to correct spelling and grammar.
@@ -35,6 +71,9 @@ async def normalize_arabic_text(text: str, mode: str = "command") -> str:
         
     if len(text) < cfg.get("min_length_for_correction", 5):
         return text
+
+    # Pre-processing: Apply common STT error corrections
+    text = _apply_common_corrections(text)
 
     # Use LLM Router to get the configured model
     logical_model = mode_cfg.get("model_logical", "logical.nano")
