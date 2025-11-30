@@ -37,11 +37,14 @@ class HVAMenuBarApp(rumps.App):
         self.detector = get_detector()
         self.is_listening = False
         
+        self.listen_thread = None
+        
         # Menu items
         self.menu = [
             rumps.MenuItem("🎤 Listen (⌘⇧H)", callback=self.start_listening),
             rumps.separator,
             rumps.MenuItem("📝 Show Window", callback=self.show_window),
+            rumps.MenuItem("🔄 Reset State", callback=self.reset_state),
             rumps.MenuItem("🗑️ Clear History", callback=self.clear_history),
             rumps.separator,
             rumps.MenuItem("ℹ️  About", callback=self.show_about),
@@ -51,15 +54,29 @@ class HVAMenuBarApp(rumps.App):
         
     def start_listening(self, _):
         """Start listening for voice command"""
+        print(f"🎤 start_listening called. is_listening={self.is_listening}")
+        
         if self.is_listening:
-            return
+            # Check if thread is actually alive
+            if self.listen_thread and self.listen_thread.is_alive():
+                print("⚠️ Already listening and thread is alive. Ignoring.")
+                return
+            else:
+                print("⚠️ is_listening was True but thread is dead. Resetting.")
+                self.is_listening = False
         
         self.is_listening = True
         
         # Run in separate thread to not block UI
-        thread = threading.Thread(target=self._listen_and_process)
-        thread.daemon = True
-        thread.start()
+        self.listen_thread = threading.Thread(target=self._listen_and_process)
+        self.listen_thread.daemon = True
+        self.listen_thread.start()
+
+    def reset_state(self, _):
+        """Force reset application state"""
+        self.is_listening = False
+        self.listen_thread = None
+        rumps.notification("HVA", "", "State reset / تم إعادة تعيين الحالة")
     
     def _listen_and_process(self):
         """Listen for voice and process command"""

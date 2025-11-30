@@ -58,8 +58,8 @@ def listen_once(duration: int = 15) -> Optional[str]:
         import audioop
         import time
         
-        THRESHOLD = 600      # Energy threshold (adjust if needed)
-        SILENCE_LIMIT = 1.5  # Seconds of silence to trigger stop
+        THRESHOLD = 300      # Lowered from 600 to be more sensitive
+        SILENCE_LIMIT = 2.5  # Increased from 1.5s to allow pauses between commands
         
         started_speaking = False
         silence_start = None
