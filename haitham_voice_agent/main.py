@@ -349,6 +349,10 @@ class HVA:
             "سطح المكتب": "~/Desktop",
             "home": "~",
             "الرئيسية": "~",
+            "haitham": "~",
+            "هيثم": "~",
+            "هيَم": "~",
+            "هيذام": "~",
             "root": "/",
             "projects": "~/HVA_Workspace/projects",
             "مشاريع": "~/HVA_Workspace/projects"
