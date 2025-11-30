@@ -23,7 +23,8 @@ class FileTools:
     
     async def list_files(
         self,
-        directory: str,
+        directory: str = None,
+        folder_name: str = None,
         pattern: Optional[str] = None,
         recursive: bool = False
     ) -> Dict[str, Any]:
@@ -32,6 +33,7 @@ class FileTools:
         
         Args:
             directory: Directory path
+            folder_name: Alias for directory
             pattern: Optional glob pattern (e.g., "*.pdf")
             recursive: Search recursively
             
@@ -39,12 +41,30 @@ class FileTools:
             dict: List of files with metadata
         """
         try:
-            dir_path = Path(directory).expanduser()
+            # Handle aliases
+            actual_dir = directory or folder_name
+            
+            # Handle "None" string from LLM
+            if actual_dir == "None":
+                actual_dir = None
+                
+            # Default to home if not specified
+            if not actual_dir:
+                actual_dir = "~"
+                
+            dir_path = Path(actual_dir).expanduser()
+            
+            # Smart resolution: If path doesn't exist, try relative to home
+            if not dir_path.exists():
+                home_path = Path.home() / actual_dir
+                if home_path.exists():
+                    dir_path = home_path
+                    logger.info(f"Resolved '{actual_dir}' to '{dir_path}'")
             
             if not dir_path.exists():
                 return {
                     "error": True,
-                    "message": f"Directory not found: {directory}"
+                    "message": f"Directory not found: {actual_dir}"
                 }
             
             if not dir_path.is_dir():
