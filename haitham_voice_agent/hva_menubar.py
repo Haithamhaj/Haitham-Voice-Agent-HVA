@@ -7,6 +7,7 @@ import rumps
 import threading
 import sys
 import os
+import asyncio
 from pathlib import Path
 
 # Add parent directory to path
@@ -95,17 +96,26 @@ class HVAMenuBarApp(rumps.App):
             print(f"⚙️  Processing: {command}")
             
             try:
-                # Get action plan from LLM
-                plan = llm_router.route(command)
+                # Get router instance
+                router = llm_router.get_router()
+                
+                # Generate execution plan (run async in sync context)
+                # We need a new loop for this thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    plan = loop.run_until_complete(router.generate_execution_plan(command))
+                finally:
+                    loop.close()
                 
                 if not plan:
                     self.window.add_message('error', 'لم أفهم الأمر / Could not understand command')
                     self.is_listening = False
                     return
                 
-                # Show plan
-                action_name = plan.get('action', 'unknown')
-                self.window.add_message('info', f"الإجراء: {action_name}")
+                # Show plan intent
+                intent = plan.get('intent', 'unknown')
+                self.window.add_message('info', f"Intent: {intent}")
                 
                 # Execute action
                 result = dispatch_action(plan)

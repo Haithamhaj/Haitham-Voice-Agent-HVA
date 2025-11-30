@@ -485,17 +485,35 @@ You should see a confirmation message of successful configuration.
 
 ## 💡 الاستخدام | Usage
 
-### الوضع التفاعلي | Interactive Mode
+### التشغيل الذكي | Smart Launch
 
 <div dir="rtl">
 
-تشغيل HVA في وضع الاستماع المستمر:
+أسهل طريقة لتشغيل النظام هي استخدام المشغل الذكي:
+1. انقر نقراً مزدوجاً على ملف **`Start HVA.command`**
+2. سيعمل النظام في الخلفية (ستظهر أيقونة 🎤 في شريط القوائم)
+3. اضغط **`Cmd + Shift + H`** في أي وقت للتحدث
 
 </div>
 
-Run HVA in continuous listening mode:
+The easiest way to run the system is using the Smart Launcher:
+1. Double-click **`Start HVA.command`**
+2. The system will run in the background (🎤 icon appears in menu bar)
+3. Press **`Cmd + Shift + H`** anytime to speak
+
+### الوضع التفاعلي (للمطورين) | Interactive Mode (Dev)
+
+<div dir="rtl">
+
+للتشغيل في التيرمينال ورؤية السجلات:
+
+</div>
+
+To run in terminal and see logs:
 
 ```bash
+./scripts/HVA_Debug_Launcher.command
+# OR
 python -m haitham_voice_agent.main
 ```
 

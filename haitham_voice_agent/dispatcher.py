@@ -184,6 +184,46 @@ def get_dispatcher() -> ToolDispatcher:
     return _dispatcher_instance
 
 
+
+def dispatch_action(plan: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Execute an execution plan synchronously
+    
+    Args:
+        plan: Execution plan dictionary
+        
+    Returns:
+        dict: Execution result
+    """
+    dispatcher = get_dispatcher()
+    
+    # Run async execution in a new event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        results = loop.run_until_complete(dispatcher.execute_plan(plan))
+        
+        # Aggregate results
+        if not results:
+            return {"success": False, "message": "No steps executed"}
+            
+        # Return the last result as the primary result
+        # Ideally we should aggregate, but for now last result is fine
+        last_result = results[-1]
+        
+        # Ensure success flag exists
+        if "success" not in last_result:
+            last_result["success"] = not last_result.get("error", False)
+            
+        return last_result
+        
+    except Exception as e:
+        logger.error(f"Dispatch failed: {e}")
+        return {"success": False, "message": str(e)}
+    finally:
+        loop.close()
+
+
 if __name__ == "__main__":
     # Test dispatcher
     async def test():
