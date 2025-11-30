@@ -62,6 +62,22 @@ A smart 3-layer system giving the agent instant knowledge of your device:
 2.  **Layer 2 (Quick Access)**: Instant index of Desktop, Downloads, and Documents.
 3.  **Layer 3 (Deep Search)**: Deep search using Spotlight (`mdfind`) to find any file in seconds.
 
+### 👂 استراتيجية الصوت الموحدة | Unified Voice Strategy (Golden Rule)
+
+<div dir="rtl">
+
+نستخدم استراتيجية "القاعدة الذهبية" لضمان أفضل دقة:
+*   **الأوامر العربية القصيرة**: نستخدم **Google Cloud STT** (دقة عالية وسرعة).
+*   **الجلسات الطويلة**: نستخدم **Whisper Large-v3** (مجاني، محلي، ويفهم السياق الطويل).
+*   **الإنجليزية**: نستخدم **Whisper** (محلي وسريع).
+
+</div>
+
+We use the "Golden Rule" strategy for best accuracy:
+*   **Short Arabic Commands**: Uses **Google Cloud STT** (High accuracy & speed).
+*   **Long Sessions**: Uses **Whisper Large-v3** (Free, local, handles long context).
+*   **English**: Uses **Whisper** (Local & fast).
+
 ### 📱 تطبيق شريط القوائم | Menu Bar App
 
 <div dir="rtl">
@@ -76,20 +92,6 @@ A smart 3-layer system giving the agent instant knowledge of your device:
 - **Optimized Performance**: Fast UI updates and non-blocking background processing.
 - **System Notifications**: Alerts when tasks complete.
 
-### 🎤 نظام التحكم الصوتي | Voice Control System
-
-<div dir="rtl">
-
-- **كلمة الإيقاظ**: "هيثم" أو "Haitham".
-- **استجابة سريعة**: تحسينات كبيرة في زمن الاستجابة (Latency).
-- **دعم ثنائي اللغة**: عربية (ar-SA) وإنجليزية (en-US).
-
-</div>
-
-- **Wake Word**: "Haitham" or "هيثم".
-- **Fast Response**: Significant improvements in latency.
-- **Bilingual Support**: Arabic (ar-SA) and English (en-US).
-
 ---
 
 ## 🏗️ البنية المعمارية | Architecture
@@ -102,17 +104,19 @@ A smart 3-layer system giving the agent instant knowledge of your device:
 └────────┬────────┘
          ▼
 ┌─────────────────┐      ┌──────────────────┐
-│ STT & Wake Word │ ───► │ System Awareness │
-└────────┬────────┘      │ (Profile/Index)  │
-         │               └────────┬─────────┘
+│ Unified STT     │ ───► │ System Awareness │
+│ (Google/Whisper)│      │ (Profile/Index)  │
+└────────┬────────┘      └────────┬─────────┘
+         │                        │
          ▼                        │
 ┌─────────────────┐               │
-│ Intent Router   │ ◄─────────────┘
-│ (Ollama/Rules)  │
+│ Ollama          │ ◄─────────────┘
+│ Orchestrator    │
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ Execution Plan  │
+│ LLM Router      │
+│ (GPT/Gemini)    │
 └────────┬────────┘
          ▼
 ┌─────────────────┐
@@ -133,22 +137,27 @@ haitham_voice_agent/
 ├── 📱 hva_menubar.py             # تطبيق شريط القوائم الرئيسي
 ├── 🖥️ gui_process.py             # عملية الواجهة الرسومية
 ├── ⚙️ config.py                  # التكوين المركزي
-├── main.py                      # نقطة الدخول
+├── main.py                      # نقطة الدخول (CLI)
 │
-├── 🧠 tools/system_awareness/    # (New) وحدة الوعي بالنظام
+├── 🧠 tools/system_awareness/    # وحدة الوعي بالنظام
 │   ├── system_profiler.py       # Layer 1: Hardware & Apps
 │   ├── quick_indexer.py         # Layer 2: Quick Access
-│   ├── deep_search.py           # Layer 3: Spotlight
-│   └── file_watcher.py          # Real-time monitoring
+│   └── ...
+│
+├── 🎤 tools/voice/               # وحدة الصوت الموحدة
+│   ├── stt.py                   # Unified STT Handler
+│   ├── stt_google.py            # Google Cloud Backend
+│   ├── stt_whisper_ar.py        # Whisper Arabic Backend
+│   └── tts.py                   # Text-to-Speech
 │
 ├── 🛠️ tools/                     # الأدوات
-│   ├── files.py                 # عمليات الملفات (Updated)
-│   ├── system_tools.py          # أدوات النظام (Updated)
+│   ├── files.py                 # عمليات الملفات
+│   ├── system_tools.py          # أدوات النظام
 │   ├── gmail/                   # وحدة Gmail
 │   └── ...
 │
 ├── ☁️ ollama_orchestrator.py     # منسق الذكاء الاصطناعي المحلي
-└── 🛡️ docs/                      # (New) وثائق الأمان والنظام
+└── 🛡️ docs/                      # وثائق الأمان والنظام
     ├── PROJECT_MAP.md
     ├── CHANGE_RULES.md
     └── TEST_COMMANDS.md
@@ -222,7 +231,7 @@ python -m haitham_voice_agent.hva_menubar
 *   **"افتح كروم"** (يستخدم System Awareness لفتح التطبيق بدقة)
 *   **"وين ملف التقرير؟"** (يبحث في الفهرس السريع ثم Spotlight)
 *   **"كم المساحة المتبقية؟"** (يعطيك حالة التخزين فوراً)
-*   **"صباح الخير"** (الموجز الصباحي)
+*   **"صباح الخير"** (الموجز الصباحي مع سياق الذاكرة)
 *   **"اقرأ آخر إيميل"** (Gmail Integration)
 
 </div>
@@ -230,7 +239,7 @@ python -m haitham_voice_agent.hva_menubar
 *   **"Open Chrome"** (Uses System Awareness for precise launch)
 *   **"Find report file"** (Searches Quick Index then Spotlight)
 *   **"How much storage left?"** (Instant storage status)
-*   **"Good morning"** (Morning briefing)
+*   **"Good morning"** (Morning briefing with Memory context)
 *   **"Read last email"** (Gmail Integration)
 
 ---
