@@ -55,6 +55,11 @@ class HVAMenuBarApp(rumps.App):
         self.advisor_thread.daemon = True
         self.advisor_thread.start()
         
+        # Start Ollama Warm-up Thread (to load model into VRAM)
+        self.warmup_thread = threading.Thread(target=self._warmup_ollama)
+        self.warmup_thread.daemon = True
+        self.warmup_thread.start()
+        
         # Menu items
         self.menu = [
             rumps.MenuItem("🎤 Listen (⌘⇧H)", callback=self.start_listening),
@@ -88,6 +93,24 @@ class HVAMenuBarApp(rumps.App):
             except Exception as e:
                 print(f"Advisor check error: {e}")
                 time.sleep(60)
+
+    def _warmup_ollama(self):
+        """Warm up Ollama model in background"""
+        try:
+            print("🔥 Warming up Ollama...")
+            from haitham_voice_agent.ollama_orchestrator import get_orchestrator
+            orchestrator = get_orchestrator()
+            
+            # Simple hello to force model load
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(orchestrator.classify_request("hello"))
+                print("✅ Ollama Warmed Up & Ready!")
+            finally:
+                loop.close()
+        except Exception as e:
+            print(f"⚠️ Ollama Warmup Failed: {e}")
 
     def _on_tts_speak(self, text):
         """Callback when TTS speaks (or would speak)"""
