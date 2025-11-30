@@ -30,6 +30,7 @@ class ToolDispatcher:
         from haitham_voice_agent.tools.tasks.task_manager import task_manager
         from haitham_voice_agent.tools.system_tools import SystemTools
         from haitham_voice_agent.tools.browser import BrowserTools
+        from haitham_voice_agent.tools.terminal import TerminalTools
         
         # Initialize tools
         # Note: Some might need async init, but for now we register the instances
@@ -41,6 +42,7 @@ class ToolDispatcher:
         self.register_tool("tasks", task_manager) # TaskManager is already instantiated
         self.register_tool("system", SystemTools())
         self.register_tool("browser", BrowserTools())
+        self.register_tool("terminal", TerminalTools())
     
     def register_tool(self, name: str, handler):
         """

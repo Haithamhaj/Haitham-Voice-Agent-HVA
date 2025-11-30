@@ -224,7 +224,7 @@ Available tools:
 - files: list_files, search_files, create_folder, delete_folder, move_file, copy_file
 - docs: summarize_file, translate_file, compare_files, extract_tasks, read_pdf
 - browser: open_url, search_google
-- terminal: (safe commands only: ls, pwd, echo, whoami, df)
+- terminal: execute_command(command="...") (safe: ls, pwd, echo, whoami, df)
 - gmail: fetch_latest_email, search_emails, create_draft, send_draft (requires confirmation)
 - memory: save_note, search, get_notes
 
