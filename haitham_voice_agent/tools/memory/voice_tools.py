@@ -109,17 +109,24 @@ Source: Voice
             return "- None"
         return "\n".join([f"- {item}" for item in items])
 
-    async def search_memory_voice(self, query_text: str, language: str = "en") -> str:
+    async def search_memory_voice(self, query_text: str = None, query: str = None, language: str = "en") -> str:
         """
         Search memories via voice and return a spoken response.
         
         Args:
-            query_text: The search query
+            query_text: The search query (legacy)
+            query: The search query (LLM standard)
             language: "ar" or "en"
             
         Returns:
             str: The response text to be spoken
         """
+        # Handle parameter alias
+        actual_query = query_text or query
+        if not actual_query:
+            return "Please provide a search query." if language == "en" else "الرجاء تحديد ما تريد البحث عنه."
+            
+        query_text = actual_query
         try:
             await self.ensure_initialized()
             
