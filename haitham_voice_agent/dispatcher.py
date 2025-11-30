@@ -20,6 +20,25 @@ class ToolDispatcher:
     def __init__(self):
         self.tools = {}
         logger.info("Tool Dispatcher initialized")
+        self._register_default_tools()
+        
+    def _register_default_tools(self):
+        """Register default system tools"""
+        from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
+        from haitham_voice_agent.tools.gmail.connection_manager import ConnectionManager
+        from haitham_voice_agent.tools.files import FileTools
+        from haitham_voice_agent.tools.tasks.task_manager import task_manager
+        from haitham_voice_agent.tools.system_tools import SystemTools
+        
+        # Initialize tools
+        # Note: Some might need async init, but for now we register the instances
+        # The dispatch method handles async execution
+        
+        self.register_tool("memory", VoiceMemoryTools())
+        self.register_tool("gmail", ConnectionManager())
+        self.register_tool("files", FileTools())
+        self.register_tool("tasks", task_manager) # TaskManager is already instantiated
+        self.register_tool("system", SystemTools())
     
     def register_tool(self, name: str, handler):
         """
