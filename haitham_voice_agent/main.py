@@ -46,6 +46,7 @@ from haitham_voice_agent.tools.system_tools import SystemTools
 from haitham_voice_agent.tools.smart_organizer import get_organizer
 from haitham_voice_agent.tools.secretary import get_secretary
 from haitham_voice_agent.tools.advisor import get_advisor
+from haitham_voice_agent.memory.manager import get_memory_manager
 
 def validate_config() -> bool:
     """Validates the application configuration."""
@@ -524,13 +525,21 @@ Output format: JSON
 - set_work_mode: تغيير وضع العمل (work, meeting, chill)
 - الكلمات الدالة: "صباح الخير"، "وضع العمل"، "اجتماع"، "استراحة"
 
+## 8. memory_manager (مدير الذاكرة)
+- create_project: إنشاء مشروع جديد
+- save_thought: حفظ فكرة أو ملاحظة (مع تلخيص تلقائي)
+- search: البحث في الذاكرة (Semantic Search)
+- الكلمات الدالة: "مشروع جديد"، "فكرة"، "احفظ"، "دون"، "ابحث في ذاكرتي"، "ماذا قلت عن"
+
 # قواعد مهمة:
 1. "افتح مجلد جديد" أو "أنشئ مجلد" = files.create_folder (ليس memory!)
 2. "افتح تطبيق" أو "شغّل برنامج" = system.open_app
-3. "احفظ ملاحظة" أو "سجّل فكرة" = memory.save_note
-4. "رتب التنزيلات" = organizer.organize_downloads
-5. "صباح الخير" = secretary.get_morning_briefing
-6. "وضع العمل" = secretary.set_work_mode(mode='work')
+3. "احفظ ملاحظة" أو "سجّل فكرة" = memory_manager.save_thought
+4. "مشروع جديد باسم X" = memory_manager.create_project(name='X')
+5. "ماذا قلت عن X؟" = memory_manager.search(query='X')
+6. "رتب التنزيلات" = organizer.organize_downloads
+7. "صباح الخير" = secretary.get_morning_briefing
+8. "وضع العمل" = secretary.set_work_mode(mode='work')
 5. "نظف سطح المكتب" = organizer.clean_desktop
 4. إذا ذكر اسم "هيثم" أو "هيم" كمجلد = يقصد مجلد المستخدم الرئيسي ~/
 5. **"داخل" تعني مسار متداخل:** "ملف X داخل مجلد Y" = "Y/X" (مهم جداً!)
@@ -862,6 +871,41 @@ Output format: JSON
             
             elif action == "mute":
                 return await self.system_tools.mute_volume()
+                
+        elif tool == "memory_manager":
+            manager = get_memory_manager()
+            
+            if action == "create_project":
+                name = params.get("name") or plan.get("intent")
+                desc = params.get("description", "")
+                res = manager.create_project(name, desc)
+                return res
+                
+            elif action == "save_thought":
+                content = params.get("content") or plan.get("intent")
+                project = params.get("project_name")
+                res = await manager.save_thought(content, project)
+                
+                if res["success"]:
+                    # Format nice message with summary
+                    msg = f"Saved thought.\nSummary: {res.get('summary')}"
+                    return {"success": True, "message": msg, "data": msg}
+                return res
+
+            elif action == "search":
+                query = params.get("query") or plan.get("intent")
+                results = await manager.search_memory(query)
+                
+                if not results:
+                    return {"success": True, "message": "No relevant memories found.", "data": "No results."}
+                
+                msg = f"🔍 **Memory Search Results for '{query}'**\n\n"
+                for r in results:
+                    content = r['content'][:200].replace("\n", " ") + "..."
+                    msg += f"- {content}\n"
+                    
+                return {"success": True, "message": msg, "data": msg}
+
             
             elif action == "unmute":
                 return await self.system_tools.unmute_volume()
