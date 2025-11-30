@@ -45,6 +45,7 @@ from haitham_voice_agent.tools.files import FileTools
 from haitham_voice_agent.tools.system_tools import SystemTools
 from haitham_voice_agent.tools.smart_organizer import get_organizer
 from haitham_voice_agent.tools.secretary import get_secretary
+from haitham_voice_agent.tools.advisor import get_advisor
 
 def validate_config() -> bool:
     """Validates the application configuration."""
@@ -681,6 +682,13 @@ Output format: JSON
         tool = plan.get("tool")
         action = plan.get("action")
         params = plan.get("parameters", {})
+        
+        # --- Safety Check (Advisor) ---
+        advisor = get_advisor()
+        validation = advisor.validate_action(tool, action, params)
+        if not validation["safe"]:
+            return {"success": False, "message": validation["warning"]}
+        # ------------------------------
         
         if tool == "memory":
             if action == "save_note":

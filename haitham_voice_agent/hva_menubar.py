@@ -19,7 +19,8 @@ from haitham_voice_agent.wake_word import get_detector
 from haitham_voice_agent import stt, llm_router
 from haitham_voice_agent.dispatcher import dispatch_action
 from haitham_voice_agent.tts import get_tts
-
+from haitham_voice_agent.tools.advisor import get_advisor
+import time
 
 class HVAMenuBarApp(rumps.App):
     def __init__(self):
@@ -44,10 +45,15 @@ class HVAMenuBarApp(rumps.App):
         self.is_listening = False
         self.listen_thread = None
         
-        # Start command listener thread (for manual input from GUI)
+        # Start command listener thread
         self.cmd_thread = threading.Thread(target=self._listen_for_gui_commands)
         self.cmd_thread.daemon = True
         self.cmd_thread.start()
+        
+        # Start Advisor Background Thread
+        self.advisor_thread = threading.Thread(target=self._run_advisor_checks)
+        self.advisor_thread.daemon = True
+        self.advisor_thread.start()
         
         # Menu items
         self.menu = [
@@ -61,6 +67,27 @@ class HVAMenuBarApp(rumps.App):
             rumps.separator,
             rumps.MenuItem("⏹️  Quit", callback=self.quit_app),
         ]
+
+    def _run_advisor_checks(self):
+        """Run periodic advisor checks (Resources & Wellbeing)"""
+        advisor = get_advisor()
+        while True:
+            try:
+                # Check Resources
+                res_alert = advisor.check_resources()
+                if res_alert:
+                    self.gui_queue.put(('add_message', 'error', res_alert, True))
+                    
+                # Check Wellbeing
+                health_alert = advisor.check_wellbeing()
+                if health_alert:
+                    self.gui_queue.put(('add_message', 'info', health_alert, True))
+                    
+                # Sleep 5 minutes
+                time.sleep(300)
+            except Exception as e:
+                print(f"Advisor check error: {e}")
+                time.sleep(60)
 
     def _on_tts_speak(self, text):
         """Callback when TTS speaks (or would speak)"""
