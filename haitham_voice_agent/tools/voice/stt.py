@@ -1,111 +1,102 @@
 """
-Local Speech-to-Text (STT) Engine
+Unified Speech-to-Text (STT) Engine
+The Single Source of Truth for HVA's "Ears".
 
-Uses faster-whisper for local transcription.
-Supports two modes:
-1. Realtime: For interactive commands (using VAD)
-2. Session: For long recordings (meetings)
+Routing Logic (The Golden Rule):
+1. Short Commands (Realtime):
+   - English -> Whisper (Local)
+   - Arabic -> Google Cloud STT (Best Accuracy)
+2. Long Sessions:
+   - English -> Whisper (Local)
+   - Arabic -> Whisper Large-v3 (Local, Best for Context)
 """
 
-import io
-import os
 import logging
 import speech_recognition as sr
-import soundfile as sf
-import numpy as np
-from typing import Optional, Literal
-
-# Try importing faster_whisper, handle if missing
-try:
-    from faster_whisper import WhisperModel
-    HAS_WHISPER = True
-except ImportError:
-    HAS_WHISPER = False
+import re
+from typing import Optional, Tuple
 
 from haitham_voice_agent.config import Config
 
+# Import the specialized engines (now located in tools/voice/)
+from haitham_voice_agent.tools.voice.stt_langid import detect_language_whisper
+from haitham_voice_agent.tools.voice.stt_whisper_en import transcribe_english_whisper
+from haitham_voice_agent.tools.voice.stt_google import transcribe_arabic_google
+from haitham_voice_agent.tools.voice.stt_whisper_ar import transcribe_arabic_whisper
+
 logger = logging.getLogger(__name__)
 
-# Global cache for Whisper model instances
-# Loaded once at startup to avoid reloading latency
-WHISPER_MODELS = {
-    "realtime": None,
-    "session": None,
-}
-
+# Initialize Recognizer for VAD
 _recognizer = sr.Recognizer()
 
+ARABIC_CHARS_RE = re.compile(r"[\u0600-\u06FF]")
 
-def init_whisper_models():
+def count_arabic_chars(text: str) -> int:
+    """Count number of Arabic characters in text."""
+    return len(ARABIC_CHARS_RE.findall(text or ""))
+
+def _validate_arabic_transcript(text: str, conf: float, config: dict) -> bool:
     """
-    Initialize and cache Whisper models for realtime and session profiles.
-    Must be called ONCE at startup.
+    Validate Arabic transcript against config thresholds.
+    Returns True if valid, False otherwise.
     """
-    global WHISPER_MODELS
+    text = (text or "").strip()
+    conf = float(conf or 0.0)
+    arabic_len = len(text)
+    arabic_chars = count_arabic_chars(text)
     
-    if not HAS_WHISPER:
-        logger.error("faster-whisper not installed. Local STT will not work.")
-        return
+    min_chars = config.get("min_valid_chars", 6)
+    min_conf = config.get("min_confidence", 0.7)
+    require_ar = config.get("require_arabic_chars", True)
+    log_rej = config.get("log_rejections", False)
+    
+    valid = True
+    rejection_reason = ""
+    
+    if not text or arabic_len < min_chars:
+        valid = False
+        rejection_reason = f"length {arabic_len} < {min_chars}"
+        
+    elif require_ar and arabic_chars < max(2, arabic_len // 3):
+        # require at least some Arabic letters (heuristic: at least 2 or 1/3rd of text)
+        valid = False
+        rejection_reason = f"insufficient arabic chars ({arabic_chars}/{arabic_len})"
+        
+    elif conf < min_conf:
+        valid = False
+        rejection_reason = f"confidence {conf:.2f} < {min_conf}"
+        
+    if not valid:
+        if log_rej:
+            logger.warning(
+                "Arabic STT rejected: text=%r conf=%.2f reason=%s",
+                text, conf, rejection_reason
+            )
+        return False
+        
+    logger.info(
+        "Arabic STT accepted: text=%r conf=%.2f len=%d arabic_chars=%d",
+        text, conf, arabic_len, arabic_chars
+    )
+    return True
 
-    try:
-        for profile in ("realtime", "session"):
-            model_name = Config.WHISPER_MODEL_NAMES.get(profile)
-            if not model_name:
-                logger.warning(f"No Whisper model configured for profile '{profile}'")
-                continue
-
-            if WHISPER_MODELS[profile] is None:
-                logger.info(f"Loading Whisper model for profile '{profile}': {model_name}")
-                
-                try:
-                    # Attempt to load the configured model
-                    WHISPER_MODELS[profile] = WhisperModel(
-                        model_name, 
-                        device="cpu", 
-                        compute_type="int8"
-                    )
-                    logger.info(f"Whisper model '{profile}' ({model_name}) loaded successfully")
-                    
-                except Exception as e:
-                    # Fallback logic specifically for heavy models
-                    if "large" in model_name:
-                        logger.warning(f"Failed to load heavy model '{model_name}' for '{profile}'. Error: {e}")
-                        logger.info("Attempting fallback to 'medium' model...")
-                        try:
-                            WHISPER_MODELS[profile] = WhisperModel(
-                                "medium", 
-                                device="cpu", 
-                                compute_type="int8"
-                            )
-                            logger.info(f"Fallback model 'medium' loaded for '{profile}'")
-                        except Exception as fallback_error:
-                            logger.error(f"Fallback failed for '{profile}': {fallback_error}")
-                    else:
-                        logger.error(f"Failed to load model '{model_name}' for '{profile}': {e}")
-                
-    except Exception as e:
-        logger.error(f"Failed to initialize Whisper models: {e}", exc_info=True)
-
-
-class LocalSTT:
-    """Local STT Handler using faster-whisper"""
+class STTHandler:
+    """
+    Unified STT Handler.
+    Replaces old LocalSTT and stt_router.
+    """
     
     def __init__(self):
-        if not any(WHISPER_MODELS.values()):
-            init_whisper_models()
-            
         # Log available microphones for debugging
         try:
             mics = sr.Microphone.list_microphone_names()
             logger.info(f"Available Microphones: {mics}")
-            # Note: sr.Microphone() uses the system default device.
-            # To change it, one would need to pass device_index to sr.Microphone(device_index=...)
         except Exception as e:
             logger.warning(f"Could not list microphones: {e}")
-            
+
     def capture_audio(self) -> Optional[tuple[bytes, float]]:
         """
-        Captures audio from the microphone until silence is detected.
+        Captures audio from the microphone until silence is detected (VAD).
         Returns (audio_bytes, duration_seconds) or None if capture failed.
         """
         try:
@@ -135,164 +126,97 @@ class LocalSTT:
             logger.error(f"Audio capture error: {e}", exc_info=True)
             return None
 
-    def listen_realtime(self, language: Optional[str] = None) -> Optional[dict]:
+    def listen_realtime(self) -> Optional[str]:
         """
-        Command Mode STT:
-        - Uses speech_recognition + Microphone for VAD
-        - Transcribes using local Whisper 'realtime' model
+        Main entry point for Command Mode.
+        Captures audio -> Detects Language -> Routes to correct engine.
+        Returns: Transcript string or None.
+        """
+        capture = self.capture_audio()
+        if not capture:
+            return None
+            
+        audio_bytes, duration = capture
         
-        Args:
-            language: "ar", "en", or None (auto-detect)
-            
-        Returns:
-            dict: {
-                "text": str, 
-                "duration": float, 
-                "confidence": float
-            } or None if filtered out
+        # Check for long speech (treat as session note?)
+        # For now, we just route it. If it's very long, the router might handle it or we can flag it.
+        # But the user asked for strict routing based on "Short Commands" vs "Long Sessions".
+        # Usually "listen_realtime" implies short command intent.
+        
+        return self.transcribe_command(audio_bytes, duration)
+
+    def transcribe_command(self, audio_bytes: bytes, duration_seconds: float) -> Optional[str]:
         """
-        if not HAS_WHISPER:
-            logger.error("faster-whisper missing")
-            return None
+        Routes short commands based on language.
+        """
+        config = Config.STT_ROUTER_CONFIG
+        
+        # 1. Detect Language
+        lang, lang_conf = detect_language_whisper(audio_bytes, duration_seconds)
+        logger.info(f"STT Router: Detected lang={lang} conf={lang_conf:.2f}")
+        
+        # 2. Route
+        # If English and confident
+        if lang == "en" and lang_conf >= config["lang_detect"]["min_confidence"]:
+            logger.info("Routing to Whisper English Backend")
+            text = transcribe_english_whisper(audio_bytes, duration_seconds)
             
-        model = WHISPER_MODELS["realtime"]
-        if model is None:
-            logger.error("Realtime Whisper model not initialized")
-            return None
-
-        try:
-            with sr.Microphone() as source:
-                # Configure VAD settings from config
-                _recognizer.pause_threshold = Config.VOICE_VAD_CONFIG.get("pause_threshold", 1.0)
-                _recognizer.energy_threshold = Config.VOICE_VAD_CONFIG.get("energy_threshold", 300)
-                _recognizer.dynamic_energy_threshold = Config.VOICE_VAD_CONFIG.get("dynamic_energy_threshold", True)
-
-                logger.info("Listening (Local Whisper)...")
-                # Adjust for ambient noise briefly
-                _recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                
-                audio = _recognizer.listen(source)
-                logger.info("Audio captured, transcribing...")
-
-            # Calculate duration roughly
-            # AudioData.get_wav_data() returns bytes. 
-            # WAV is usually 16-bit (2 bytes) * sample_rate * channels
-            # sr defaults: 16-bit, mono, 44100Hz usually, but let's check audio.sample_rate
-            # Duration = len(bytes) / (sample_width * sample_rate)
-            wav_bytes = audio.get_wav_data()
-            duration = len(wav_bytes) / (audio.sample_width * audio.sample_rate)
-            logger.info(f"Audio duration: {duration:.2f}s")
-            
-            # Convert to file-like object
-            wav_buf = io.BytesIO(wav_bytes)
-            data, samplerate = sf.read(wav_buf)
-            
-            # Transcribe
-            # Force Arabic for robustness as requested
-            target_lang = "ar"
-            
-            segments, info = model.transcribe(
-                data, 
-                language=target_lang, 
-                task="transcribe",
-                beam_size=5  # Increased beam size for better quality (large-v3)
-            )
-
-            # Collect segments and check confidence
-            collected_segments = list(segments)
-            text = " ".join(seg.text for seg in collected_segments).strip()
-            
-            # Calculate average confidence (probability = exp(logprob))
-            avg_prob = 0.0
-            if collected_segments:
-                avg_prob = np.mean([np.exp(seg.avg_logprob) for seg in collected_segments])
-            
-            logger.info(f"Realtime transcription (lang={target_lang}, conf={avg_prob:.2f}): {text}")
-
-            # Strict Filtering
-            strict_config = getattr(Config, "STT_STRICT_CONFIG", {
-                "min_confidence": 0.7,
-                "min_length": 6,
-                "max_realtime_seconds": 10.0
-            })
-            
-            # 1. Check if it's long speech (pass through, but flag it)
-            if duration > strict_config["max_realtime_seconds"]:
-                logger.info(f"Long speech detected ({duration:.2f}s). Passing as session note.")
-                return {
-                    "text": text,
-                    "duration": duration,
-                    "confidence": avg_prob,
-                    "is_long_speech": True
-                }
-
-            # 2. Garbage Filter for short commands
-            if len(text) < strict_config["min_length"]:
-                logger.info(f"Ignoring short transcript (< {strict_config['min_length']} chars)")
+            if not text or len(text.strip()) < 2:
+                logger.warning("English transcript too short or empty")
                 return None
                 
-            if avg_prob < strict_config["min_confidence"]:
-                logger.warning(f"Low confidence ({avg_prob:.2f} < {strict_config['min_confidence']}). Ignoring.")
-                return None
-
-            if text:
-                return {
-                    "text": text,
-                    "duration": duration,
-                    "confidence": avg_prob,
-                    "is_long_speech": False
-                }
-            return None
-            
-        except sr.WaitTimeoutError:
-            logger.warning("Listening timed out")
-            return None
-        except Exception as e:
-            logger.error(f"Realtime STT error: {e}", exc_info=True)
-            return None
-
-    def transcribe_session(self, file_path: str, language: Optional[str] = None) -> str:
-        """
-        Session Mode STT:
-        - Transcribes a full audio file using 'session' model
-        
-        Args:
-            file_path: Path to WAV file
-            language: "ar", "en", or None
-            
-        Returns:
-            str: Full transcription
-        """
-        if not HAS_WHISPER:
-            return "Error: faster-whisper not installed"
-            
-        model = WHISPER_MODELS["session"]
-        if model is None:
-            # Fallback to realtime model if session model failed to load
-            model = WHISPER_MODELS["realtime"]
-            if model is None:
-                return "Error: No Whisper models initialized"
-            logger.warning("Session model missing, falling back to realtime model")
-
-        if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
-            return ""
-
-        logger.info(f"Transcribing session file: {file_path}")
-        
-        try:
-            # Transcribe file directly
-            # beam_size=5 for better accuracy in session mode
-            segments, info = model.transcribe(
-                file_path, 
-                language=language,
-                beam_size=5
-            )
-
-            text = " ".join(seg.text for seg in segments).strip()
-            logger.info(f"Session transcription complete. Length: {len(text)} chars")
             return text
             
-        except Exception as e:
-            logger.error(f"Session transcription error: {e}", exc_info=True)
-            return f"Error transcribing session: {str(e)}"
+        else:
+            # Default to Arabic (Google Cloud STT) - The Golden Rule
+            logger.info("Routing to Google Cloud STT Arabic Backend")
+            text, conf = transcribe_arabic_google(audio_bytes, duration_seconds)
+            
+            # 3. Validate Arabic
+            if _validate_arabic_transcript(text, conf, config["arabic"]):
+                return text
+                
+            return None
+
+    def transcribe_session(self, audio_bytes: bytes, duration_seconds: float) -> Optional[str]:
+        """
+        Routes long sessions based on language.
+        """
+        config = Config.STT_ROUTER_CONFIG
+        
+        # 1. Detect Language
+        lang, lang_conf = detect_language_whisper(audio_bytes, duration_seconds)
+        logger.info(f"STT Router (Session): Detected lang={lang} conf={lang_conf:.2f}")
+        
+        # 2. Route
+        if lang == "en":
+            # Use Whisper English for full session
+            logger.info("Session: Using Whisper English")
+            text = transcribe_english_whisper(audio_bytes, duration_seconds)
+            
+            if not text or len(text.strip()) < 5:
+                logger.warning("Session transcript empty or too short")
+                return None
+                
+            return text
+        else:
+            # Use Whisper large-v3 Arabic for full session (local, free, private) - The Golden Rule
+            logger.info("Session: Using Whisper large-v3 Arabic (local)")
+            text, conf = transcribe_arabic_whisper(audio_bytes, duration_seconds)
+            
+            # For sessions, we use the same validation logic
+            if _validate_arabic_transcript(text, conf, config["arabic"]):
+                return text
+                
+            return None
+
+# For backward compatibility if needed, or just use the class
+def init_whisper_models():
+    """
+    Initialize Whisper models.
+    Now delegated to the specific modules if they need it, 
+    but we can keep a global init here if main calls it.
+    """
+    # The new modules (stt_whisper_en, stt_whisper_ar) handle their own model loading lazily or globally.
+    # But to prevent latency on first request, we can trigger them here.
+    pass 

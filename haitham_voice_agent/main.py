@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Optional
 
 from haitham_voice_agent.config import Config
-from haitham_voice_agent.tools.voice import LocalSTT, TTS, SessionRecorder, init_whisper_models
+from haitham_voice_agent.tools.voice import TTS, SessionRecorder, init_whisper_models
 from haitham_voice_agent.llm_router import LLMRouter
 from haitham_voice_agent.model_router import TaskMeta, choose_model
 from haitham_voice_agent.tools.gemini.gemini_router import choose_gemini_variant
@@ -37,7 +37,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-from haitham_voice_agent.tools.stt_router import transcribe_command, transcribe_session
+from haitham_voice_agent.tools.voice.stt import STTHandler, init_whisper_models
+from haitham_voice_agent.ollama_orchestrator import get_orchestrator
 from haitham_voice_agent.intent_router import route_command
 from haitham_voice_agent.tools.arabic_normalizer import normalize_arabic_text
 from haitham_voice_agent.tools.tasks.task_manager import task_manager
@@ -78,7 +79,7 @@ class HVA:
         init_whisper_models()
         
         # Initialize voice components
-        self.stt = LocalSTT()
+        self.stt = STTHandler()
         self.tts = TTS()
         self.recorder = SessionRecorder()
         
@@ -128,7 +129,7 @@ class HVA:
             logger.info(f"Long speech detected ({duration:.2f}s). Treating as memory note.")
             
             # Use session transcriber for better quality on long audio
-            text = transcribe_session(audio_bytes, duration)
+            text = self.stt.transcribe_session(audio_bytes, duration)
             
             if text:
                 self.speak("تم حفظ الجلسة كملاحظة طويلة" if self.language == "ar" else "Long session saved as note")
@@ -138,7 +139,7 @@ class HVA:
             return
 
         # Short Command
-        text = transcribe_command(audio_bytes, duration)
+        text = self.stt.transcribe_command(audio_bytes, duration)
         
         if not text:
             # Validation failed or garbage
@@ -148,6 +149,49 @@ class HVA:
 
         logger.info(f"Command (Raw): {text}")
         
+        # 1. Intent Router (Reflex Layer - Fastest)
+        # Handles critical commands like "stop", "mute", "volume" instantly
+        intent_result = route_command(text)
+        if intent_result:
+            logger.info(f"Intent Router caught command: {intent_result['intent']}")
+            # Execute directly
+            await self.execute_plan(intent_result)
+            return
+
+        # 2. Ollama Orchestrator (Local Intelligence Layer)
+        # Classifies intent and handles simple queries
+        orchestrator = get_orchestrator()
+        classification = await orchestrator.classify_request(text)
+        
+        if classification.get("type") == "direct_response":
+            logger.info("Ollama handled request directly.")
+            response = classification["response"]
+            self.speak(response)
+            return
+            
+        elif classification.get("type") == "execute_command":
+            logger.info(f"Ollama identified command: {classification['intent']}")
+            plan = {
+                "intent": classification["intent"],
+                "tool": "system", 
+                "action": classification["intent"],
+                "parameters": classification.get("parameters", {}),
+                "confirmation_needed": False
+            }
+            await self.execute_plan(plan)
+            return
+            
+        # 3. LLM Router (Cloud Intelligence Layer)
+        # Handles complex tasks (Planning, Gmail, Memory)
+        logger.info(f"Ollama delegated to: {classification.get('delegate_to')}")
+        
+        # Generate execution plan using Cloud LLM (GPT/Gemini)
+        plan = await self.llm_router.generate_execution_plan(text)
+        
+        if plan:
+            await self.execute_plan(plan)
+        else:
+            self.speak("عذراً، لم أستطع فهم طلبك." if self.language == "ar" else "Sorry, I couldn't understand your request.")
         # Normalize if Arabic
         if self.language == "ar":
             text = await normalize_arabic_text(text, mode="command")

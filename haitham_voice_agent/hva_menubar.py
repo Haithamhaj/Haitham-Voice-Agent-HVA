@@ -16,10 +16,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from haitham_voice_agent.gui_process import run_gui_process
 from haitham_voice_agent.wake_word import get_detector
-from haitham_voice_agent import stt, llm_router
+from haitham_voice_agent.tools.voice.stt import STTHandler
+from haitham_voice_agent import llm_router
 from haitham_voice_agent.dispatcher import dispatch_action
 from haitham_voice_agent.tts import get_tts
 from haitham_voice_agent.tools.advisor import get_advisor
+from haitham_voice_agent.tools.system_awareness import get_system_awareness
 import time
 
 print(f"🐍 Python Executable: {sys.executable}")
@@ -44,6 +46,9 @@ class HVAMenuBarApp(rumps.App):
         self.tts = get_tts()
         self.tts.set_callback(self._on_tts_speak)
         
+        # Initialize STT
+        self.stt = STTHandler()
+        
         self.detector = get_detector()
         self.is_listening = False
         self.listen_thread = None
@@ -62,6 +67,10 @@ class HVAMenuBarApp(rumps.App):
         self.warmup_thread = threading.Thread(target=self._warmup_ollama)
         self.warmup_thread.daemon = True
         self.warmup_thread.start()
+        
+        # Initialize System Awareness
+        self.system_awareness = get_system_awareness()
+        self.system_awareness.start()
         
         # Menu items
         self.menu = [
@@ -271,7 +280,7 @@ class HVAMenuBarApp(rumps.App):
             
             # Listen for voice
             print("🎤 Listening...")
-            text = stt.listen_once()
+            text = self.stt.listen_realtime()
             
             if not text:
                 # Just a timeout, not a critical error

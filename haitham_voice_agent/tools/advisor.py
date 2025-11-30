@@ -6,6 +6,8 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+from haitham_voice_agent.memory.manager import get_memory_manager
+
 class Advisor:
     """
     Honest Advisor Module
@@ -16,6 +18,7 @@ class Advisor:
         self.start_time = datetime.datetime.now()
         self.last_resource_check = datetime.datetime.now()
         self.resource_check_interval = 300 # 5 minutes
+        self.memory = get_memory_manager()
         
         # Safety Config
         self.protected_paths = [
@@ -87,10 +90,13 @@ class Advisor:
                     # It is a protected folder or inside one? 
                     # Actually, deleting a subfolder in Documents is fine.
                     # Deleting Documents ITSELF is bad.
-                    if path == protected:
+                     if path == protected:
+                         warning_msg = f"🛑 **Safety Alert**\nYou are trying to delete a protected system folder: `{path.name}`.\nI cannot allow this."
+                         # Log to memory
+                         self.memory.save_thought(f"Safety Violation Attempt: User tried to delete {path.name}", tags=["safety", "violation"])
                          return {
                              "safe": False, 
-                             "warning": f"🛑 **Safety Alert**\nYou are trying to delete a protected system folder: `{path.name}`.\nI cannot allow this."
+                             "warning": warning_msg
                          }
             
             # Check if path doesn't exist

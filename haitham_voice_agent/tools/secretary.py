@@ -10,6 +10,8 @@ from haitham_voice_agent.tools.system_tools import SystemTools
 
 logger = logging.getLogger(__name__)
 
+from haitham_voice_agent.memory.manager import get_memory_manager
+
 class Secretary:
     """
     Executive Secretary Module
@@ -18,6 +20,7 @@ class Secretary:
     
     def __init__(self):
         self.system_tools = SystemTools()
+        self.memory = get_memory_manager()
         
     async def get_morning_briefing(self) -> Dict[str, Any]:
         """
@@ -38,9 +41,13 @@ class Secretary:
             "desc": "Perfect weather for productivity."
         }
         
-        # 3. Tasks
+        # 3. Tasks & Memory Context
         tasks = task_manager.list_tasks(status="open")
         high_priority = [t for t in tasks if "urgent" in t.title.lower() or "important" in t.title.lower()]
+        
+        # Retrieve recent context from memory
+        recent_memories = await self.memory.search("important context for today", limit=3)
+        memory_context = "\n".join([f"- {m.content}" for m in recent_memories]) if recent_memories else "No recent important notes."
         
         # 4. System Status
         battery = psutil.sensors_battery()
@@ -69,6 +76,11 @@ You have {len(tasks)} pending tasks.
             report += f"⚠️ **{len(high_priority)} High Priority:**\n"
             for t in high_priority:
                 report += f"- {t.title}\n"
+        
+        report += f"""
+🧠 **Memory Context**
+{memory_context}
+"""
         
         report += f"""
 📅 **Schedule**
