@@ -491,7 +491,8 @@ Output format: JSON
         self.speak("تم حفظ تحليل الجلسة في الذاكرة" if self.language == "ar" else "Session analysis saved to memory")
 
     async def plan_command(self, text: str) -> dict:
-        """Generate execution plan using GPT"""
+        """Generate execution plan using GPT - Improved for Arabic understanding"""
+        
         # Build TaskMeta
         meta = TaskMeta(
             context_tokens=len(text) // 4,
@@ -503,49 +504,157 @@ Output format: JSON
         # Choose Model
         decision = choose_model(meta)
         model_name = Config.resolve_model(decision["model"])
+        
         prompt = f"""
-You are the intelligent brain of Haitham Voice Agent (HVA).
-Your goal is to understand the user's intent and map it to the correct tool and action.
+أنت الدماغ الذكي لمساعد هيثم الصوتي (HVA).
+مهمتك فهم نية المستخدم وتحويلها إلى أداة وإجراء محدد.
 
-User said: "{text}"
+المستخدم قال: "{text}"
 
-Available Tools:
-1. memory: For saving notes, ideas, and retrieving past information.
-2. gmail: For reading, searching, and sending emails.
-3. tasks: For managing to-do lists (add, list, complete).
-4. files: For listing and searching local files.
-5. system: For controlling the device (apps, volume, display).
+# الأدوات المتاحة:
 
-Output Schema (JSON):
+## 1. memory (الذاكرة)
+- save_note: حفظ ملاحظة أو فكرة أو معلومة
+- search: البحث في الملاحظات المحفوظة
+- الكلمات الدالة: "احفظ"، "سجّل"، "تذكّر"، "فكرة"، "ملاحظة"، "ابحث في ملاحظاتي"
+
+## 2. files (الملفات)
+- list_files: عرض الملفات في مجلد
+- search_files: البحث عن ملف معين
+- create_folder: إنشاء مجلد جديد ⬅️ مهم!
+- الكلمات الدالة: "افتح مجلد"، "أنشئ مجلد"، "اصنع مجلد"، "مجلد جديد"، "اعرض الملفات"
+
+## 3. gmail (البريد)
+- fetch_email: قراءة آخر بريد إلكتروني
+- search_email: البحث في البريد
+- create_draft: إنشاء مسودة
+- الكلمات الدالة: "إيميل"، "بريد"، "رسالة"
+
+## 4. tasks (المهام)
+- create_task: إضافة مهمة جديدة
+- list_tasks: عرض المهام
+- complete_task: إكمال مهمة
+- الكلمات الدالة: "مهمة"، "أضف مهمة"، "قائمة المهام"
+
+## 5. system (النظام)
+- open_app: فتح تطبيق
+- set_volume: التحكم بالصوت
+- sleep_display: إطفاء الشاشة
+- الكلمات الدالة: "افتح"، "شغّل"، "الصوت"، "الشاشة"
+
+# قواعد مهمة:
+1. "افتح مجلد جديد" أو "أنشئ مجلد" = files.create_folder (ليس memory!)
+2. "افتح تطبيق" أو "شغّل برنامج" = system.open_app
+3. "احفظ ملاحظة" أو "سجّل فكرة" = memory.save_note
+4. إذا ذكر اسم "هيثم" أو "هيم" كمجلد = يقصد مجلد المستخدم الرئيسي ~/
+5. "داخل" تعني مسار متداخل: "مجلد X داخل مجلد Y" = Y/X
+
+# أمثلة:
+
+مثال 1:
+المستخدم: "افتح مجلد جديد داخل مجلد هيثم باسم المهام"
 {{
-    "intent": "Brief description of what the user wants",
-    "tool": "memory|gmail|tasks|files|system|other",
-    "action": "save_note|search|fetch_email|send_email|create_task|list_tasks|complete_task|list_files|search_files|create_folder|open_app|set_volume|mute|unmute|sleep_display",
+    "intent": "إنشاء مجلد جديد باسم المهام داخل المجلد الرئيسي",
+    "tool": "files",
+    "action": "create_folder",
     "parameters": {{
-        "title": "Task title",
-        "project_id": "Project name (e.g. 'work', 'personal')",
-        "due_date": "ISO date",
-        "query": "Search query",
-        "content": "Note content",
-        "directory": "Folder path (e.g. 'development', 'downloads')",
-        "pattern": "File pattern (e.g. '*.py', 'main.py')",
-        "app_name": "App name (e.g. 'Chrome', 'Spotify')",
-        "level": "Volume level (0-100)"
+        "directory": "~/المهام"
     }},
-    "confirmation_needed": boolean
+    "confirmation_needed": false
 }}
 
-Examples:
-1. "Open a new folder inside Haitham folder" -> {{ "tool": "files", "action": "create_folder", "parameters": {{ "directory": "Haitham/New Folder" }} }} (If name not specified, ask or infer)
-2. "Create folder named Tasks in Haitham" -> {{ "tool": "files", "action": "create_folder", "parameters": {{ "directory": "Haitham/Tasks" }} }}
-3. "Open Google Chrome" -> {{ "tool": "system", "action": "open_app", "parameters": {{ "app_name": "Google Chrome" }} }}
-4. "Search for main.py in development" -> {{ "tool": "files", "action": "search_files", "parameters": {{ "directory": "development", "pattern": "main.py" }} }}
-5. "Turn up the volume" -> {{ "tool": "system", "action": "set_volume", "parameters": {{ "level": null }} }} (System will handle increment)
-6. "Add a task to buy milk tomorrow" -> {{ "tool": "tasks", "action": "create_task", "parameters": {{ "title": "Buy milk", "due_date": "tomorrow" }} }}
+مثال 2:
+المستخدم: "أنشئ مجلداً جديداً باسم المشاريع في التنزيلات"
+{{
+    "intent": "إنشاء مجلد المشاريع في Downloads",
+    "tool": "files",
+    "action": "create_folder",
+    "parameters": {{
+        "directory": "~/Downloads/المشاريع"
+    }},
+    "confirmation_needed": false
+}}
 
-Generate the JSON plan:
+مثال 3:
+المستخدم: "شغّل متصفح كروم"
+{{
+    "intent": "فتح متصفح Google Chrome",
+    "tool": "system",
+    "action": "open_app",
+    "parameters": {{
+        "app_name": "Google Chrome"
+    }},
+    "confirmation_needed": false
+}}
+
+مثال 4:
+المستخدم: "احفظ هذه الفكرة: نحتاج إلى تحسين واجهة المستخدم"
+{{
+    "intent": "حفظ فكرة عن تحسين الواجهة",
+    "tool": "memory",
+    "action": "save_note",
+    "parameters": {{
+        "content": "نحتاج إلى تحسين واجهة المستخدم"
+    }},
+    "confirmation_needed": false
+}}
+
+مثال 5:
+المستخدم: "اعرض الملفات الموجودة في مجلد التطوير"
+{{
+    "intent": "عرض ملفات مجلد development",
+    "tool": "files",
+    "action": "list_files",
+    "parameters": {{
+        "directory": "~/development"
+    }},
+    "confirmation_needed": false
+}}
+
+مثال 6:
+المستخدم: "أضف مهمة: الاتصال بالعميل غداً"
+{{
+    "intent": "إضافة مهمة للاتصال بالعميل",
+    "tool": "tasks",
+    "action": "create_task",
+    "parameters": {{
+        "title": "الاتصال بالعميل",
+        "due_date": "tomorrow"
+    }},
+    "confirmation_needed": false
+}}
+
+مثال 7:
+المستخدم: "ابحث عن ملف main.py في مجلد التطوير"
+{{
+    "intent": "البحث عن ملف main.py",
+    "tool": "files",
+    "action": "search_files",
+    "parameters": {{
+        "directory": "~/development",
+        "pattern": "main.py"
+    }},
+    "confirmation_needed": false
+}}
+
+مثال 8:
+المستخدم: "اقرأ آخر بريد إلكتروني"
+{{
+    "intent": "قراءة آخر بريد وارد",
+    "tool": "gmail",
+    "action": "fetch_email",
+    "parameters": {{}},
+    "confirmation_needed": false
+}}
+
+# الآن حلل أمر المستخدم وأرجع JSON فقط:
 """
-        response = await self.llm_router.generate_with_gpt(prompt)
+
+        response = await self.llm_router.generate_with_gpt(
+            prompt,
+            temperature=0.1,  # Lower temperature for more consistent parsing
+            response_format="json_object"
+        )
         
         try:
             if isinstance(response, str):

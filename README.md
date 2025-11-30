@@ -1,58 +1,490 @@
-# Haitham Voice Agent (HVA)
+# Haitham Voice Agent (HVA) 🎤🤖
+
+<div dir="rtl">
+
+**وكيل صوتي ذكي لنظام macOS مع توجيه هجين للذكاء الاصطناعي، تكامل Gmail، ونظام ذاكرة متقدم**
+
+</div>
 
 A voice-operated automation agent for macOS with hybrid LLM routing, Gmail integration, and advanced memory system.
 
-## Features
+---
 
-- 🎤 **Voice Control**: Arabic and English voice commands
-- 🤖 **Hybrid LLM**: Gemini for analysis, GPT for actions
-- 📧 **Gmail Integration**: Read, draft, and manage emails with API/IMAP fallback
-- 🧠 **Advanced Memory**: Knowledge graph with semantic search
-- 📁 **File Operations**: Safe file and folder management
-- 📄 **Document Processing**: Summarize, translate, and extract from PDFs
-- 🔒 **Security First**: No auto-send, confirmation required, encrypted credentials
+## 📋 جدول المحتويات | Table of Contents
 
-## Installation
+- [نظرة عامة | Overview](#-نظرة-عامة--overview)
+- [المميزات الرئيسية | Key Features](#-المميزات-الرئيسية--key-features)
+- [البنية المعمارية | Architecture](#-البنية-المعمارية--architecture)
+- [التثبيت والإعداد | Installation & Setup](#-التثبيت-والإعداد--installation--setup)
+- [الاستخدام | Usage](#-الاستخدام--usage)
+- [الوحدات والأدوات | Modules & Tools](#-الوحدات-والأدوات--modules--tools)
+- [التكوين | Configuration](#-التكوين--configuration)
+- [الاختبارات | Testing](#-الاختبارات--testing)
+- [استكشاف الأخطاء | Troubleshooting](#-استكشاف-الأخطاء--troubleshooting)
+- [التوثيق التقني | Technical Documentation](#-التوثيق-التقني--technical-documentation)
+- [الأمان | Security](#-الأمان--security)
+- [المساهمة | Contributing](#-المساهمة--contributing)
 
-### Prerequisites
+---
 
-- macOS (Apple Silicon recommended)
-- Python 3.11+
-- OpenAI API key
-- Google Gemini API key
+## 🌟 نظرة عامة | Overview
 
-### Setup
+<div dir="rtl">
 
-1. **Clone the repository**:
-   ```bash
-   cd "/Users/haitham/development/Haitham Voice Agent (HVA)"
-   ```
+**Haitham Voice Agent (HVA)** هو وكيل صوتي ذكي مصمم خصيصاً لنظام macOS، يجمع بين قوة الذكاء الاصطناعي المتقدم والتحكم الصوتي الطبيعي. يدعم النظام اللغتين العربية والإنجليزية، ويستخدم استراتيجية توجيه هجينة بين نماذج Gemini و GPT لتحقيق أفضل أداء لكل مهمة.
 
-2. **Create virtual environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
+</div>
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+**Haitham Voice Agent (HVA)** is an intelligent voice-operated automation agent designed specifically for macOS. It combines the power of advanced AI with natural voice control, supporting both Arabic and English languages. The system uses a hybrid routing strategy between Gemini and GPT models to achieve optimal performance for each task.
 
-4. **Configure environment**:
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your API keys
-   ```
+### 🎯 الأهداف الأساسية | Core Objectives
 
-5. **Test configuration**:
-   ```bash
-   python -m haitham_voice_agent.config
-   ```
+- ✅ **Voice-to-Action Automation**: تحويل الأوامر الصوتية إلى إجراءات تلقائية
+- ✅ **Hybrid LLM Intelligence**: توجيه ذكي بين نماذج الذكاء الاصطناعي
+- ✅ **Structured Execution Plans**: خطط تنفيذ منظمة مع تأكيد المستخدم
+- ✅ **Persistent Memory System**: نظام ذاكرة دائم مع بحث دلالي
+- ✅ **Gmail Integration**: قراءة وإنشاء مسودات البريد الإلكتروني
+- ✅ **Safe macOS Automation**: أتمتة آمنة لنظام macOS
 
-## Usage
+---
 
-### Interactive Mode
+## ✨ المميزات الرئيسية | Key Features
+
+### 🎤 نظام التحكم الصوتي | Voice Control System
+
+<div dir="rtl">
+
+- **تحويل الكلام إلى نص (STT)**: دعم كامل للعربية (ar-SA) والإنجليزية (en-US)
+  - استخدام Whisper المحلي للدقة العالية
+  - تحمل الضوضاء والبيئات الصعبة
+  - كشف تلقائي للغة المستخدمة
+  
+- **تحويل النص إلى كلام (TTS)**: استخدام نظام macOS المدمج
+  - صوت "Majed" للعربية
+  - أصوات "Samantha/Alex" للإنجليزية
+  - استجابة باللغة المكتشفة تلقائياً
+
+</div>
+
+- **Speech-to-Text (STT)**: Full support for Arabic (ar-SA) and English (en-US)
+  - Local Whisper for high accuracy
+  - Noise tolerance for challenging environments
+  - Automatic language detection
+  
+- **Text-to-Speech (TTS)**: Using macOS built-in system
+  - "Majed" voice for Arabic
+  - "Samantha/Alex" voices for English
+  - Automatic response in detected language
+
+### 🤖 التوجيه الهجين للذكاء الاصطناعي | Hybrid LLM Routing
+
+<div dir="rtl">
+
+النظام يستخدم استراتيجية ذكية لتوجيه المهام إلى النموذج الأنسب:
+
+</div>
+
+The system uses an intelligent strategy to route tasks to the most suitable model:
+
+#### 🔷 Gemini Models (للتحليل | For Analysis)
+- 📄 معالجة ملفات PDF والمستندات
+- 🌐 الترجمة والمقارنة
+- 📊 التحليل والتلخيص
+- 🖼️ تحليل الصور
+- 🧠 الاستدلال بالسياق الكبير
+
+#### 🔶 GPT Models (للتنفيذ | For Execution)
+- 📋 إنشاء خطط التنفيذ المنظمة
+- 🛠️ استدعاء الأدوات والوظائف
+- 💾 عمليات الذاكرة
+- 📧 مهام البريد الإلكتروني
+- ⚙️ مهام النظام
+
+### 📧 تكامل Gmail | Gmail Integration
+
+<div dir="rtl">
+
+- **القراءة**: جلب آخر الرسائل، البحث، قراءة المحادثات
+- **الكتابة**: إنشاء مسودات، الرد، إعادة التوجيه
+- **التصنيف**: تلخيص الرسائل، استخراج المهام، التصنيف التلقائي
+- **الأمان**: عدم إرسال تلقائي، وضع المسودات فقط، مصادقة OAuth
+
+</div>
+
+- **Reading**: Fetch latest emails, search, read threads
+- **Writing**: Create drafts, reply, forward
+- **Classification**: Summarize emails, extract tasks, auto-categorize
+- **Security**: No auto-send, draft-only mode, OAuth authentication
+
+### 🧠 نظام الذاكرة المتقدم | Advanced Memory System
+
+<div dir="rtl">
+
+نظام ذاكرة متطور يحفظ المعرفة بشكل دائم:
+
+</div>
+
+Advanced memory system that persistently stores knowledge:
+
+#### 💾 التخزين المحلي | Local Storage
+- قاعدة بيانات SQLite كمصدر أساسي
+- JSON كنسخة احتياطية
+- المسار: `~/.hva_memory.*`
+
+#### 🔍 البحث الدلالي | Semantic Search
+- قاعدة بيانات متجهة (ChromaDB)
+- تضمينات محلية للخصوصية
+- بحث ذكي بالمعنى
+
+#### 📊 المزامنة مع Google Sheets (اختياري)
+- مزامنة اختيارية مع جداول Google
+- النسخ الاحتياطي السحابي
+- المصدر المحلي هو الأساسي
+
+#### 📝 أنواع البيانات المدعومة
+- 💡 أفكار (Ideas)
+- ✅ قرارات (Decisions)
+- ❓ أسئلة (Questions)
+- 📌 مهام (Tasks)
+- 📄 ملاحظات (Notes)
+
+### 📁 أدوات إدارة الملفات | File Management Tools
+
+<div dir="rtl">
+
+- **العمليات الأساسية**: عرض، بحث، فتح، نسخ، نقل، إعادة تسمية
+- **إدارة المجلدات**: إنشاء، حذف (مع تأكيد)
+- **الترتيب**: ترتيب الملفات حسب معايير مختلفة
+- **الأمان**: تأكيد للعمليات المدمرة
+
+</div>
+
+- **Basic Operations**: List, search, open, copy, move, rename
+- **Folder Management**: Create, delete (with confirmation)
+- **Sorting**: Sort files by various criteria
+- **Safety**: Confirmation for destructive operations
+
+### 📄 معالجة المستندات | Document Processing
+
+<div dir="rtl">
+
+باستخدام قوة Gemini:
+
+</div>
+
+Using Gemini's power:
+
+- 📖 قراءة ملفات PDF
+- 📝 تلخيص المستندات
+- 🌐 ترجمة الملفات
+- 🔄 مقارنة المستندات
+- ✅ استخراج المهام من النصوص
+
+### 🌐 أدوات المتصفح | Browser Tools
+
+- فتح الروابط
+- البحث في Google
+- التنقل الآمن
+
+### 💻 أدوات الطرفية الآمنة | Safe Terminal Tools
+
+<div dir="rtl">
+
+الأوامر المسموحة فقط (بدون sudo):
+
+</div>
+
+Allowed commands only (no sudo):
+
+```bash
+ls, pwd, echo, whoami, df
+```
+
+---
+
+## 🏗️ البنية المعمارية | Architecture
+
+### 📊 تدفق النظام | System Flow
+
+```
+┌─────────────────┐
+│  User Voice     │
+│  صوت المستخدم   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  STT Engine     │
+│  محرك التعرف    │
+│  (Whisper)      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Intent Router   │
+│ موجه النوايا    │
+│ (Deterministic) │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  LLM Router     │
+│  موجه الذكاء    │
+│ (Gemini vs GPT) │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Execution Plan  │
+│  خطة التنفيذ    │
+│  (Structured)   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ User Confirm    │
+│ تأكيد المستخدم  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Dispatcher    │
+│    الموزع       │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────────┐
+│          Tools Layer                │
+│          طبقة الأدوات               │
+├─────────────────────────────────────┤
+│ Files │ Docs │ Gmail │ Memory │ ... │
+└────────┬────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  TTS Response   │
+│  الرد الصوتي    │
+│  (macOS Say)    │
+└─────────────────┘
+```
+
+### 🗂️ هيكل المشروع | Project Structure
+
+```
+haitham_voice_agent/
+├── 📄 main.py                    # المنسق الرئيسي | Main orchestrator
+├── ⚙️ config.py                  # إدارة التكوين | Configuration management
+├── 🎤 stt.py                     # تحويل الكلام لنص | Speech-to-Text
+├── 🔊 tts.py                     # تحويل النص لكلام | Text-to-Speech
+├── 🧭 intent_router.py           # توجيه النوايا | Intent routing
+├── 🤖 llm_router.py              # توجيه LLM الهجين | Hybrid LLM routing
+├── 🔀 model_router.py            # توجيه النماذج | Model routing
+├── 📡 dispatcher.py              # موزع الأدوات | Tool dispatcher
+│
+├── 🛠️ tools/                     # الأدوات | Tools
+│   ├── files.py                 # عمليات الملفات | File operations
+│   ├── docs.py                  # معالجة المستندات | Document processing
+│   ├── browser.py               # أدوات المتصفح | Browser tools
+│   ├── terminal.py              # طرفية آمنة | Safe terminal
+│   ├── system_tools.py          # أدوات النظام | System tools
+│   ├── workspace_manager.py     # إدارة مساحة العمل | Workspace manager
+│   ├── arabic_normalizer.py     # تطبيع العربية | Arabic normalizer
+│   │
+│   ├── 📧 gmail/                # وحدة Gmail | Gmail module
+│   │   ├── __init__.py
+│   │   ├── gmail_api_handler.py
+│   │   ├── imap_handler.py
+│   │   ├── smtp_handler.py
+│   │   ├── llm_helper.py
+│   │   ├── memory_integration.py
+│   │   ├── connection_manager.py
+│   │   ├── prompts.py
+│   │   ├── auth/              # المصادقة | Authentication
+│   │   ├── models/            # نماذج البيانات | Data models
+│   │   └── utils/             # أدوات مساعدة | Utilities
+│   │
+│   ├── 🧠 memory/               # وحدة الذاكرة | Memory module
+│   │   ├── memory_system.py
+│   │   ├── voice_tools.py
+│   │   ├── input/             # إدخال البيانات | Data input
+│   │   ├── storage/           # التخزين | Storage
+│   │   ├── retrieval/         # الاسترجاع | Retrieval
+│   │   ├── intelligence/      # الذكاء | Intelligence
+│   │   ├── export/            # التصدير | Export
+│   │   ├── maintenance/       # الصيانة | Maintenance
+│   │   ├── models/            # النماذج | Models
+│   │   └── utils/             # أدوات مساعدة | Utilities
+│   │
+│   ├── 🎙️ voice/               # أدوات الصوت | Voice tools
+│   │   ├── stt_router.py
+│   │   ├── stt_langid.py
+│   │   ├── stt_whisper_en.py
+│   │   └── stt_wav2vec2_ar.py
+│   │
+│   ├── 🔷 gemini/               # أدوات Gemini | Gemini tools
+│   │
+│   └── ✅ tasks/                # إدارة المهام | Task management
+│       └── task_manager.py
+│
+├── 🧪 tests/                    # الاختبارات | Tests
+│   ├── test_config.py
+│   ├── test_llm_router.py
+│   ├── test_model_router.py
+│   ├── test_tools.py
+│   ├── test_gemini_routing.py
+│   ├── test_gmail_llm.py
+│   ├── test_memory_foundation.py
+│   ├── test_memory_live.py
+│   ├── test_voice_local.py
+│   └── test_bridge_live.py
+│
+├── 📋 domain/                   # نماذج المجال | Domain models
+│   └── models.py
+│
+├── 📦 requirements.txt          # المتطلبات | Dependencies
+├── 📖 README.md                 # هذا الملف | This file
+├── 🚀 RUNNING.md                # دليل التشغيل | Running guide
+├── ⚙️ .env.example              # مثال البيئة | Environment example
+└── 📜 *.md                      # وثائق SRS | SRS documents
+```
+
+---
+
+## 🚀 التثبيت والإعداد | Installation & Setup
+
+### المتطلبات الأساسية | Prerequisites
+
+<div dir="rtl">
+
+- **نظام التشغيل**: macOS (يفضل Apple Silicon)
+- **Python**: 3.11 أو أحدث
+- **مفاتيح API**:
+  - OpenAI API Key
+  - Google Gemini API Key
+- **اختياري**:
+  - بيانات اعتماد Google Sheets (للمزامنة)
+  - بيانات اعتماد Gmail OAuth (لتكامل البريد)
+
+</div>
+
+- **Operating System**: macOS (Apple Silicon recommended)
+- **Python**: 3.11 or newer
+- **API Keys**:
+  - OpenAI API Key
+  - Google Gemini API Key
+- **Optional**:
+  - Google Sheets credentials (for sync)
+  - Gmail OAuth credentials (for email integration)
+
+### خطوات التثبيت | Installation Steps
+
+#### 1️⃣ استنساخ المشروع | Clone Repository
+
+```bash
+cd "/Users/haitham/development/Haitham Voice Agent (HVA)"
+```
+
+#### 2️⃣ إنشاء البيئة الافتراضية | Create Virtual Environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+#### 3️⃣ تثبيت المتطلبات | Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+<details>
+<summary>📦 قائمة المتطلبات الكاملة | Full Dependencies List</summary>
+
+```
+openai                      # OpenAI API
+google-generativeai         # Google Gemini API
+chromadb                    # Vector database
+gspread                     # Google Sheets
+soundfile                   # Audio file handling
+sounddevice                 # Audio recording
+SpeechRecognition           # Speech recognition
+pyaudio                     # Audio I/O
+cffi                        # C Foreign Function Interface
+python-dotenv               # Environment variables
+faster-whisper              # Whisper STT
+aiosqlite                   # Async SQLite
+beautifulsoup4              # HTML parsing
+keyring                     # Secure credential storage
+keyrings.alt                # Alternative keyring backends
+google-auth-oauthlib        # Google OAuth
+google-auth                 # Google authentication
+google-api-python-client    # Google APIs
+numpy                       # Numerical computing
+scipy                       # Scientific computing
+cryptography                # Encryption
+transformers                # ML models
+torch                       # PyTorch
+pytest-asyncio==1.3.0       # Async testing
+PyPDF2==3.0.1              # PDF processing
+regex==2025.11.3           # Regular expressions
+```
+
+</details>
+
+#### 4️⃣ تكوين البيئة | Configure Environment
+
+```bash
+cp .env.example .env
+nano .env  # أو أي محرر نصوص | or any text editor
+```
+
+<div dir="rtl">
+
+قم بتعبئة المتغيرات التالية:
+
+</div>
+
+Fill in the following variables:
+
+```bash
+# Required: OpenAI API Key
+OPENAI_API_KEY=sk-your-openai-api-key-here
+
+# Required: Google Gemini API Key
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# Optional: Google Sheets credentials path (for Memory module sync)
+# GOOGLE_SHEETS_CREDENTIALS=/path/to/credentials.json
+
+# Optional: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=INFO
+```
+
+#### 5️⃣ اختبار التكوين | Test Configuration
+
+```bash
+python -m haitham_voice_agent.config
+```
+
+<div dir="rtl">
+
+يجب أن ترى رسالة تأكيد بنجاح التكوين.
+
+</div>
+
+You should see a confirmation message of successful configuration.
+
+---
+
+## 💡 الاستخدام | Usage
+
+### الوضع التفاعلي | Interactive Mode
+
+<div dir="rtl">
+
+تشغيل HVA في وضع الاستماع المستمر:
+
+</div>
 
 Run HVA in continuous listening mode:
 
@@ -60,7 +492,13 @@ Run HVA in continuous listening mode:
 python -m haitham_voice_agent.main
 ```
 
-### Test Mode
+### وضع الاختبار | Test Mode
+
+<div dir="rtl">
+
+اختبار بأمر نصي (بدون صوت):
+
+</div>
 
 Test with a text command (no voice):
 
@@ -68,84 +506,965 @@ Test with a text command (no voice):
 python -m haitham_voice_agent.main --test "List files in Downloads"
 ```
 
-### Voice Commands
+### أمثلة الأوامر الصوتية | Voice Command Examples
 
-**Arabic Examples:**
-- "اقرأ آخر إيميل" (Read latest email)
-- "احفظ هذه الفكرة للمشروع Mind-Q" (Save this idea for Mind-Q project)
-- "لخص هذا الملف" (Summarize this file)
+#### 🇸🇦 أوامر عربية | Arabic Commands
 
-**English Examples:**
+<div dir="rtl">
+
+**الذاكرة والملاحظات:**
+- "احفظ ملاحظة: اجتماع المشروع غداً الساعة 3"
+- "سجل فكرة للمشروع Mind-Q"
+- "ايش آخر الملاحظات؟"
+- "ابحث في الملاحظات عن اجتماعات"
+
+**البريد الإلكتروني:**
+- "اقرأ آخر إيميل"
+- "لخص آخر 5 إيميلات"
+- "اكتب مسودة إيميل لأحمد"
+
+**الملفات والمستندات:**
+- "اعرض الملفات في المجلد Downloads"
+- "لخص هذا الملف PDF"
+- "ترجم هذا المستند للإنجليزية"
+- "ابحث عن ملفات المشروع"
+
+**المهام:**
+- "أضف مهمة: مراجعة الكود"
+- "اعرض مهامي"
+- "أكمل مهمة رقم 3"
+
+**النظام:**
+- "افتح تطبيق Safari"
+- "ابحث في Google عن Python tutorials"
+
+</div>
+
+**Memory & Notes:**
+- "Save note: Project meeting tomorrow at 3"
+- "Record idea for Mind-Q project"
+- "What are the last notes?"
+- "Search notes for meetings"
+
+**Email:**
+- "Read latest email"
+- "Summarize last 5 emails"
+- "Draft email to Ahmad"
+
+**Files & Documents:**
+- "Show files in Downloads folder"
+- "Summarize this PDF file"
+- "Translate this document to English"
+- "Search for project files"
+
+**Tasks:**
+- "Add task: Review code"
+- "Show my tasks"
+- "Complete task number 3"
+
+**System:**
+- "Open Safari app"
+- "Search Google for Python tutorials"
+
+#### 🇬🇧 English Commands
+
+**Memory & Notes:**
+- "Save note: Project meeting tomorrow at 3 PM"
+- "Record this idea for the AI project"
+- "What are my recent notes?"
+- "Search notes about machine learning"
+
+**Email:**
 - "Read my latest emails"
+- "Summarize unread emails"
 - "Create a draft email to John"
-- "Search for files about project X"
 
-## Architecture
+**Files & Documents:**
+- "List files in Documents"
+- "Summarize this PDF"
+- "Translate document to Arabic"
+- "Find files about project X"
 
+**Tasks:**
+- "Add task: Complete documentation"
+- "List my tasks"
+- "Mark task 2 as done"
+
+**System:**
+- "Open Chrome"
+- "Search for AI news"
+
+---
+
+## 🛠️ الوحدات والأدوات | Modules & Tools
+
+### 1️⃣ نظام الصوت | Voice System
+
+#### 📥 STT (Speech-to-Text)
+
+<div dir="rtl">
+
+**الملف**: `stt.py`
+
+**المميزات**:
+- دعم اللغة العربية والإنجليزية
+- استخدام Whisper المحلي للدقة
+- كشف تلقائي للغة
+- تحمل الضوضاء
+
+**الاستخدام**:
+
+</div>
+
+**File**: `stt.py`
+
+**Features**:
+- Arabic and English support
+- Local Whisper for accuracy
+- Automatic language detection
+- Noise tolerance
+
+**Usage**:
+
+```python
+from haitham_voice_agent.stt import listen_once
+
+text, language = listen_once()
+print(f"Detected: {text} (Language: {language})")
 ```
-Voice Input → STT → LLM Router → Execution Plan → 
-User Confirmation → Dispatcher → Tools → TTS Response
+
+#### 📤 TTS (Text-to-Speech)
+
+<div dir="rtl">
+
+**الملف**: `tts.py`
+
+**المميزات**:
+- استخدام نظام macOS المدمج
+- أصوات عربية وإنجليزية
+- سرعة قابلة للتعديل
+
+**الاستخدام**:
+
+</div>
+
+**File**: `tts.py`
+
+**Features**:
+- Using macOS built-in system
+- Arabic and English voices
+- Adjustable speed
+
+**Usage**:
+
+```python
+from haitham_voice_agent.tts import speak
+
+speak("مرحباً بك", language="ar")
+speak("Hello there", language="en")
 ```
 
-### LLM Routing
+### 2️⃣ موجه النوايا | Intent Router
 
-- **Gemini**: PDFs, translation, summarization, image analysis
-- **GPT**: JSON outputs, execution plans, tool invocation, memory operations
+<div dir="rtl">
 
-## Project Structure
+**الملف**: `intent_router.py`
 
+**الغرض**: توجيه حتمي للأوامر الشائعة قبل استخدام LLM
+
+**الأوامر المدعومة**:
+- حفظ الملاحظات
+- بدء/إيقاف الجلسات
+- جلب البريد الإلكتروني
+- إدارة المهام
+- عمليات الملفات
+- التحكم بالنظام
+
+</div>
+
+**File**: `intent_router.py`
+
+**Purpose**: Deterministic routing for common commands before using LLM
+
+**Supported Commands**:
+- Save notes
+- Start/stop sessions
+- Fetch emails
+- Task management
+- File operations
+- System control
+
+### 3️⃣ موجه LLM | LLM Router
+
+<div dir="rtl">
+
+**الملف**: `llm_router.py`
+
+**الاستراتيجية**:
+
+</div>
+
+**File**: `llm_router.py`
+
+**Strategy**:
+
+| Task Type | Model | Reason |
+|-----------|-------|--------|
+| PDF Processing | Gemini | Large context window |
+| Translation | Gemini | Better multilingual |
+| Summarization | Gemini | Analysis strength |
+| Image Analysis | Gemini | Vision capabilities |
+| Tool Invocation | GPT | Better function calling |
+| JSON Output | GPT | Structured output |
+| Memory Operations | GPT | Consistency |
+| Email Tasks | GPT | Action-oriented |
+
+### 4️⃣ أدوات الملفات | File Tools
+
+<div dir="rtl">
+
+**الملف**: `tools/files.py`
+
+**الوظائف المتاحة**:
+
+</div>
+
+**File**: `tools/files.py`
+
+**Available Functions**:
+
+```python
+class FileTools:
+    # List files in directory
+    list_files(path: str) -> dict
+    
+    # Search for files
+    search_files(path: str, pattern: str) -> dict
+    
+    # Open folder in Finder
+    open_folder(path: str) -> dict
+    
+    # Create new folder
+    create_folder(path: str) -> dict
+    
+    # Delete folder (with confirmation)
+    delete_folder(path: str) -> dict
+    
+    # Move file
+    move_file(source: str, destination: str) -> dict
+    
+    # Copy file
+    copy_file(source: str, destination: str) -> dict
+    
+    # Rename file
+    rename_file(old_path: str, new_name: str) -> dict
+    
+    # Sort files
+    sort_files(path: str, criteria: str) -> dict
 ```
-haitham_voice_agent/
-├── main.py              # Main orchestrator
-├── config.py            # Configuration management
-├── stt.py               # Speech-to-Text
-├── tts.py               # Text-to-Speech
-├── llm_router.py        # Hybrid LLM routing
-├── dispatcher.py        # Tool dispatcher
-└── tools/
-    ├── files.py         # File operations
-    ├── docs.py          # Document processing
-    ├── browser.py       # Browser tools
-    ├── terminal.py      # Safe terminal
-    ├── gmail/           # Gmail module
-    └── memory/          # Memory module
+
+### 5️⃣ أدوات المستندات | Document Tools
+
+<div dir="rtl">
+
+**الملف**: `tools/docs.py`
+
+**الوظائف المتاحة**:
+
+</div>
+
+**File**: `tools/docs.py`
+
+**Available Functions**:
+
+```python
+class DocumentTools:
+    # Summarize file
+    summarize_file(file_path: str) -> dict
+    
+    # Translate file
+    translate_file(file_path: str, target_lang: str) -> dict
+    
+    # Compare files
+    compare_files(file1: str, file2: str) -> dict
+    
+    # Extract tasks from document
+    extract_tasks(file_path: str) -> dict
+    
+    # Read PDF
+    read_pdf(file_path: str) -> dict
 ```
 
-## Development Status
+### 6️⃣ وحدة Gmail | Gmail Module
 
-- ✅ **Phase 1**: Core infrastructure (STT, TTS, LLM router, dispatcher)
-- 🚧 **Phase 2**: Basic tools (files, docs, browser, terminal)
-- 🚧 **Phase 3**: Gmail module (API + IMAP fallback)
-- 🚧 **Phase 4**: Memory module (knowledge graph + semantic search)
-- 🚧 **Phase 5**: Integration and testing
+<div dir="rtl">
 
-## Security
+**المجلد**: `tools/gmail/`
 
-- ✅ No auto-send of emails without confirmation
-- ✅ Credentials encrypted in macOS Keychain
-- ✅ Safe terminal commands only (no sudo)
-- ✅ Confirmation required for destructive operations
+**المكونات**:
 
-## Testing
+</div>
 
-Run tests:
+**Folder**: `tools/gmail/`
+
+**Components**:
+
+#### 📨 Gmail API Handler
+
+```python
+class GmailAPIHandler:
+    # Fetch latest email
+    fetch_latest_email(max_results: int = 1) -> dict
+    
+    # Fetch by query
+    fetch_email_by_query(query: str, max_results: int = 10) -> dict
+    
+    # Fetch thread
+    fetch_email_thread(thread_id: str) -> dict
+    
+    # Create draft
+    create_draft(to: str, subject: str, body: str) -> dict
+    
+    # Reply to email
+    reply_to_email(message_id: str, body: str) -> dict
+    
+    # Forward email
+    forward_email(message_id: str, to: str) -> dict
+```
+
+#### 📬 IMAP Handler (Fallback)
+
+```python
+class IMAPHandler:
+    # Fetch emails via IMAP
+    fetch_emails(folder: str = "INBOX", limit: int = 10) -> dict
+    
+    # Search emails
+    search_emails(criteria: str) -> dict
+```
+
+#### 🤖 LLM Helper
+
+```python
+class GmailLLMHelper:
+    # Summarize email
+    summarize_email(email_content: str) -> str
+    
+    # Extract tasks
+    extract_tasks_from_email(email_content: str) -> list
+    
+    # Categorize email
+    categorize_email(email_content: str) -> str
+```
+
+### 7️⃣ نظام الذاكرة | Memory System
+
+<div dir="rtl">
+
+**المجلد**: `tools/memory/`
+
+**البنية**:
+
+</div>
+
+**Folder**: `tools/memory/`
+
+**Structure**:
+
+#### 💾 Memory System Core
+
+```python
+class MemorySystem:
+    # Save note locally
+    save_note_local(content: str, project: str = None, 
+                   note_type: str = "note") -> dict
+    
+    # Get notes
+    get_notes_local(project: str = None, limit: int = 10) -> dict
+    
+    # List recent memories
+    list_recent_memories_local(limit: int = 20) -> dict
+    
+    # Semantic query
+    semantic_query_local(query: str, limit: int = 5) -> dict
+    
+    # Save to Google Sheets (optional)
+    save_note_sheet(content: str, project: str = None) -> dict
+    
+    # Query from Sheets
+    query_memory_sheet(query: str) -> dict
+```
+
+#### 📊 Data Model
+
+```python
+{
+    "id": "uuid",
+    "timestamp": "2025-11-30T08:00:00",
+    "source": "Voice|Chat|Manual",
+    "project": "Mind-Q",
+    "topic": "AI Development",
+    "type": "idea|decision|question|task|note",
+    "summary": "Brief summary",
+    "details": "Full details",
+    "decisions": ["Decision 1", "Decision 2"],
+    "next_actions": ["Action 1", "Action 2"],
+    "tags": ["ai", "project"],
+    "raw_ref": "Original text"
+}
+```
+
+### 8️⃣ أدوات النظام | System Tools
+
+<div dir="rtl">
+
+**الملف**: `tools/system_tools.py`
+
+**الوظائف**:
+
+</div>
+
+**File**: `tools/system_tools.py`
+
+**Functions**:
+
+```python
+class SystemTools:
+    # Open application
+    open_app(app_name: str) -> dict
+    
+    # Volume control
+    set_volume(level: int) -> dict
+    
+    # System info
+    get_system_info() -> dict
+```
+
+### 9️⃣ الطرفية الآمنة | Safe Terminal
+
+<div dir="rtl">
+
+**الملف**: `tools/terminal.py`
+
+**الأوامر المسموحة فقط**:
+
+</div>
+
+**File**: `tools/terminal.py`
+
+**Allowed Commands Only**:
+
+```python
+ALLOWED_COMMANDS = [
+    "ls", "pwd", "echo", "whoami", "df", "date", "cal"
+]
+
+class TerminalTools:
+    execute_safe_command(command: str) -> dict
+```
+
+---
+
+## ⚙️ التكوين | Configuration
+
+### ملف التكوين | Configuration File
+
+<div dir="rtl">
+
+**الملف**: `config.py`
+
+**المتغيرات الرئيسية**:
+
+</div>
+
+**File**: `config.py`
+
+**Main Variables**:
+
+```python
+class Config:
+    # Version
+    HVA_VERSION = "2.0.0"
+    
+    # API Keys
+    OPENAI_API_KEY: str
+    GEMINI_API_KEY: str
+    
+    # Paths
+    BASE_DIR: Path
+    DATA_DIR: Path
+    MEMORY_DIR: Path
+    LOGS_DIR: Path
+    
+    # Models
+    LOGICAL_MODELS = {
+        "logical.mini": "gpt-4o-mini",
+        "logical.standard": "gpt-4o",
+        "logical.gemini.flash": "gemini-2.0-flash-exp",
+        "logical.gemini.pro": "gemini-1.5-pro-latest"
+    }
+    
+    # Voice Settings
+    STT_LANGUAGE_AR = "ar-SA"
+    STT_LANGUAGE_EN = "en-US"
+    TTS_VOICE_AR = "Majed"
+    TTS_VOICE_EN = "Samantha"
+    
+    # Memory Settings
+    MEMORY_DB_PATH: Path
+    VECTOR_DB_PATH: Path
+    
+    # Gmail Settings
+    GMAIL_SCOPES = [
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/gmail.compose'
+    ]
+```
+
+### متغيرات البيئة | Environment Variables
+
+<div dir="rtl">
+
+**الملف**: `.env`
+
+</div>
+
+**File**: `.env`
+
+```bash
+# Required
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=...
+
+# Optional
+GOOGLE_SHEETS_CREDENTIALS=/path/to/credentials.json
+LOG_LEVEL=INFO
+```
+
+---
+
+## 🧪 الاختبارات | Testing
+
+### تشغيل جميع الاختبارات | Run All Tests
 
 ```bash
 pytest tests/ -v
 ```
 
-## Documentation
+### اختبارات محددة | Specific Tests
 
-- [Architecture Analysis](/.gemini/antigravity/brain/94c9a49c-1d61-4c52-a2ce-bbc3f61c672e/architecture_analysis.md)
-- [Implementation Plan](/.gemini/antigravity/brain/94c9a49c-1d61-4c52-a2ce-bbc3f61c672e/implementation_plan.md)
-- [Master SRS](hva_full_srs.md)
-- [Gmail Module SRS](HVA_Gmail_Module_SRS_v1.0.md)
-- [Memory Module SRS](HVA_Advanced_Memory_System_Module_SRS.md)
+```bash
+# Configuration tests
+pytest tests/test_config.py -v
 
-## License
+# LLM Router tests
+pytest tests/test_llm_router.py -v
 
-Private project - All rights reserved
+# Model Router tests
+pytest tests/test_model_router.py -v
 
-## Author
+# Tools tests
+pytest tests/test_tools.py -v
 
-Haitham - 2025
+# Gmail tests
+pytest tests/test_gmail_llm.py -v
+
+# Memory tests
+pytest tests/test_memory_foundation.py -v
+pytest tests/test_memory_live.py -v
+
+# Voice tests
+pytest tests/test_voice_local.py -v
+```
+
+### الاختبارات المتاحة | Available Tests
+
+<div dir="rtl">
+
+| الملف | الوصف |
+|------|-------|
+| `test_config.py` | اختبار التكوين والمتغيرات |
+| `test_llm_router.py` | اختبار توجيه LLM |
+| `test_model_router.py` | اختبار توجيه النماذج |
+| `test_tools.py` | اختبار الأدوات |
+| `test_gemini_routing.py` | اختبار توجيه Gemini |
+| `test_gmail_llm.py` | اختبار تكامل Gmail |
+| `test_memory_foundation.py` | اختبار أساسيات الذاكرة |
+| `test_memory_live.py` | اختبار الذاكرة الحية |
+| `test_voice_local.py` | اختبار النظام الصوتي |
+| `test_bridge_live.py` | اختبار الجسر الحي |
+
+</div>
+
+| File | Description |
+|------|-------------|
+| `test_config.py` | Configuration and variables testing |
+| `test_llm_router.py` | LLM routing testing |
+| `test_model_router.py` | Model routing testing |
+| `test_tools.py` | Tools testing |
+| `test_gemini_routing.py` | Gemini routing testing |
+| `test_gmail_llm.py` | Gmail integration testing |
+| `test_memory_foundation.py` | Memory foundation testing |
+| `test_memory_live.py` | Live memory testing |
+| `test_voice_local.py` | Voice system testing |
+| `test_bridge_live.py` | Live bridge testing |
+
+---
+
+## 🔧 استكشاف الأخطاء | Troubleshooting
+
+### مشاكل شائعة | Common Issues
+
+#### 1️⃣ خطأ في مفاتيح API | API Keys Error
+
+<div dir="rtl">
+
+**المشكلة**: `Configuration Error: Missing API keys`
+
+**الحل**:
+
+</div>
+
+**Problem**: `Configuration Error: Missing API keys`
+
+**Solution**:
+
+```bash
+# Check .env file
+cat .env
+
+# Ensure keys are set
+export OPENAI_API_KEY=sk-...
+export GEMINI_API_KEY=...
+
+# Test configuration
+python -m haitham_voice_agent.config
+```
+
+#### 2️⃣ مشاكل الصوت | Audio Issues
+
+<div dir="rtl">
+
+**المشكلة**: لا يعمل التسجيل الصوتي
+
+**الحل**:
+
+</div>
+
+**Problem**: Audio recording not working
+
+**Solution**:
+
+```bash
+# Check microphone permissions
+# System Preferences > Security & Privacy > Microphone
+
+# Test audio devices
+python -c "import sounddevice as sd; print(sd.query_devices())"
+
+# Install/reinstall PyAudio
+pip uninstall pyaudio
+pip install pyaudio
+```
+
+#### 3️⃣ مشاكل Whisper | Whisper Issues
+
+<div dir="rtl">
+
+**المشكلة**: فشل تحويل الكلام إلى نص
+
+**الحل**:
+
+</div>
+
+**Problem**: Speech-to-text failing
+
+**Solution**:
+
+```bash
+# Reinstall faster-whisper
+pip uninstall faster-whisper
+pip install faster-whisper
+
+# Check model download
+python -c "from faster_whisper import WhisperModel; WhisperModel('base')"
+```
+
+#### 4️⃣ مشاكل الذاكرة | Memory Issues
+
+<div dir="rtl">
+
+**المشكلة**: فشل حفظ الملاحظات
+
+**الحل**:
+
+</div>
+
+**Problem**: Note saving failing
+
+**Solution**:
+
+```bash
+# Check memory directory
+ls -la ~/.hva_memory/
+
+# Reset memory database
+rm ~/.hva_memory/memory.db
+python -m haitham_voice_agent.main --test "Save note: test"
+```
+
+#### 5️⃣ مشاكل Gmail | Gmail Issues
+
+<div dir="rtl">
+
+**المشكلة**: فشل المصادقة
+
+**الحل**:
+
+</div>
+
+**Problem**: Authentication failing
+
+**Solution**:
+
+```bash
+# Remove old credentials
+rm -rf ~/.hva_gmail_credentials/
+
+# Re-authenticate
+python -m haitham_voice_agent.main --test "Read latest email"
+# Follow OAuth flow
+```
+
+### السجلات | Logs
+
+<div dir="rtl">
+
+**موقع السجلات**:
+
+</div>
+
+**Log Location**:
+
+```bash
+~/.hva_logs/hva.log
+```
+
+<div dir="rtl">
+
+**عرض السجلات**:
+
+</div>
+
+**View Logs**:
+
+```bash
+# View recent logs
+tail -f ~/.hva_logs/hva.log
+
+# Search for errors
+grep ERROR ~/.hva_logs/hva.log
+
+# View with timestamps
+cat ~/.hva_logs/hva.log | grep "2025-11-30"
+```
+
+---
+
+## 🔒 الأمان | Security
+
+### مبادئ الأمان | Security Principles
+
+<div dir="rtl">
+
+✅ **عدم الإرسال التلقائي**: لا يتم إرسال أي بريد إلكتروني تلقائياً  
+✅ **تشفير البيانات**: تخزين آمن للبيانات الحساسة  
+✅ **أوامر آمنة**: لا يسمح بأوامر sudo أو مدمرة  
+✅ **تأكيد المستخدم**: تأكيد مطلوب للعمليات الحساسة  
+✅ **OAuth**: مصادقة آمنة لـ Gmail  
+✅ **تخزين محلي**: الأولوية للتخزين المحلي على السحابي  
+
+</div>
+
+✅ **No Auto-Send**: No emails sent automatically  
+✅ **Data Encryption**: Secure storage of sensitive data  
+✅ **Safe Commands**: No sudo or destructive commands allowed  
+✅ **User Confirmation**: Confirmation required for sensitive operations  
+✅ **OAuth**: Secure authentication for Gmail  
+✅ **Local Storage**: Priority for local over cloud storage  
+
+### العمليات المحظورة | Prohibited Operations
+
+<div dir="rtl">
+
+❌ إرسال البريد الإلكتروني تلقائياً  
+❌ الوصول إلى كلمات المرور  
+❌ تعديل إعدادات النظام  
+❌ تنفيذ أوامر sudo  
+❌ التحميلات التلقائية  
+❌ أتمتة GUI (الماوس/لوحة المفاتيح)  
+
+</div>
+
+❌ Auto-sending emails  
+❌ Accessing passwords  
+❌ Modifying system settings  
+❌ Executing sudo commands  
+❌ Automatic downloads  
+❌ GUI automation (mouse/keyboard)  
+
+---
+
+## 📚 التوثيق التقني | Technical Documentation
+
+### وثائق SRS | SRS Documents
+
+<div dir="rtl">
+
+- **[hva_full_srs.md](hva_full_srs.md)**: المواصفات الكاملة للنظام
+- **[HVA_Gmail_Module_SRS_v1.0.md](HVA_Gmail_Module_SRS_v1.0.md)**: مواصفات وحدة Gmail
+- **[HVA_Advanced_Memory_System_Module_SRS.md](HVA_Advanced_Memory_System_Module_SRS.md)**: مواصفات نظام الذاكرة
+
+</div>
+
+- **[hva_full_srs.md](hva_full_srs.md)**: Complete system specifications
+- **[HVA_Gmail_Module_SRS_v1.0.md](HVA_Gmail_Module_SRS_v1.0.md)**: Gmail module specifications
+- **[HVA_Advanced_Memory_System_Module_SRS.md](HVA_Advanced_Memory_System_Module_SRS.md)**: Memory system specifications
+
+### دليل التشغيل | Running Guide
+
+<div dir="rtl">
+
+- **[RUNNING.md](RUNNING.md)**: دليل مفصل لتشغيل النظام
+
+</div>
+
+- **[RUNNING.md](RUNNING.md)**: Detailed guide for running the system
+
+---
+
+## 🤝 المساهمة | Contributing
+
+<div dir="rtl">
+
+هذا مشروع خاص حالياً. للاستفسارات، يرجى التواصل مع المطور.
+
+</div>
+
+This is currently a private project. For inquiries, please contact the developer.
+
+### معايير الكود | Code Standards
+
+<div dir="rtl">
+
+- **Python**: PEP 8
+- **التوثيق**: Docstrings لجميع الوظائف
+- **الاختبارات**: pytest لجميع المميزات الجديدة
+- **Git**: Conventional Commits
+
+</div>
+
+- **Python**: PEP 8
+- **Documentation**: Docstrings for all functions
+- **Testing**: pytest for all new features
+- **Git**: Conventional Commits
+
+---
+
+## 📊 حالة التطوير | Development Status
+
+### ✅ المكتمل | Completed
+
+- [x] البنية التحتية الأساسية (STT, TTS, LLM Router, Dispatcher)
+- [x] موجه النوايا الحتمي
+- [x] التوجيه الهجين للذكاء الاصطناعي
+- [x] نظام الذاكرة المحلي
+- [x] البحث الدلالي
+- [x] تكامل Gmail (API + IMAP)
+- [x] أدوات الملفات والمجلدات
+- [x] معالجة المستندات
+- [x] أدوات المتصفح
+- [x] الطرفية الآمنة
+- [x] إدارة المهام
+
+### 🚧 قيد التطوير | In Progress
+
+- [ ] تحسين دقة STT للعربية
+- [ ] واجهة ويب للتحكم
+- [ ] تكامل مع المزيد من الخدمات
+- [ ] تحسين الأداء
+
+### 📅 مخطط مستقبلي | Future Plans
+
+- [ ] دعم المزيد من اللغات
+- [ ] تطبيق iOS/iPadOS
+- [ ] تكامل مع Shortcuts
+- [ ] نظام Plugins
+- [ ] واجهة رسومية كاملة
+
+---
+
+## 📝 الترخيص | License
+
+<div dir="rtl">
+
+مشروع خاص - جميع الحقوق محفوظة © 2025
+
+</div>
+
+Private project - All rights reserved © 2025
+
+---
+
+## 👤 المطور | Author
+
+**Haitham**  
+📅 2025
+
+---
+
+## 🙏 شكر وتقدير | Acknowledgments
+
+<div dir="rtl">
+
+- **OpenAI**: لتوفير GPT API
+- **Google**: لتوفير Gemini API
+- **Whisper**: لنظام التعرف على الكلام
+- **مجتمع Python**: للمكتبات الرائعة
+
+</div>
+
+- **OpenAI**: For providing GPT API
+- **Google**: For providing Gemini API
+- **Whisper**: For speech recognition system
+- **Python Community**: For amazing libraries
+
+---
+
+## 📞 الدعم | Support
+
+<div dir="rtl">
+
+للمشاكل التقنية أو الأسئلة:
+
+1. راجع قسم [استكشاف الأخطاء](#-استكشاف-الأخطاء--troubleshooting)
+2. تحقق من [السجلات](#السجلات--logs)
+3. راجع [الوثائق التقنية](#-التوثيق-التقني--technical-documentation)
+
+</div>
+
+For technical issues or questions:
+
+1. Check the [Troubleshooting](#-استكشاف-الأخطاء--troubleshooting) section
+2. Review the [Logs](#السجلات--logs)
+3. Consult the [Technical Documentation](#-التوثيق-التقني--technical-documentation)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Haitham**
+
+🎤 **Voice-Powered • 🤖 AI-Driven • 🔒 Privacy-First**
+
+</div>
