@@ -1,0 +1,51 @@
+name: Auto-update README
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'haitham_voice_agent/**/*.py'
+      - 'requirements.txt'
+      - '.env.example'
+      - 'haitham_voice_agent/config.py'
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install openai google-generativeai
+      
+      - name: Generate README updates
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python scripts/update_readme.py
+      
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          if [[ -n $(git status --porcelain README.md) ]]; then
+            git add README.md
+            git commit -m "docs: auto-update README [skip ci]"
+            git push
+          else
+            echo "No changes to README"
+          fi
