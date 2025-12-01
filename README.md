@@ -115,6 +115,20 @@ The memory system is fully unified to act as a "Single Brain":
 - **Smart Fallback**: Unrecognized or short commands are automatically saved as notes.
 - **Thread-Safe**: Concurrent recording and processing without conflicts.
 
+### 🚦 الطرفية الآمنة | Secure Terminal (New)
+
+<div dir="rtl">
+
+- **Traffic Light System**: نظام أمان يمنع الأوامر الخطرة تلقائياً.
+- **Developer Friendly**: دعم تنفيذ أوامر git, python, pip بأمان.
+- **Injection Protection**: حماية ضد هجمات التسلسل (Command Chaining).
+
+</div>
+
+- **Traffic Light System**: Automatically blocks dangerous commands.
+- **Developer Friendly**: Safely execute git, python, pip commands.
+- **Injection Protection**: Prevents command chaining attacks.
+
 ### 📱 تطبيق شريط القوائم | Menu Bar App
 
 <div dir="rtl">
@@ -163,7 +177,7 @@ The memory system is fully unified to act as a "Single Brain":
 ┌──────────────────────────────────────────┐
 │               Tools Layer                │
 ├──────────────────────────────────────────┤
-│ Files │ Apps │ Gmail │ Memory │ System   │
+│ Files │ Apps │ Gmail │ Memory │ Terminal │
 │                      │ (SQLite)          │
 └──────────────────────────────────────────┘
 ```
@@ -290,6 +304,7 @@ python -m haitham_voice_agent.hva_menubar
 *   **"كم المساحة المتبقية؟"** (يعطيك حالة التخزين فوراً)
 *   **"صباح الخير"** (الموجز الصباحي مع سياق الذاكرة)
 *   **"اقرأ آخر إيميل"** (Gmail Integration)
+*   **"نفذ أمر git status"** (Terminal Integration)
 
 </div>
 
@@ -298,6 +313,7 @@ python -m haitham_voice_agent.hva_menubar
 *   **"How much storage left?"** (Instant storage status)
 *   **"Good morning"** (Morning briefing with Memory context)
 *   **"Read last email"** (Gmail Integration)
+*   **"Run git status"** (Terminal Integration)
 
 ---
 

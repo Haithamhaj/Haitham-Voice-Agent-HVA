@@ -623,6 +623,11 @@ Output format: JSON
 - sleep_display: إطفاء الشاشة
 - الكلمات الدالة: "افتح"، "شغّل"، "الصوت"، "الشاشة"
 
+## 9. terminal (الطرفية الآمنة)
+- execute_command: تنفيذ أوامر النظام (ls, git, python, pip)
+- الكلمات الدالة: "نفذ أمر"، "شغل كود"، "git status", "ls", "pip install"
+- ملاحظة: الأوامر الخطرة محظورة تلقائياً.
+
 ## 6. organizer (المنظم الذكي)
 - organize_downloads: ترتيب مجلد التنزيلات
 - clean_desktop: تنظيف سطح المكتب
@@ -948,6 +953,25 @@ Output format: JSON
                         else:
                             level = 50
                 return await self.system_tools.set_volume(int(level))
+
+        elif tool == "terminal":
+            from haitham_voice_agent.tools.terminal import TerminalTools
+            term = TerminalTools()
+            
+            command = params.get("command") or plan.get("intent")
+            
+            # Execute (Traffic Light Logic handles safety)
+            res = await term.execute_command(command)
+            
+            if res.get("status") == "confirmation_required":
+                # For now, return as failure/blocked until interactive confirmation is implemented
+                return {"success": False, "message": f"Confirmation required: {res['message']}"}
+            
+            if res.get("error"):
+                return {"success": False, "message": res["message"]}
+                
+            output = res.get("output", "").strip()
+            return {"success": True, "message": output if output else "Command executed."}
                 
         elif tool == "organizer":
             organizer = get_organizer()
