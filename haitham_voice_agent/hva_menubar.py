@@ -22,6 +22,8 @@ from haitham_voice_agent.dispatcher import dispatch_action
 from haitham_voice_agent.tts import get_tts
 from haitham_voice_agent.tools.advisor import get_advisor
 from haitham_voice_agent.tools.system_awareness import get_system_awareness
+from haitham_voice_agent.tools.notifications.manager import NotificationManager
+from haitham_voice_agent.tools.system_tools import SystemTools
 import time
 
 print(f"🐍 Python Executable: {sys.executable}")
@@ -71,6 +73,11 @@ class HVAMenuBarApp(rumps.App):
         # Initialize System Awareness
         self.system_awareness = get_system_awareness()
         self.system_awareness.start()
+        
+        # Start Notification Manager Thread
+        self.notification_thread = threading.Thread(target=self._run_notifications)
+        self.notification_thread.daemon = True
+        self.notification_thread.start()
         
         # Menu items
         self.menu = [
@@ -125,6 +132,22 @@ class HVAMenuBarApp(rumps.App):
                 loop.close()
         except Exception as e:
             print(f"⚠️ Ollama Warmup Failed: {e}")
+
+    def _run_notifications(self):
+        """Run notification manager in background loop"""
+        try:
+            print("🔔 Starting Notification Manager...")
+            system_tools = SystemTools()
+            manager = NotificationManager(system_tools)
+            
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(manager.start())
+            finally:
+                loop.close()
+        except Exception as e:
+            print(f"⚠️ Notification Manager Failed: {e}")
 
     def _on_tts_speak(self, text):
         """Callback when TTS speaks (or would speak)"""

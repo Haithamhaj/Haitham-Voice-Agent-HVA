@@ -260,6 +260,16 @@ class Config:
         'https://www.googleapis.com/auth/gmail.readonly'
     ]
     
+    # Calendar API scopes
+    CALENDAR_SCOPES = [
+        'https://www.googleapis.com/auth/calendar'
+    ]
+    
+    # Drive API scopes
+    DRIVE_SCOPES = [
+        'https://www.googleapis.com/auth/drive'
+    ]
+    
     # Gmail API rate limiting (requests per second)
     GMAIL_API_RATE_LIMIT: int = 10
     

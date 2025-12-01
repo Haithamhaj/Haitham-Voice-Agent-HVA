@@ -75,3 +75,19 @@ class SystemTools:
         except Exception as e:
             logger.error(f"Failed to sleep display: {e}")
             return {"success": False, "message": str(e)}
+
+    async def notify(self, title: str, message: str, sound: str = "Ping") -> Dict[str, Any]:
+        """
+        Send a macOS notification.
+        """
+        try:
+            # Escape quotes
+            title = title.replace('"', '\\"')
+            message = message.replace('"', '\\"')
+            
+            cmd = f'osascript -e \'display notification "{message}" with title "{title}" sound name "{sound}"\''
+            subprocess.run(cmd, shell=True, check=True)
+            return {"success": True, "message": "Notification sent"}
+        except Exception as e:
+            logger.error(f"Failed to send notification: {e}")
+            return {"success": False, "message": str(e)}

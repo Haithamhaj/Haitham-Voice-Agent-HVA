@@ -628,6 +628,16 @@ Output format: JSON
 - الكلمات الدالة: "نفذ أمر"، "شغل كود"، "git status", "ls", "pip install"
 - ملاحظة: الأوامر الخطرة محظورة تلقائياً.
 
+## 10. calendar (التقويم)
+- list_events: عرض المواعيد القادمة
+- create_event: إضافة موعد جديد
+- الكلمات الدالة: "مواعيدي"، "جدول اليوم"، "احجز اجتماع"، "ذكرني بموعد"
+
+## 11. drive (جوجل درايف)
+- list_files: عرض ملفات درايف
+- search_files: البحث في درايف
+- الكلمات الدالة: "ملفات درايف"، "ابحث في السحابة"، "مستندات جوجل"
+
 ## 6. organizer (المنظم الذكي)
 - organize_downloads: ترتيب مجلد التنزيلات
 - clean_desktop: تنظيف سطح المكتب
@@ -972,6 +982,71 @@ Output format: JSON
                 
             output = res.get("output", "").strip()
             return {"success": True, "message": output if output else "Command executed."}
+            
+        elif tool == "calendar":
+            from haitham_voice_agent.tools.calendar import CalendarTools
+            cal = CalendarTools()
+            
+            if action == "list_events":
+                res = await cal.list_events()
+                if res.get("error"):
+                    return {"success": False, "message": res["message"]}
+                
+                events = res["events"]
+                if not events:
+                    return {"success": True, "message": "No upcoming events found."}
+                
+                msg = f"Found {len(events)} events:\n"
+                for e in events:
+                    start = e['start'].replace('T', ' ').split('+')[0]
+                    msg += f"- {e['summary']} at {start}\n"
+                return {"success": True, "message": msg}
+                
+            elif action == "create_event":
+                summary = params.get("summary") or plan.get("intent")
+                start_time = params.get("start_time") # Expecting ISO or handled by LLM
+                
+                # If start_time is missing, we can't create.
+                if not start_time:
+                    return {"success": False, "message": "I need a start time for the event."}
+                    
+                res = await cal.create_event(summary, start_time)
+                if res.get("error"):
+                    return {"success": False, "message": res["message"]}
+                return {"success": True, "message": res["message"]}
+        
+        elif tool == "drive":
+            from haitham_voice_agent.tools.drive import DriveTools
+            drive = DriveTools()
+            
+            if action == "list_files":
+                res = await drive.list_files()
+                if res.get("error"):
+                    return {"success": False, "message": res["message"]}
+                
+                files = res["files"]
+                if not files:
+                    return {"success": True, "message": "No files found in Drive."}
+                
+                msg = f"Found {len(files)} files in Drive:\n"
+                for f in files:
+                    msg += f"- {f['name']} ({f['mimeType']})\n"
+                return {"success": True, "message": msg}
+                
+            elif action == "search_files":
+                query = params.get("query") or plan.get("intent")
+                res = await drive.search_files(query)
+                if res.get("error"):
+                    return {"success": False, "message": res["message"]}
+                
+                files = res["files"]
+                if not files:
+                    return {"success": True, "message": "No matches found in Drive."}
+                
+                msg = f"Found {len(files)} matches in Drive:\n"
+                for f in files:
+                    msg += f"- {f['name']}\n"
+                return {"success": True, "message": msg}
                 
         elif tool == "organizer":
             organizer = get_organizer()
