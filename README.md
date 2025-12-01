@@ -43,7 +43,9 @@ A voice-operated automation agent for macOS with hybrid LLM routing, full system
 - ✅ **System Awareness**: فهم عميق للجهاز، التطبيقات، والملفات (3-Layer Architecture)
 - ✅ **Hybrid LLM Intelligence**: توجيه ذكي بين نماذج الذكاء الاصطناعي
 - ✅ **Unified Memory System**: ذاكرة موحدة تعتمد على SQLite و Vector Store (لا يوجد انقسام في الذاكرة)
-- ✅ **Full Gmail Integration**: قراءة، تلخيص، وإنشاء مسودات البريد الإلكتروني
+- ✅ **Unified Memory System**: ذاكرة موحدة تعتمد على SQLite و Vector Store (لا يوجد انقسام في الذاكرة)
+- ✅ **Full Google Integration**: ربط كامل مع Gmail, Calendar, Drive (Unified OAuth)
+- ✅ **Proactive Notifications**: نظام تنبيهات ذكي للمواعيد والإيميلات الهامة
 - ✅ **Safety First**: نظام أمان شامل يمنع الإجراءات المدمرة
 - ✅ **Robust Architecture**: نظام غير محجوب (Non-blocking I/O) مع معالجة ذكية للأخطاء
 
@@ -114,6 +116,20 @@ The memory system is fully unified to act as a "Single Brain":
 - **Non-blocking I/O**: System remains responsive during recording and handles interrupts gracefully.
 - **Smart Fallback**: Unrecognized or short commands are automatically saved as notes.
 - **Thread-Safe**: Concurrent recording and processing without conflicts.
+
+### 🧠 الترقية الذكية | Intelligence Upgrade (New)
+
+<div dir="rtl">
+
+- **📅 Calendar Integration**: إدارة المواعيد، إنشاء اجتماعات، والاستعلام عن الجدول اليومي.
+- **☁️ Drive Integration**: البحث عن الملفات في السحابة وعرضها.
+- **🔔 Proactive Notifications**: "الجهاز العصبي" للنظام. ينبهك قبل الاجتماعات بـ 15 دقيقة وعند وصول إيميلات هامة.
+
+</div>
+
+- **📅 Calendar Integration**: Manage events, schedule meetings, and query daily schedule.
+- **☁️ Drive Integration**: Search and view cloud files.
+- **🔔 Proactive Notifications**: The system's "Nervous System". Alerts you 15 mins before meetings and for important emails.
 
 ### 🚦 الطرفية الآمنة | Secure Terminal (New)
 
@@ -303,7 +319,10 @@ python -m haitham_voice_agent.hva_menubar
 *   **"وين ملف التقرير؟"** (يبحث في الفهرس السريع ثم Spotlight)
 *   **"كم المساحة المتبقية؟"** (يعطيك حالة التخزين فوراً)
 *   **"صباح الخير"** (الموجز الصباحي مع سياق الذاكرة)
+*   **"صباح الخير"** (الموجز الصباحي مع سياق الذاكرة)
 *   **"اقرأ آخر إيميل"** (Gmail Integration)
+*   **"ما هي مواعيدي اليوم؟"** (Calendar Integration)
+*   **"ابحث في درايف عن ملف العقد"** (Drive Integration)
 *   **"نفذ أمر git status"** (Terminal Integration)
 
 </div>
@@ -312,7 +331,10 @@ python -m haitham_voice_agent.hva_menubar
 *   **"Find report file"** (Searches Quick Index then Spotlight)
 *   **"How much storage left?"** (Instant storage status)
 *   **"Good morning"** (Morning briefing with Memory context)
+*   **"Good morning"** (Morning briefing with Memory context)
 *   **"Read last email"** (Gmail Integration)
+*   **"What are my events today?"** (Calendar Integration)
+*   **"Search Drive for contract"** (Drive Integration)
 *   **"Run git status"** (Terminal Integration)
 
 ---
