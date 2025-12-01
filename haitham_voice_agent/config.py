@@ -151,7 +151,7 @@ class Config:
     W2V2_AR_MODEL_NAME: str = "jonatasgrosman/wav2vec2-large-xlsr-53-arabic"
     
     STT_ROUTER_CONFIG = {
-        "offline_mode": True,  # everything is local (Whisper/Wav2Vec2)
+        "offline_mode": False,  # Changed to False to allow Google Cloud
         "lang_detect": {
             "max_seconds": 5.0,
             "min_confidence": 0.6
@@ -160,11 +160,11 @@ class Config:
             "backend": "whisper_en"
         },
         "arabic": {
-            "primary_backend": "wav2vec2_ar",
-            "min_valid_chars": 8,      # require a bit more than 6
+            "primary_backend": "google_cloud", # Updated to match reality
+            "min_valid_chars": 8,
             "require_arabic_chars": True,
-            "min_confidence": 0.7,     # stricter acceptance threshold
-            "log_rejections": True,    # new flag used by the router
+            "min_confidence": 0.7,
+            "log_rejections": True,
         }
     }
     

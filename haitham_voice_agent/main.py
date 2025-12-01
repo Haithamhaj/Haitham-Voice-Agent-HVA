@@ -295,8 +295,9 @@ class HVA:
         # Route & Plan
         plan = await self.plan_command(text)
         
-        # Fallback: If LLM failed to identify intent but it looks like a note
-        if (plan.get("intent") in ["Unknown", "unknown_action", None] or plan.get("action") == "unknown") and self._looks_like_note(text):
+        # Fallback: If LLM failed to identify intent OR it's unknown, treat as note
+        # This ensures we capture "short thoughts" that don't look like commands
+        if (plan.get("intent") in ["Unknown", "unknown_action", None] or plan.get("action") == "unknown"):
              logger.info("Fallback intent: treating unknown text as save_memory_note")
              plan = {
                  "intent": "Save Note (Fallback)",
@@ -332,22 +333,16 @@ class HVA:
         if not text:
             return False
 
-        # Long-enough natural speech (either AR or EN)
-        if len(text) < 20:
-            return False
-
-        # If it contains time or date words, treat as note if nothing else matched
-        note_markers = ["ملاحظة", "meeting", "اجتماع", "موعد", "idea", "فكرة", "بخصوص"]
-        if any(marker in text for marker in note_markers):
+        # REMOVED: Naive length check (len < 20)
+        
+        # Explicit triggers for notes
+        note_markers = ["ملاحظة", "note", "تذكر", "remember", "save", "احفظ", "فكرة", "idea"]
+        if any(marker in text.lower() for marker in note_markers):
             return True
 
-        # Fallback: if it's long Arabic text and not clearly a question/command, treat as note
-        import re
-        has_arabic = re.search(r"[\u0600-\u06FF]", text) is not None
-        if has_arabic and text.count("؟") == 0:
-            return True
-
-        return False
+        # Fallback: If it's not a clear command, treat as note
+        # This is safer than rejecting short text
+        return True
 
     def _resolve_path(self, path_name: str) -> str:
         """Resolve spoken path name to actual path"""
@@ -407,32 +402,25 @@ class HVA:
         
         # Wait for stop command
         while self.recorder.is_recording():
-            # Listen for stop command periodically
-            # We use a short timeout check to allow the loop to continue if silence
-            # Note: In a real concurrent system, we might need a separate listening thread
-            # For now, we'll block on listen_realtime which uses VAD. 
-            # If user speaks, we check if it's "stop".
+            # Non-blocking wait for stop signal
+            try:
+                print(">> Press Ctrl+C to stop recording <<", end="\r")
+                await asyncio.sleep(0.5)
+            except asyncio.CancelledError:
+                break
+            except KeyboardInterrupt:
+                break
             
-            # NOTE: Since we are recording raw audio in background, 
-            # we can't easily use the SAME mic for VAD without conflict on some systems.
-            # However, speech_recognition + pyaudio might conflict.
-            # A robust way is to rely on a keyboard interrupt or a specific silence duration.
-            # For this implementation, we will assume the user presses Ctrl+C or we implement
-            # a simple check if we can.
-            
-            # LIMITATION: Simultaneous recording and listening is hard with single mic.
-            # Strategy: We will just record until KeyboardInterrupt OR 
-            # we can't listen while recording.
-            # Let's use a blocking input for "Press Enter to stop" as a fallback for CLI
-            # or rely on the user stopping via a separate signal.
-            
-            # For this CLI version, let's use a non-blocking check or just wait for user input
-            print(">> Press ENTER to stop recording <<")
-            await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
-            break
+            # Check if file size is growing (optional sanity check)
+            # if not self.recorder.is_recording(): break
             
         # Stop recording
-        final_path = self.recorder.stop()
+        # Stop recording
+        try:
+            final_path = self.recorder.stop()
+        except KeyboardInterrupt:
+             # Handle Ctrl+C gracefully if caught during stop
+             final_path = self.recorder.stop()
         self.speak("تم إيقاف التسجيل. جاري المعالجة..." if self.language == "ar" else "Recording stopped. Processing...")
         
         # Transcribe

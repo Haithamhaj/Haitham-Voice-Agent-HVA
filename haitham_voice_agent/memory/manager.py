@@ -134,29 +134,37 @@ class MemoryManager:
                 updated_at=None
             )
             
-            # 3. Save to SQLite
+            # 3. Transactional Save
+            # Step A: Save to SQLite (Primary Source of Truth)
             await self.sqlite_store.save_memory(memory)
             
-            # 4. Index in Vector Store
-            self.vector_store.add_document(
-                text=content,
-                metadata={
-                    "type": "note",
-                    "project": project_name or "Inbox",
-                    "id": memory_id,
-                    "summary": summary_data.get('summary', '')
-                }
-            )
-            
-            # 5. Add to Graph
-            self.graph_store.add_node(memory_id, "Note", {"summary": summary_data.get('summary', '')})
-            if project_name:
-                self.graph_store.add_edge(memory_id, project_name, "PART_OF")
+            try:
+                # Step B: Index in Vector Store
+                self.vector_store.add_document(
+                    text=content,
+                    metadata={
+                        "type": "note",
+                        "project": project_name or "Inbox",
+                        "id": memory_id,
+                        "summary": summary_data.get('summary', '')
+                    }
+                )
                 
-            for tag in summary_data.get('tags', []):
-                tag_id = tag.lower().replace(" ", "_")
-                self.graph_store.add_node(tag_id, "Concept")
-                self.graph_store.add_edge(memory_id, tag_id, "MENTIONS")
+                # Step C: Add to Graph
+                self.graph_store.add_node(memory_id, "Note", {"summary": summary_data.get('summary', '')})
+                if project_name:
+                    self.graph_store.add_edge(memory_id, project_name, "PART_OF")
+                    
+                for tag in summary_data.get('tags', []):
+                    tag_id = tag.lower().replace(" ", "_")
+                    self.graph_store.add_node(tag_id, "Concept")
+                    self.graph_store.add_edge(memory_id, tag_id, "MENTIONS")
+                    
+            except Exception as vector_error:
+                # ROLLBACK: If Vector/Graph fails, delete from SQLite to maintain consistency
+                logger.error(f"Vector/Graph index failed: {vector_error}. Rolling back SQLite.")
+                await self.sqlite_store.delete_memory(memory_id)
+                raise vector_error
 
             return {
                 "success": True, 
