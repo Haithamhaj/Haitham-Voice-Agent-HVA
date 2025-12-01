@@ -210,9 +210,11 @@ class HVAMenuBarApp(rumps.App):
                 self.gui_queue.put(('set_agent_status', 'tool', f"Action: {classification['intent']}"))
                 plan = {
                     "intent": classification["intent"],
-                    "tool": "system", 
-                    "action": classification["intent"],
-                    "parameters": classification.get("parameters", {}),
+                    "steps": [{
+                        "tool": "system", 
+                        "action": classification["intent"],
+                        "params": classification.get("parameters", {})
+                    }],
                     "confirmation_needed": False
                 }
             
@@ -374,9 +376,11 @@ class HVAMenuBarApp(rumps.App):
                     self.gui_queue.put(('set_agent_status', 'tool', f"Action: {classification['intent']}"))
                     plan = {
                         "intent": classification["intent"],
-                        "tool": "system", 
-                        "action": classification["intent"],
-                        "parameters": classification.get("parameters", {}),
+                        "steps": [{
+                            "tool": "system", 
+                            "action": classification["intent"],
+                            "params": classification.get("parameters", {})
+                        }],
                         "confirmation_needed": False
                     }
                 

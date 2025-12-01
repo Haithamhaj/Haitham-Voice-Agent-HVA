@@ -24,13 +24,18 @@ COLORS = {
 class HVAWidget(tk.Frame):
     """Base class for HVA Dashboard Widgets"""
     def __init__(self, parent, title="", width=200, height=150, **kwargs):
-        super().__init__(parent, bg=COLORS['card_bg'], bd=0, highlightthickness=0, **kwargs)
+        # Create a container for the border/shadow effect
+        super().__init__(parent, bg=COLORS['border'], bd=0, highlightthickness=0, **kwargs)
         self.pack_propagate(False)
         self.configure(width=width, height=height)
         
+        # Inner frame (actual content background)
+        self.inner = tk.Frame(self, bg=COLORS['card_bg'])
+        self.inner.pack(fill=tk.BOTH, expand=True, padx=1, pady=1) # 1px border
+        
         # Title Bar
         if title:
-            self.title_frame = tk.Frame(self, bg=COLORS['card_bg'], height=30)
+            self.title_frame = tk.Frame(self.inner, bg=COLORS['card_bg'], height=30)
             self.title_frame.pack(fill=tk.X, padx=15, pady=(15, 5))
             
             self.title_label = tk.Label(
@@ -43,7 +48,7 @@ class HVAWidget(tk.Frame):
             self.title_label.pack(side=tk.LEFT)
             
         # Content Frame
-        self.content = tk.Frame(self, bg=COLORS['card_bg'])
+        self.content = tk.Frame(self.inner, bg=COLORS['card_bg'])
         self.content.pack(fill=tk.BOTH, expand=True, padx=15, pady=5)
 
 class ModernButton(tk.Frame):
@@ -56,35 +61,34 @@ class ModernButton(tk.Frame):
         
         self.command = command
         self.bg_color = bg
-        self.hover_color = COLORS['accent_hover'] if bg == COLORS['accent'] else COLORS['card_bg_hover']
+        self.hover_color = COLORS['accent_hover'] if bg == COLORS['accent'] else '#45475a' # Lighter surface
         
-        # Inner label for text/icon
-        display_text = f"{icon}  {text}" if icon else text
-        self.lbl = tk.Label(
+        self.label = tk.Label(
             self, 
-            text=display_text, 
-            bg=bg, 
-            fg=fg, 
+            text=f"{icon}  {text}" if icon else text,
             font=('Helvetica', 11, 'bold'),
+            bg=bg,
+            fg=fg,
             cursor="hand2"
         )
-        self.lbl.place(relx=0.5, rely=0.5, anchor="center")
+        self.label.place(relx=0.5, rely=0.5, anchor="center")
         
         # Bind events
         self.bind("<Enter>", self.on_enter)
         self.bind("<Leave>", self.on_leave)
         self.bind("<Button-1>", self.on_click)
-        self.lbl.bind("<Enter>", self.on_enter)
-        self.lbl.bind("<Leave>", self.on_leave)
-        self.lbl.bind("<Button-1>", self.on_click)
+        
+        self.label.bind("<Enter>", self.on_enter)
+        self.label.bind("<Leave>", self.on_leave)
+        self.label.bind("<Button-1>", self.on_click)
         
     def on_enter(self, e):
         self.configure(bg=self.hover_color)
-        self.lbl.configure(bg=self.hover_color)
+        self.label.configure(bg=self.hover_color)
         
     def on_leave(self, e):
         self.configure(bg=self.bg_color)
-        self.lbl.configure(bg=self.bg_color)
+        self.label.configure(bg=self.bg_color)
         
     def on_click(self, e):
         if self.command:
