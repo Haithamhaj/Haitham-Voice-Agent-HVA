@@ -46,7 +46,7 @@ class Config:
     # Gemini model is resolved dynamically via resolve_gemini_model()
     
     # GPT model for actions, plans, tools, classification
-    GPT_MODEL: str = "gpt-4o"
+    GPT_MODEL: str = "gpt-5"
     
     # Embedding model for Memory module
     EMBEDDING_MODEL: str = "text-embedding-ada-002"
@@ -55,10 +55,11 @@ class Config:
     # Logical model names → actual API model strings
     # This allows us to upgrade models in ONE place without touching routing logic
     MODEL_MAPPING = {
-        "logical.nano":        "gpt-4o-mini",      # Cheapest, lowest quality
-        "logical.nano-plus":   "gpt-4o-mini",      # Slightly stronger nano
-        "logical.mini":        "gpt-4o",           # Main GPT workhorse
-        "logical.premium":     "gpt-4o",           # Highest quality (same as mini for now)
+        "logical.nano":        "gpt-5-mini",       # Fastest, cheapest (New!)
+        "logical.nano-plus":   "gpt-5-mini",       
+        "logical.mini":        "gpt-5-mini",       # Main workhorse (upgraded from gpt-4o)
+        "logical.premium":     "gpt-5",            # High intelligence (Standard)
+        "logical.thinking":    "gpt-5-thinking",   # Reasoning model
         "logical.doc-gemini":  "logical.gemini.pro", # Delegate to Gemini mapping
     }
     
@@ -196,7 +197,7 @@ class Config:
     
     # VAD / Recognition defaults for Command Mode
     VOICE_VAD_CONFIG = {
-        "pause_threshold": 1.0,   # Balanced setting
+        "pause_threshold": 0.8,   # Faster turn-taking (was 1.0)
         "energy_threshold": 300,  # Initial energy threshold
         "dynamic_energy_threshold": True,
     }
