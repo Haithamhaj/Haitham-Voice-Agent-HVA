@@ -190,8 +190,9 @@ haitham_voice_agent/
 │   └── tts.py                   # Text-to-Speech
 │
 ├── 🛠️ tools/                     # الأدوات
-│   ├── files.py                 # عمليات الملفات
+│   ├── files.py                 # Smart Sandbox File Operations
 │   ├── system_tools.py          # أدوات النظام
+│   ├── terminal.py              # Traffic Light Terminal Tools
 │   ├── gmail/                   # وحدة Gmail
 │   ├── secretary.py             # (Memory Integrated - SQLite)
 │   └── advisor.py               # (Memory Integrated - SQLite)
@@ -213,21 +214,33 @@ haitham_voice_agent/
 
 <div dir="rtl">
 
-تم تعزيز المشروع بنظام توثيق وأمان شامل في مجلد `docs/`:
+تم تعزيز المشروع بنظام أمان متقدم (Security Architecture 2.0):
 
-*   **`PROJECT_MAP.md`**: خريطة كاملة للمشروع، الملفات الحرجة، والتبعيات.
-*   **`CHANGE_RULES.md`**: بروتوكولات صارمة لتعديل الكود لضمان الاستقرار.
-*   **`TEST_COMMANDS.md`**: دليل شامل للاختبار اليدوي والآلي.
-*   **`CHECKLIST.md`**: قائمة تحقق قبل وبعد أي تعديل.
+*   **🚦 Traffic Light Terminal**:
+    *   **🟢 أخضر**: أوامر آمنة (`ls`, `pwd`) تنفذ فوراً.
+    *   **🟡 أصفر**: أوامر مقيدة (`python`, `pip`) تطلب تأكيداً.
+    *   **🔴 أحمر**: أوامر خطرة (`rm -rf`, `mkfs`) محظورة تماماً.
+*   **🏖️ Smart User Sandbox**:
+    *   يمنع الوصول لأي ملف خارج مجلد المستخدم (`~/`).
+    *   يحظر المجلدات الحساسة (`.ssh`, `Library`) حتى داخل مجلد المستخدم.
+*   **🛡️ Documentation**:
+    *   **`PROJECT_MAP.md`**: خريطة كاملة للمشروع.
+    *   **`CHANGE_RULES.md`**: بروتوكولات صارمة لتعديل الكود.
 
 </div>
 
-The project is fortified with a comprehensive safety and documentation system in `docs/`:
+The project is fortified with an advanced security system (Security Architecture 2.0):
 
-*   **`PROJECT_MAP.md`**: Full project map, critical files, and dependencies.
-*   **`CHANGE_RULES.md`**: Strict protocols for code modification.
-*   **`TEST_COMMANDS.md`**: Comprehensive guide for manual and automated testing.
-*   **`CHECKLIST.md`**: Pre- and post-change checklists.
+*   **🚦 Traffic Light Terminal**:
+    *   **🟢 Green**: Safe commands (`ls`, `pwd`) execute immediately.
+    *   **🟡 Yellow**: Restricted commands (`python`, `pip`) require confirmation.
+    *   **🔴 Red**: Dangerous commands (`rm -rf`, `mkfs`) are strictly blocked.
+*   **🏖️ Smart User Sandbox**:
+    *   Blocks access to any file outside the user's home directory (`~/`).
+    *   Blacklists sensitive folders (`.ssh`, `Library`) even within home.
+*   **🛡️ Documentation**:
+    *   **`PROJECT_MAP.md`**: Full project map.
+    *   **`CHANGE_RULES.md`**: Strict protocols for code modification.
 
 ---
 
