@@ -98,6 +98,11 @@ class HVA:
         self.system_awareness = get_system_awareness()
         self.system_awareness.start()
         
+        # Initialize Reminders Watcher (iPhone Sync)
+        from haitham_voice_agent.tools.reminders_watcher import RemindersWatcher
+        self.reminders_watcher = RemindersWatcher(interval=60, list_name="HVA_Inbox")
+        self.reminders_watcher.start()
+        
         # State
         self.language = "ar"  # Default language
         self.is_running = True
