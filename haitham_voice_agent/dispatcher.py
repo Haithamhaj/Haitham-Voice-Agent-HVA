@@ -245,7 +245,11 @@ def dispatch_action(plan: Dict[str, Any]) -> Dict[str, Any]:
         
         # Ensure success flag exists
         if "success" not in last_result:
-            last_result["success"] = not last_result.get("error", False)
+            if last_result.get("status") == "confirmation_required":
+                last_result["success"] = False
+                last_result["message"] = f"⚠️ Confirmation Required: {last_result.get('message')}"
+            else:
+                last_result["success"] = not last_result.get("error", False)
             
         return last_result
         
