@@ -153,6 +153,7 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Smart Calendar**: Natural language date parsing ("tomorrow", "next Mon") and smart availability checks ("Am I free?").
 - **Premium GUI (v1.9)**: Stunning Dark Mode interface with live "Active Agent" indicators, simulated depth, and polished interactions.
 - **Desktop Experience**: Native macOS App Bundle (`HVA Premium.app`) for one-click launch.
+- **Smart File Listing**: Ask "Show files in Downloads" to get a categorized list (Today, Yesterday, Older) directly in the chat.
 
 ### 📱 تطبيق شريط القوائم وواجهة المستخدم | Menu Bar App & GUI
 
@@ -378,6 +379,7 @@ Click the icon in your menu bar or use the global hotkey `Cmd+Shift+H` to start 
 *   **"Remind me"** -> System: "About what?" -> **"To call Ahmed"** (Clarification Agent).
 *   **"I have an idea for a new cooking app"** (Idea Agent creates a structured project).
 *   **"Hey Siri, add 'Buy milk' to HVA Inbox"** (iPhone Sync -> HVA Memory).
+*   **"Show files in Downloads"** (Smart File Listing with date categorization).
 *   **"Am I free tomorrow?"** (Smart Calendar availability check).
 *   **"Schedule a meeting with John next Monday at 5pm"** (Smart Calendar natural language scheduling).
 
