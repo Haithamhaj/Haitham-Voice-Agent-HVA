@@ -144,6 +144,8 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Smart Calendar**: فهم كامل للوقت ("غداً"، "الاثنين القادم") وفحص ذكي للتوفر ("هل أنا مشغول؟").
 - **Premium GUI**: واجهة فخمة (Dark Mode) مع مؤشر ذكاء حي يظهر من يفكر الآن (Ollama vs GPT).
 - **Timezone-Aware Scheduling**: يفهم "اجتماع الساعة 5 بتوقيت القاهرة" ويحسب فرق التوقيت تلقائياً ليحجز الموعد الصحيح.
+- **System Modes**: تفعيل "وضع الاجتماع" (كتم الصوت)، "وضع العمل" (تركيز)، أو "وضع الراحة" (استرخاء) بأمر صوتي واحد.
+- **Advanced LLM Support**: توافق كامل مع نماذج الجيل القادم مثل **OpenAI o1** و **GPT-5**، مع ضبط تلقائي للمعاملات.
 
 </div>
 
@@ -156,6 +158,8 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Desktop Experience**: Native macOS App Bundle (`HVA Premium.app`) for one-click launch.
 - **Smart File Listing**: Ask "Show files in Downloads" to get a categorized list (Today, Yesterday, Older) directly in the chat.
 - **Timezone-Aware Scheduling**: Smartly handles "Meeting at 5pm Cairo time" by calculating the correct time difference relative to your local timezone.
+- **System Modes**: Activate "Meeting Mode" (Mute/DND), "Work Mode" (Focus), or "Chill Mode" (Relax) with a single voice command.
+- **Advanced LLM Support**: Fully compatible with next-gen models like **OpenAI o1** and **GPT-5**, with automatic parameter adjustment for reasoning models.
 
 ### 📱 تطبيق شريط القوائم وواجهة المستخدم | Menu Bar App & GUI
 
@@ -366,6 +370,8 @@ Click the icon in your menu bar or use the global hotkey `Cmd+Shift+H` to start 
 *   **"ما هي مواعيدي اليوم؟"** (يستخدم تكامل تقويم Google).
 *   **"ابحث في درايف عن ملف العقد"** (يستخدم تكامل Google Drive).
 *   **"نظف مجلد التنزيلات"** (يستخدم المنظم الذكي لتصنيف الملفات).
+*   **"وضع الاجتماع"** (يكتم الصوت ويرسل تنبيهاً).
+*   **"وضع العمل"** (يضبط مستوى الصوت للمساعدة على التركيز).
 *   **"نفذ أمر git status"** (يستخدم الطرفية الآمنة بعد طلب التأكيد).
 
 </div>
@@ -385,6 +391,8 @@ Click the icon in your menu bar or use the global hotkey `Cmd+Shift+H` to start 
 *   **"Show files in Downloads"** (Smart File Listing with date categorization).
 *   **"Am I free tomorrow?"** (Smart Calendar availability check).
 *   **"Schedule a meeting with John next Monday at 5pm"** (Smart Calendar natural language scheduling).
+*   **"Meeting Mode"** (Mutes volume and enables DND for meetings).
+*   **"Work Mode"** (Sets volume to low for focus).
 
 ---
 
