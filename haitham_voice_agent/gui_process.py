@@ -8,7 +8,7 @@ import webbrowser
 import math
 import psutil  # For system stats
 
-from .gui_widgets import COLORS, SystemStatusWidget, WeatherWidget, ChatWidget
+from .gui_widgets import COLORS, SystemStatusWidget, WeatherWidget, ChatWidget, AgentStatusWidget, ModernButton
 
 class HVAWindow:
     def __init__(self, msg_queue, cmd_queue):
@@ -25,6 +25,7 @@ class HVAWindow:
         self.chat_widget = None
         self.status_widget = None
         self.weather_widget = None
+        self.agent_status_widget = None
         self.input_field = None
         self.pulse_canvas = None
         
@@ -34,8 +35,8 @@ class HVAWindow:
             return
             
         self.window = tk.Tk()
-        self.window.title("🎤 Haitham Voice Agent - Dashboard")
-        self.window.geometry("1000x700")
+        self.window.title("🎤 Haitham Voice Agent - Premium Dashboard")
+        self.window.geometry("1100x750")
         self.window.configure(bg=COLORS['bg'])
         
         # Center window
@@ -51,7 +52,7 @@ class HVAWindow:
         self.window.grid_rowconfigure(0, weight=1)    # Full height
         
         # --- Sidebar (Left) ---
-        sidebar = tk.Frame(self.window, bg=COLORS['header_bg'], width=250)
+        sidebar = tk.Frame(self.window, bg=COLORS['header_bg'], width=260)
         sidebar.grid(row=0, column=0, sticky="ns")
         sidebar.pack_propagate(False)
         
@@ -59,34 +60,34 @@ class HVAWindow:
         tk.Label(
             sidebar, 
             text="HVA", 
-            font=('Helvetica', 24, 'bold'), 
+            font=('Helvetica', 28, 'bold'), 
             bg=COLORS['header_bg'], 
             fg=COLORS['accent']
-        ).pack(pady=(30, 10))
+        ).pack(pady=(40, 5))
         
         tk.Label(
             sidebar, 
-            text="Executive Assistant", 
-            font=('Helvetica', 10), 
+            text="INTELLIGENCE SYSTEM", 
+            font=('Helvetica', 9, 'bold'), 
             bg=COLORS['header_bg'], 
-            fg=COLORS['text_sub']
-        ).pack(pady=(0, 30))
+            fg=COLORS['text_sub'],
+            letterspacing=2
+        ).pack(pady=(0, 40))
         
         # Sidebar Menu Buttons
         def create_menu_btn(text, icon="•", command=None):
-            # Use Label instead of Button for consistent coloring on macOS
             btn_frame = tk.Frame(sidebar, bg=COLORS['header_bg'])
-            btn_frame.pack(fill=tk.X, pady=2)
+            btn_frame.pack(fill=tk.X, pady=2, padx=10)
             
             lbl = tk.Label(
                 btn_frame, 
-                text=f"{icon}  {text}", 
-                font=('Helvetica', 12),
+                text=f"{icon}   {text}", 
+                font=('Helvetica', 11),
                 bg=COLORS['header_bg'], 
                 fg=COLORS['text_fg'],
                 anchor="w",
                 padx=20,
-                pady=10,
+                pady=12,
                 cursor="hand2"
             )
             lbl.pack(fill=tk.X)
@@ -118,13 +119,14 @@ class HVAWindow:
         # Bottom Actions
         self.pin_btn = tk.Button(
             sidebar, text="📌 Pin Window", command=self.toggle_pin,
-            bg=COLORS['header_bg'], fg=COLORS['text_sub'], relief=tk.FLAT, bd=0
+            bg=COLORS['header_bg'], fg=COLORS['text_sub'], relief=tk.FLAT, bd=0,
+            activebackground=COLORS['header_bg'], activeforeground=COLORS['accent']
         )
-        self.pin_btn.pack(side=tk.BOTTOM, pady=10)
+        self.pin_btn.pack(side=tk.BOTTOM, pady=20)
         
         # --- Main Content Area (Right) ---
         self.main_area = tk.Frame(self.window, bg=COLORS['bg'])
-        self.main_area.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+        self.main_area.grid(row=0, column=1, sticky="nsew", padx=30, pady=30)
         
         # Views Container
         self.views = {}
@@ -143,33 +145,71 @@ class HVAWindow:
         self.check_queue()
         
     def init_dashboard_view(self):
-        """Initialize Dashboard View"""
+        """Initialize Premium Dashboard View"""
         frame = tk.Frame(self.main_area, bg=COLORS['bg'])
         self.views["dashboard"] = frame
         
-        # Top Row: Widgets
+        # --- Header Section ---
+        header_frame = tk.Frame(frame, bg=COLORS['bg'])
+        header_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        # Greeting
+        hour = datetime.now().hour
+        greeting = "Good Morning" if 5 <= hour < 12 else "Good Afternoon" if 12 <= hour < 18 else "Good Evening"
+        
+        tk.Label(
+            header_frame, 
+            text=f"{greeting}, Haitham.", 
+            font=('Helvetica', 24, 'bold'), 
+            bg=COLORS['bg'], 
+            fg=COLORS['text_fg']
+        ).pack(side=tk.LEFT)
+        
+        # Pulse Indicator (Top Right)
+        self.pulse_canvas = tk.Canvas(header_frame, width=50, height=50, bg=COLORS['bg'], highlightthickness=0)
+        self.pulse_canvas.pack(side=tk.RIGHT)
+        self.draw_pulse(active=False)
+        
+        # --- Widgets Row ---
         widgets_frame = tk.Frame(frame, bg=COLORS['bg'])
         widgets_frame.pack(fill=tk.X, pady=(0, 20))
         
-        self.weather_widget = WeatherWidget(widgets_frame, width=200, height=120)
-        self.weather_widget.pack(side=tk.LEFT, padx=(0, 10))
+        # 1. Weather
+        self.weather_widget = WeatherWidget(widgets_frame, width=180, height=140)
+        self.weather_widget.pack(side=tk.LEFT, padx=(0, 15))
         
-        self.status_widget = SystemStatusWidget(widgets_frame, width=200, height=120)
-        self.status_widget.pack(side=tk.LEFT, padx=10)
+        # 2. System Status
+        self.status_widget = SystemStatusWidget(widgets_frame, width=180, height=140)
+        self.status_widget.pack(side=tk.LEFT, padx=(0, 15))
         
-        # Pulse Indicator
-        self.pulse_canvas = tk.Canvas(widgets_frame, width=60, height=60, bg=COLORS['bg'], highlightthickness=0)
-        self.pulse_canvas.pack(side=tk.RIGHT, padx=20)
-        self.draw_pulse(active=False)
+        # 3. Agent Status (New!)
+        self.agent_status_widget = AgentStatusWidget(widgets_frame, width=220, height=140)
+        self.agent_status_widget.pack(side=tk.LEFT, padx=(0, 15))
         
-        # Center: Chat History
-        self.chat_widget = ChatWidget(frame)
-        self.chat_widget.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+        # 4. Quick Actions (New!)
+        actions_frame = tk.Frame(widgets_frame, bg=COLORS['bg'])
+        actions_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Welcome Message
-        self.chat_widget.add_message('assistant', "👋 Welcome back, Haitham.\nSystem is ready.", datetime.now().strftime("%H:%M"))
+        tk.Label(actions_frame, text="QUICK ACTIONS", font=('Helvetica', 9, 'bold'), bg=COLORS['bg'], fg=COLORS['text_sub']).pack(anchor="w", pady=(0, 5))
         
-        # Bottom: Input Bar
+        btn_grid = tk.Frame(actions_frame, bg=COLORS['bg'])
+        btn_grid.pack(fill=tk.BOTH, expand=True)
+        
+        ModernButton(btn_grid, "Briefing", lambda: self.send_text_command("Morning Briefing"), icon="☀️", bg=COLORS['card_bg'], width=120).grid(row=0, column=0, padx=5, pady=5)
+        ModernButton(btn_grid, "Calendar", lambda: self.send_text_command("Check Calendar"), icon="📅", bg=COLORS['card_bg'], width=120).grid(row=0, column=1, padx=5, pady=5)
+        ModernButton(btn_grid, "Clear", lambda: self.chat_widget.clear(), icon="🗑️", bg=COLORS['card_bg'], width=120).grid(row=1, column=0, padx=5, pady=5)
+        ModernButton(btn_grid, "Work Mode", lambda: self.send_text_command("Work Mode"), icon="💼", bg=COLORS['card_bg'], width=120).grid(row=1, column=1, padx=5, pady=5)
+        
+        # --- Chat Area ---
+        chat_container = tk.Frame(frame, bg=COLORS['card_bg']) # Container for border effect
+        chat_container.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+        
+        self.chat_widget = ChatWidget(chat_container)
+        self.chat_widget.pack(fill=tk.BOTH, expand=True, padx=1, pady=1) # Thin border
+        
+        self.chat_widget.add_message('assistant', "System online. Intelligence modules active.", datetime.now().strftime("%H:%M"))
+        
+        # --- Input Area ---
         input_frame = tk.Frame(frame, bg=COLORS['card_bg'], height=60)
         input_frame.pack(fill=tk.X)
         input_frame.pack_propagate(False)
@@ -177,11 +217,11 @@ class HVAWindow:
         self.input_field = tk.Entry(
             input_frame,
             bg=COLORS['card_bg'],
-            fg='#ffffff', # Force white
-            insertbackground='#ffffff', # Force white cursor
+            fg=COLORS['text_fg'],
+            insertbackground=COLORS['text_fg'],
             selectbackground=COLORS['accent'],
             selectforeground=COLORS['bg'],
-            font=('Helvetica', 14), # Larger font
+            font=('Helvetica', 13),
             relief=tk.FLAT,
             bd=0
         )
@@ -193,7 +233,7 @@ class HVAWindow:
             input_frame, text="🎤", command=self.send_listen_command,
             bg=COLORS['card_bg'], fg=COLORS['accent'],
             font=('Helvetica', 16), relief=tk.FLAT, bd=0,
-            cursor="hand2"
+            cursor="hand2", activebackground=COLORS['card_bg'], activeforeground=COLORS['text_fg']
         )
         mic_btn.pack(side=tk.RIGHT, padx=(0, 10), pady=10, fill=tk.Y)
         
@@ -201,7 +241,7 @@ class HVAWindow:
             input_frame, text="➤", command=self.send_command,
             bg=COLORS['accent'], fg=COLORS['bg'],
             font=('Helvetica', 14, 'bold'), relief=tk.FLAT, bd=0,
-            cursor="hand2"
+            cursor="hand2", activebackground=COLORS['accent_hover']
         )
         send_btn.pack(side=tk.RIGHT, padx=(0, 20), pady=10, fill=tk.Y)
 
@@ -209,29 +249,52 @@ class HVAWindow:
         """Send listen command to main process"""
         self.cmd_queue.put(('listen', None))
 
+    def send_text_command(self, text):
+        """Send text command directly"""
+        self.cmd_queue.put(('command', text))
+        self.chat_widget.add_message('user', text, datetime.now().strftime("%H:%M"))
+        self.show_processing_internal()
+
     def init_files_view(self):
         """Initialize Files View"""
         frame = tk.Frame(self.main_area, bg=COLORS['bg'])
         self.views["files"] = frame
         
-        tk.Label(frame, text="Recent Files", font=('Helvetica', 18, 'bold'), bg=COLORS['bg'], fg=COLORS['text_fg']).pack(anchor="w", pady=(0, 20))
+        tk.Label(frame, text="Recent Files", font=('Helvetica', 20, 'bold'), bg=COLORS['bg'], fg=COLORS['text_fg']).pack(anchor="w", pady=(0, 20))
         
         # Simple list of files in Home
         import os
         home = os.path.expanduser("~")
-        files_frame = tk.Frame(frame, bg=COLORS['card_bg'])
+        files_frame = tk.Frame(frame, bg=COLORS['bg'])
         files_frame.pack(fill=tk.BOTH, expand=True)
         
         try:
             files = [f for f in os.listdir(home) if not f.startswith('.')]
             for i, f in enumerate(files[:15]): # Show top 15
                 path = os.path.join(home, f)
-                lbl = tk.Label(files_frame, text=f"📄 {f}", bg=COLORS['card_bg'], fg=COLORS['text_fg'], anchor="w", cursor="hand2")
-                lbl.pack(fill=tk.X, padx=10, pady=5)
+                
+                # File Row
+                row = tk.Frame(files_frame, bg=COLORS['card_bg'])
+                row.pack(fill=tk.X, pady=2)
+                
+                icon = "📁" if os.path.isdir(path) else "📄"
+                
+                lbl = tk.Label(
+                    row, 
+                    text=f"{icon}  {f}", 
+                    bg=COLORS['card_bg'], 
+                    fg=COLORS['text_fg'], 
+                    font=('Helvetica', 11),
+                    anchor="w", 
+                    padx=15,
+                    pady=10,
+                    cursor="hand2"
+                )
+                lbl.pack(fill=tk.X)
                 # Bind click to open file
                 lbl.bind("<Button-1>", lambda e, p=path: self.open_file(p))
         except:
-            tk.Label(files_frame, text="Error loading files", bg=COLORS['card_bg'], fg=COLORS['error']).pack()
+            tk.Label(files_frame, text="Error loading files", bg=COLORS['bg'], fg=COLORS['error']).pack()
 
     def open_file(self, path):
         """Open a file with default application"""
@@ -246,13 +309,15 @@ class HVAWindow:
         frame = tk.Frame(self.main_area, bg=COLORS['bg'])
         self.views["settings"] = frame
         
-        tk.Label(frame, text="Settings", font=('Helvetica', 18, 'bold'), bg=COLORS['bg'], fg=COLORS['text_fg']).pack(anchor="w", pady=(0, 20))
+        tk.Label(frame, text="Settings", font=('Helvetica', 20, 'bold'), bg=COLORS['bg'], fg=COLORS['text_fg']).pack(anchor="w", pady=(0, 20))
         
         def create_toggle(parent, text, default=True):
-            f = tk.Frame(parent, bg=COLORS['card_bg'], pady=10, padx=10)
+            f = tk.Frame(parent, bg=COLORS['card_bg'], pady=15, padx=20)
             f.pack(fill=tk.X, pady=5)
             tk.Label(f, text=text, bg=COLORS['card_bg'], fg=COLORS['text_fg'], font=('Helvetica', 12)).pack(side=tk.LEFT)
-            btn = tk.Button(f, text="ON" if default else "OFF", bg=COLORS['accent'], fg=COLORS['bg'], width=6)
+            
+            # Simulated Toggle Switch
+            btn = tk.Label(f, text="ON", bg=COLORS['success'], fg=COLORS['bg'], font=('Helvetica', 10, 'bold'), width=6, padx=5, pady=2)
             btn.pack(side=tk.RIGHT)
             return btn
             
@@ -285,20 +350,20 @@ class HVAWindow:
         if not self.pulse_canvas: return
         self.pulse_canvas.delete("all")
         
-        color = COLORS['error'] if active else COLORS['border']
-        r = self.pulse_radius if active else 15
+        color = COLORS['accent'] if active else COLORS['border']
+        r = self.pulse_radius if active else 10
         
-        # Center is 30, 30
-        self.pulse_canvas.create_oval(30-r, 30-r, 30+r, 30+r, fill=color, outline="")
+        # Center is 25, 25
+        self.pulse_canvas.create_oval(25-r, 25-r, 25+r, 25+r, fill=color, outline="")
         
         if active:
             # Animate
             if self.pulse_growing:
                 self.pulse_radius += 0.5
-                if self.pulse_radius >= 25: self.pulse_growing = False
+                if self.pulse_radius >= 18: self.pulse_growing = False
             else:
                 self.pulse_radius -= 0.5
-                if self.pulse_radius <= 15: self.pulse_growing = True
+                if self.pulse_radius <= 10: self.pulse_growing = True
             
             self.pulse_anim_id = self.window.after(50, lambda: self.draw_pulse(True))
         elif self.pulse_anim_id:
@@ -345,6 +410,11 @@ class HVAWindow:
         elif cmd == 'show_processing':
             self.show_processing_internal()
             
+        elif cmd == 'set_agent_status':
+            _, agent_type, detail = msg
+            if self.agent_status_widget:
+                self.agent_status_widget.set_status(agent_type, detail)
+            
     def toggle_pin(self):
         self.is_pinned = not self.is_pinned
         if self.is_pinned:
@@ -373,26 +443,29 @@ class HVAWindow:
         sender = 'user' if message_type == 'user' else 'assistant'
         self.chat_widget.add_message(sender, text, timestamp)
         
+        # Reset agent status to idle after response
+        if message_type == 'assistant':
+            if self.agent_status_widget:
+                self.agent_status_widget.set_status('idle', 'Ready')
+        
         if auto_close and not self.is_pinned:
-            # Default to NOT auto-closing for now to prevent "disappearing" issues
-            # Only auto-close if explicitly requested and pinned is false
             pass 
-            # if self.auto_close_timer: self.window.after_cancel(self.auto_close_timer)
-            # self.auto_close_timer = self.window.after(60000, self.close_window)
 
     def show_listening_internal(self):
         if not self.window: self.create_window()
         self.window.deiconify()
         self.window.lift()
         self.draw_pulse(active=True)
+        if self.agent_status_widget:
+            self.agent_status_widget.set_status('idle', 'Listening...')
 
     def show_processing_internal(self):
         self.draw_pulse(active=False)
-        # Maybe show a spinner later
+        if self.agent_status_widget:
+            self.agent_status_widget.set_status('ollama', 'Thinking...')
 
     def run(self):
         self.create_window()
-        # self.window.withdraw() # Don't hide initially for testing/dashboard feel
         self.window.mainloop()
 
 def run_gui_process(msg_queue, cmd_queue=None):

@@ -134,7 +134,7 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Smart Organizer**: Tools to automatically clean the Desktop and organize the Downloads folder.
 - **Workspace Manager**: Automatically creates and manages project folder structures.
 
-### 🤖 ترقيات الذكاء (v1.1 - v1.6) | Intelligence Upgrades
+### 🤖 ترقيات الذكاء (v1.1 - v1.7) | Intelligence Upgrades
 <div dir="rtl">
 
 - **Smart Feedback Agent**: نظام "نكز" ذكي في الموجز الصباحي يذكرك بالمشاريع المتوقفة باحترام وتدرج.
@@ -142,6 +142,7 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Idea Agent**: حول أفكارك الخام إلى مشاريع منظمة. قل "عندي فكرة..." وسيقوم بإنشاء خطة مشروع كاملة (باستخدام **GPT-5 Mini** للسرعة والتكلفة).
 - **iPhone Sync**: اربط هاتفك بالوكيل! قل لـ Siri: "Add task to HVA Inbox" وسيظهر في ذاكرة HVA فوراً.
 - **Smart Calendar**: فهم كامل للوقت ("غداً"، "الاثنين القادم") وفحص ذكي للتوفر ("هل أنا مشغول؟").
+- **Premium GUI**: واجهة فخمة (Dark Mode) مع مؤشر ذكاء حي يظهر من يفكر الآن (Ollama vs GPT).
 
 </div>
 
@@ -150,20 +151,23 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Idea Agent**: Turns raw ideas into structured projects. Say "I have an idea..." and it creates a full project spec (using **GPT-5 Mini** for speed/cost).
 - **iPhone Sync**: Connect your phone! Tell Siri "Add task to HVA Inbox" and it syncs to HVA memory instantly.
 - **Smart Calendar**: Natural language date parsing ("tomorrow", "next Mon") and smart availability checks ("Am I free?").
+- **Premium GUI**: Stunning Dark Mode interface with live "Active Agent" indicators (Ollama vs GPT).
 
 ### 📱 تطبيق شريط القوائم وواجهة المستخدم | Menu Bar App & GUI
 
 <div dir="rtl">
 
 - **اختصار عالمي**: `⌘⇧H` (Cmd+Shift+H) لبدء الاستماع من أي مكان.
-- **واجهة مستخدم رسومية**: لوحة تحكم تعرض حالة النظام، سجل المحادثات، والملفات ذات الصلة.
-- **أداء محسن**: معالجة خلفية غير معطلة للنظام تضمن بقاء الواجهة سريعة الاستجابة.
+- **Premium Dashboard**: لوحة تحكم تعرض حالة النظام، الطقس، والمهام.
+- **Active Agent Indicator**: مؤشر حي يظهر لك "عقل" النظام وهو يعمل (تحليل، تفكير سحابي، تنفيذ أدوات).
+- **إجراءات سريعة**: أزرار للوصول السريع للموجز الصباحي والتقويم.
 
 </div>
 
 - **Global Hotkey**: `⌘⇧H` (Cmd+Shift+H) to start listening from anywhere.
-- **GUI Dashboard**: A dedicated window displays system status, chat history, and relevant files.
-- **Optimized Performance**: Non-blocking background processing ensures a responsive UI.
+- **Premium Dashboard**: Displays system status, weather, and tasks.
+- **Active Agent Indicator**: Live indicator showing the system's "brain" at work (Analyzing, Cloud Thinking, Tool Execution).
+- **Quick Actions**: Buttons for instant access to Morning Briefing and Calendar.
 
 ---
 

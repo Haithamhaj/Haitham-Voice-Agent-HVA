@@ -181,6 +181,7 @@ class HVAMenuBarApp(rumps.App):
                 command = text
                 
             print(f"⚙️  Processing Manual: {command}")
+            self.gui_queue.put(('set_agent_status', 'ollama', 'Analyzing Intent...'))
             
             # --- 1. Ollama Orchestrator (Local Intelligence) ---
             from haitham_voice_agent.ollama_orchestrator import get_orchestrator
@@ -198,6 +199,7 @@ class HVAMenuBarApp(rumps.App):
             
             if classification.get("type") == "direct_response":
                 print("Ollama handled request directly.")
+                self.gui_queue.put(('set_agent_status', 'ollama', 'Generating Response...'))
                 self.gui_queue.put(('add_message', 'assistant', classification["response"], True))
                 # Speak it too
                 self.tts.speak(classification["response"])
@@ -205,6 +207,7 @@ class HVAMenuBarApp(rumps.App):
                 
             elif classification.get("type") == "execute_command":
                 print(f"Ollama identified command: {classification['intent']}")
+                self.gui_queue.put(('set_agent_status', 'tool', f"Action: {classification['intent']}"))
                 plan = {
                     "intent": classification["intent"],
                     "tool": "system", 
@@ -216,6 +219,7 @@ class HVAMenuBarApp(rumps.App):
             else:
                 # Delegate to GPT
                 print(f"Ollama delegated to: {classification.get('delegate_to')}")
+                self.gui_queue.put(('set_agent_status', 'gpt', 'Consulting Cloud Brain...'))
                 
                 # Get router instance
                 router = llm_router.get_router()
@@ -230,11 +234,13 @@ class HVAMenuBarApp(rumps.App):
             
             if not plan:
                 self.gui_queue.put(('add_message', 'error', 'لم أفهم الأمر / Could not understand command', True))
+                self.gui_queue.put(('set_agent_status', 'idle', 'Ready'))
                 return
             
             # Show plan intent
             intent = plan.get('intent', 'unknown')
             self.gui_queue.put(('add_message', 'info', f"Intent: {intent}", False))
+            self.gui_queue.put(('set_agent_status', 'tool', f"Executing: {intent}"))
             
             # Execute action
             result = dispatch_action(plan)
@@ -268,6 +274,7 @@ class HVAMenuBarApp(rumps.App):
             import traceback
             traceback.print_exc()
             self.gui_queue.put(('add_message', 'error', f'حدث خطأ غير متوقع: {str(e)}', True))
+            self.gui_queue.put(('set_agent_status', 'idle', 'Error'))
 
     def start_listening(self, _):
         """Start listening for voice command"""
@@ -293,6 +300,7 @@ class HVAMenuBarApp(rumps.App):
         """Force reset application state"""
         self.is_listening = False
         self.listen_thread = None
+        self.gui_queue.put(('set_agent_status', 'idle', 'State Reset'))
         rumps.notification("HVA", "", "State reset / تم إعادة تعيين الحالة")
     
     def _listen_and_process(self):
@@ -309,6 +317,7 @@ class HVAMenuBarApp(rumps.App):
                 # Just a timeout, not a critical error
                 self.gui_queue.put(('add_message', 'info', "Listening paused (Timeout) / انتهى الوقت", True))
                 self.is_listening = False
+                self.gui_queue.put(('set_agent_status', 'idle', 'Ready'))
                 return
             
             print(f"📝 Transcribed: {text}")
@@ -325,6 +334,7 @@ class HVAMenuBarApp(rumps.App):
             
             # Show processing
             self.gui_queue.put(('show_processing',))
+            self.gui_queue.put(('set_agent_status', 'ollama', 'Analyzing Voice...'))
             
             # Process command
             print(f"⚙️  Processing: {command}")
@@ -346,6 +356,7 @@ class HVAMenuBarApp(rumps.App):
                 
                 if classification.get("type") == "direct_response":
                     print("Ollama handled request directly.")
+                    self.gui_queue.put(('set_agent_status', 'ollama', 'Generating Response...'))
                     self.gui_queue.put(('add_message', 'assistant', classification["response"], True))
                     # Speak it too (fire and forget task)
                     loop = asyncio.new_event_loop()
@@ -360,6 +371,7 @@ class HVAMenuBarApp(rumps.App):
                     
                 elif classification.get("type") == "execute_command":
                     print(f"Ollama identified command: {classification['intent']}")
+                    self.gui_queue.put(('set_agent_status', 'tool', f"Action: {classification['intent']}"))
                     plan = {
                         "intent": classification["intent"],
                         "tool": "system", 
@@ -371,6 +383,7 @@ class HVAMenuBarApp(rumps.App):
                 else:
                     # Delegate to GPT
                     print(f"Ollama delegated to: {classification.get('delegate_to')}")
+                    self.gui_queue.put(('set_agent_status', 'gpt', 'Consulting Cloud Brain...'))
                     
                     # Get router instance
                     router = llm_router.get_router()
@@ -386,11 +399,13 @@ class HVAMenuBarApp(rumps.App):
                 if not plan:
                     self.gui_queue.put(('add_message', 'error', 'لم أفهم الأمر / Could not understand command', True))
                     self.is_listening = False
+                    self.gui_queue.put(('set_agent_status', 'idle', 'Ready'))
                     return
                 
                 # Show plan intent
                 intent = plan.get('intent', 'unknown')
                 self.gui_queue.put(('add_message', 'info', f"Intent: {intent}", False))
+                self.gui_queue.put(('set_agent_status', 'tool', f"Executing: {intent}"))
                 
                 # Execute action
                 result = dispatch_action(plan)
@@ -425,6 +440,7 @@ class HVAMenuBarApp(rumps.App):
             except Exception as e:
                 print(f"❌ Error processing command: {e}")
                 self.gui_queue.put(('add_message', 'error', f'خطأ: {str(e)}', True))
+                self.gui_queue.put(('set_agent_status', 'idle', 'Error'))
                 
         except Exception as e:
             print(f"❌ Error in listen_and_process: {e}")
