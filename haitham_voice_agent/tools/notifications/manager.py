@@ -65,7 +65,7 @@ class NotificationManager:
         try:
             # Get events for next 15 mins
             # Note: list_events usually gets next 7 days, we filter here
-            res = await self.calendar.list_events(limit=5)
+            res = await self.calendar.list_events(max_results=5)
             
             if res.get("error"):
                 return

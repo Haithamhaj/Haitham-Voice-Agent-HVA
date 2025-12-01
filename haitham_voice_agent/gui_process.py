@@ -70,8 +70,7 @@ class HVAWindow:
             text="INTELLIGENCE SYSTEM", 
             font=('Helvetica', 9, 'bold'), 
             bg=COLORS['header_bg'], 
-            fg=COLORS['text_sub'],
-            letterspacing=2
+            fg=COLORS['text_sub']
         ).pack(pady=(0, 40))
         
         # Sidebar Menu Buttons
@@ -469,7 +468,27 @@ class HVAWindow:
         self.window.mainloop()
 
 def run_gui_process(msg_queue, cmd_queue=None):
-    if cmd_queue is None:
-        cmd_queue = queue.Queue()
-    app = HVAWindow(msg_queue, cmd_queue)
-    app.run()
+    # Debug logging
+    import sys
+    import os
+    try:
+        with open("/tmp/hva_gui_debug.log", "w") as f:
+            f.write(f"Starting GUI Process at {datetime.now()}\n")
+            f.write(f"Python: {sys.executable}\n")
+            f.write(f"CWD: {os.getcwd()}\n")
+            
+        if cmd_queue is None:
+            cmd_queue = queue.Queue()
+            
+        app = HVAWindow(msg_queue, cmd_queue)
+        
+        with open("/tmp/hva_gui_debug.log", "a") as f:
+            f.write("HVAWindow initialized. Calling run()...\n")
+            
+        app.run()
+    except Exception as e:
+        with open("/tmp/hva_gui_debug.log", "a") as f:
+            f.write(f"CRASH: {e}\n")
+            import traceback
+            traceback.print_exc(file=f)
+

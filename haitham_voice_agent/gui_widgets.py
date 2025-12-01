@@ -35,11 +35,10 @@ class HVAWidget(tk.Frame):
             
             self.title_label = tk.Label(
                 self.title_frame, 
-                text=title.upper(), 
-                font=('Helvetica', 9, 'bold'),
+                text=title, 
+                font=('Helvetica', 9, 'bold'), 
                 bg=COLORS['card_bg'], 
-                fg=COLORS['text_sub'],
-                letterspacing=1 # Tkinter doesn't support this directly but font choice helps
+                fg=COLORS['text_sub']
             )
             self.title_label.pack(side=tk.LEFT)
             
