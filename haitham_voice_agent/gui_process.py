@@ -227,6 +227,9 @@ class HVAWindow:
         self.input_field.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(20, 10), pady=15)
         self.input_field.bind("<Return>", self.send_command)
         
+        # Context Menu for Input Field
+        self.create_input_context_menu(self.input_field)
+        
         # Mic Button
         mic_btn = tk.Button(
             input_frame, text="🎤", command=self.send_listen_command,
@@ -462,6 +465,22 @@ class HVAWindow:
         self.draw_pulse(active=False)
         if self.agent_status_widget:
             self.agent_status_widget.set_status('ollama', 'Thinking...')
+
+    def create_input_context_menu(self, widget):
+        """Create standard Cut/Copy/Paste menu for entry"""
+        menu = tk.Menu(widget, tearoff=0)
+        menu.add_command(label="Cut", command=lambda: widget.event_generate("<<Cut>>"))
+        menu.add_command(label="Copy", command=lambda: widget.event_generate("<<Copy>>"))
+        menu.add_command(label="Paste", command=lambda: widget.event_generate("<<Paste>>"))
+        menu.add_separator()
+        menu.add_command(label="Select All", command=lambda: widget.select_range(0, tk.END))
+        
+        def show_menu(e):
+            menu.post(e.x_root, e.y_root)
+            
+        widget.bind("<Button-2>", show_menu)
+        widget.bind("<Button-3>", show_menu)
+        widget.bind("<Control-Button-1>", show_menu)
 
     def run(self):
         self.create_window()

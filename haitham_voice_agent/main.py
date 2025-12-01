@@ -167,8 +167,47 @@ class HVA:
         # 2. Ollama Orchestrator (Local Intelligence Layer)
         # Classifies intent and handles simple queries
         orchestrator = get_orchestrator()
-        classification = await orchestrator.classify_request(text)
         
+        # --- Clarification Loop with Max Retries ---
+        # Prevents infinite loops if the model keeps asking for clarification
+        max_retries = 3
+        retries = 0
+        
+        while True:
+            classification = await orchestrator.classify_request(text)
+            
+            if classification.get("type") != "needs_clarification":
+                break
+                
+            if retries >= max_retries:
+                logger.warning("Max clarification retries reached.")
+                self.speak("عذراً، لم أستطع فهم المقصود بعد عدة محاولات." if self.language == "ar" else "Sorry, I couldn't understand after multiple attempts.")
+                return
+
+            # Ask Question
+            question = classification.get("question", "Could you clarify?")
+            logger.info(f"Clarification needed ({retries+1}/{max_retries}): {question}")
+            self.speak(question)
+            
+            # Listen for Answer
+            capture = self.stt.capture_audio()
+            if not capture:
+                return # User silent or cancelled
+                
+            audio_bytes, duration = capture
+            answer_text = self.stt.transcribe_command(audio_bytes, duration)
+            
+            if not answer_text:
+                self.speak("لم أسمع إجابتك." if self.language == "ar" else "I didn't hear your answer.")
+                return
+                
+            # Merge and Retry
+            logger.info(f"User Answer: {answer_text}")
+            text = f"{text} {answer_text}"
+            logger.info(f"Merged Context: {text}")
+            retries += 1
+        
+        # --- Process Final Classification ---
         if classification.get("type") == "direct_response":
             logger.info("Ollama handled request directly.")
             response = classification["response"]
@@ -185,59 +224,6 @@ class HVA:
                 "confirmation_needed": False
             }
             await self.execute_plan(plan)
-            return
-
-        elif classification.get("type") == "needs_clarification":
-            # --- Clarification Loop ---
-            question = classification.get("question", "Could you clarify?")
-            logger.info(f"Clarification needed: {question}")
-            
-            # 1. Speak Question
-            self.speak(question)
-            
-            # 2. Listen for Answer (Open Mic)
-            logger.info("Listening for clarification...")
-            capture = self.stt.capture_audio()
-            
-            if capture:
-                audio_bytes, duration = capture
-                answer_text = self.stt.transcribe_command(audio_bytes, duration)
-                
-                if answer_text:
-                    logger.info(f"User Answer: {answer_text}")
-                    
-                    # 3. Merge Context
-                    # Simple concatenation: "Remind me" + " to call Ahmed"
-                    merged_text = f"{text} {answer_text}"
-                    logger.info(f"Merged Context: {merged_text}")
-                    
-                    # 4. Re-process
-                    # Recursive call with merged text
-                    # We need to ensure we don't loop infinitely. 
-                    # For now, just re-route the merged text.
-                    # Since process_command_mode captures audio, we can't call it directly.
-                    # We should call a method that takes text input.
-                    # Let's refactor slightly or just handle the logic here.
-                    
-                    # Re-classify the merged text
-                    new_classification = await orchestrator.classify_request(merged_text)
-                    
-                    # Handle the new classification (copy-paste logic or refactor)
-                    # Ideally, we should have a `process_text_request` method that handles classification.
-                    # For now, let's just recurse into the logic below by updating `text` and `classification`
-                    # But we can't easily jump back.
-                    # Let's call a helper method `handle_classified_request`?
-                    # Or just recursively call a new method `process_text_input(text)`
-                    
-                    # Let's call process_text_command, but that skips Ollama!
-                    # process_text_command does: Route (Deterministic) -> Plan (Ollama -> GPT)
-                    # So calling process_text_command(merged_text) IS the right thing to do!
-                    # It will re-run Ollama inside `plan_command`.
-                    
-                    await self.process_text_command(merged_text)
-                    return
-            
-            self.speak("لم أسمع إجابتك." if self.language == "ar" else "I didn't hear your answer.")
             return
             
         elif classification.get("type") == "new_idea":

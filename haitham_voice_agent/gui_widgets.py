@@ -253,9 +253,30 @@ class ChatWidget(HVAWidget):
         )
         bubble.pack(anchor=align)
         
+        # Context Menu (Right Click -> Copy)
+        self.bind_context_menu(bubble, text)
+        
         # Auto scroll
         self.chat_canvas.update_idletasks()
         self.chat_canvas.yview_moveto(1.0)
+
+    def bind_context_menu(self, widget, text):
+        """Bind right-click context menu"""
+        menu = tk.Menu(widget, tearoff=0)
+        menu.add_command(label="Copy", command=lambda: self.copy_to_clipboard(text))
+        
+        def show_menu(e):
+            menu.post(e.x_root, e.y_root)
+            
+        # Bind for macOS (Button-2 or Button-3 depending on mouse) and Control-Click
+        widget.bind("<Button-2>", show_menu)
+        widget.bind("<Button-3>", show_menu)
+        widget.bind("<Control-Button-1>", show_menu)
+
+    def copy_to_clipboard(self, text):
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        self.update() # Required to finalize clipboard update
 
     def clear(self):
         for widget in self.scrollable_frame.winfo_children():

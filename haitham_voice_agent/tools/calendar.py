@@ -117,6 +117,64 @@ class CalendarTools:
             logger.error(f"Failed to build calendar service: {e}")
             return False
 
+    async def _smart_parse_date(self, date_str: str) -> Optional[datetime.datetime]:
+        """
+        Parse date string using dateparser first, then fallback to LLM for complex timezones.
+        """
+        import dateparser
+        import pytz
+        
+        # 1. Try dateparser with local timezone settings
+        # We assume the system timezone is the user's local time (e.g. Riyadh)
+        settings = {
+            'PREFER_DATES_FROM': 'future',
+            'RETURN_AS_TIMEZONE_AWARE': True
+        }
+        dt = dateparser.parse(date_str, settings=settings)
+        
+        # If dateparser worked and we don't suspect explicit foreign timezone, return it
+        # Heuristic: if string contains "time" or specific city names, verify with LLM
+        # But dateparser might ignore "Cairo time" and return local time, which is wrong.
+        # So if we detect "time" or "in", we prefer LLM.
+        suspicious_keywords = ["time", "in ", "gmt", "utc", "est", "pst", "cairo", "egypt", "saudi", "london", "dubai"]
+        is_complex = any(k in date_str.lower() for k in suspicious_keywords)
+        
+        if dt and not is_complex:
+            return dt
+            
+        # 2. Fallback to LLM (Gemini) for complex parsing
+        try:
+            from haitham_voice_agent.llm_router import get_router
+            router = get_router()
+            
+            now_str = datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+            
+            prompt = f"""
+            Task: Parse the date/time from the user string into ISO 8601 format with correct timezone offset.
+            
+            Current System Time: {now_str}
+            User Input: "{date_str}"
+            
+            Rules:
+            1. If the user specifies a city/timezone (e.g. "Cairo time"), use that timezone's offset.
+            2. If no timezone specified, assume system timezone.
+            3. Return ONLY the ISO string (e.g. 2025-12-01T17:00:00+03:00).
+            4. If invalid, return "None".
+            """
+            
+            iso_str = await router.generate_with_gemini(prompt, temperature=0.0)
+            iso_str = iso_str.strip().replace('"', '').replace("'", "")
+            
+            if iso_str.lower() == "none":
+                return dt # Fallback to whatever dateparser found
+                
+            # Parse ISO string
+            return datetime.datetime.fromisoformat(iso_str)
+            
+        except Exception as e:
+            logger.error(f"Smart date parsing failed: {e}")
+            return dt # Fallback
+
     async def list_events(self, day_str: str = "today", max_results: int = 10) -> Dict[str, Any]:
         """List upcoming events with natural language date parsing"""
         try:
@@ -124,12 +182,10 @@ class CalendarTools:
                 return {"error": True, "message": "Calendar not authorized. Please say 'Authorize Calendar'."}
             
             # Parse date range
-            import dateparser
-            base_date = dateparser.parse(day_str)
+            base_date = await self._smart_parse_date(day_str)
             
             if not base_date:
-                # Fallback to now
-                base_date = datetime.datetime.now()
+                base_date = datetime.datetime.now().astimezone()
             
             # Determine range
             # If "today", range is now -> end of day
@@ -234,11 +290,8 @@ class CalendarTools:
             if not self._ensure_service():
                 return {"error": True, "message": "Calendar not authorized."}
             
-            import dateparser
-            
-            # Parse start time
-            # settings={'PREFER_DATES_FROM': 'future'} ensures "Monday" means next Monday if passed
-            start_dt = dateparser.parse(start_time, settings={'PREFER_DATES_FROM': 'future'})
+            # Smart Parse start time
+            start_dt = await self._smart_parse_date(start_time)
             
             if not start_dt:
                 return {"error": True, "message": f"Could not parse date: {start_time}"}
@@ -268,11 +321,11 @@ class CalendarTools:
                 'summary': summary,
                 'start': {
                     'dateTime': start_dt.isoformat(),
-                    'timeZone': 'UTC', # Should ideally be user's timezone
+                    'timeZone': str(start_dt.tzinfo) if start_dt.tzinfo else 'UTC',
                 },
                 'end': {
                     'dateTime': end_dt.isoformat(),
-                    'timeZone': 'UTC',
+                    'timeZone': str(end_dt.tzinfo) if end_dt.tzinfo else 'UTC',
                 },
             }
             
