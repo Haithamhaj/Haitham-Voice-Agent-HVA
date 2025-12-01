@@ -55,7 +55,11 @@ class SQLiteStore:
                     last_accessed TEXT,
                     version INTEGER NOT NULL,
                     created_by TEXT NOT NULL,
-                    updated_at TEXT
+                    created_by TEXT NOT NULL,
+                    updated_at TEXT,
+                    status TEXT DEFAULT 'active',
+                    structured_data TEXT, -- JSON dict
+                    nag_count INTEGER DEFAULT 0
                 )
             """)
             
@@ -76,7 +80,7 @@ class SQLiteStore:
             list_fields = [
                 "tags", "executive_summary", "decisions", "action_items", 
                 "open_questions", "key_insights", "people_mentioned", 
-                "projects_mentioned", "related_memory_ids"
+                "projects_mentioned", "related_memory_ids", "structured_data"
             ]
             
             for field in list_fields:
@@ -123,7 +127,7 @@ class SQLiteStore:
                     list_fields = [
                         "tags", "executive_summary", "decisions", "action_items", 
                         "open_questions", "key_insights", "people_mentioned", 
-                        "projects_mentioned", "related_memory_ids"
+                        "projects_mentioned", "related_memory_ids", "structured_data"
                     ]
                     
                     for field in list_fields:
@@ -184,7 +188,7 @@ class SQLiteStore:
                         list_fields = [
                             "tags", "executive_summary", "decisions", "action_items", 
                             "open_questions", "key_insights", "people_mentioned", 
-                            "projects_mentioned", "related_memory_ids"
+                            "projects_mentioned", "related_memory_ids", "structured_data"
                         ]
                         for field in list_fields:
                             if data[field]:
@@ -210,3 +214,54 @@ class SQLiteStore:
         except Exception as e:
             logger.error(f"Failed to delete memory {memory_id}: {e}")
             return False
+
+    async def get_stale_items(self, days: int = 3) -> List[Memory]:
+        """
+        Get active projects that haven't been updated in 'days'
+        """
+        try:
+            # Calculate threshold date
+            # SQLite 'now' is UTC, ensure we compare correctly or use python date
+            # Let's use python date for consistency with timestamp format in DB (ISO)
+            # Actually, DB stores ISO strings. SQLite date functions work with ISO strings.
+            
+            sql = """
+                SELECT * FROM memories 
+                WHERE type = 'project' 
+                AND status = 'active' 
+                AND (
+                    updated_at < date('now', ?) 
+                    OR (updated_at IS NULL AND timestamp < date('now', ?))
+                )
+                ORDER BY importance DESC
+            """
+            
+            modifier = f"-{days} days"
+            
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                async with db.execute(sql, (modifier, modifier)) as cursor:
+                    rows = await cursor.fetchall()
+                    
+                    results = []
+                    for row in rows:
+                        data = dict(row)
+                        # Deserialize JSON fields
+                        list_fields = [
+                            "tags", "executive_summary", "decisions", "action_items", 
+                            "open_questions", "key_insights", "people_mentioned", 
+                            "projects_mentioned", "related_memory_ids", "structured_data"
+                        ]
+                        for field in list_fields:
+                            if data[field]:
+                                data[field] = json.loads(data[field])
+                            else:
+                                data[field] = []
+                        
+                        results.append(Memory.from_dict(data))
+                        
+                    return results
+                    
+        except Exception as e:
+            logger.error(f"Failed to get stale items: {e}")
+            return []

@@ -60,6 +60,34 @@ class Secretary:
             {"time": "02:00 PM", "title": "Project Review"}
         ]
         
+        # --- Smart Feedback Agent (v1.1) ---
+        feedback_question = ""
+        
+        # 1. Context Check (Vibe Check)
+        # Assuming we can infer mode or day. For now, check if busy.
+        is_busy_day = len(events) > 4
+        is_weekend = now.weekday() >= 5 # 5=Sat, 6=Sun
+        
+        if not is_busy_day and not is_weekend:
+            # 2. Fetch Candidates
+            stale_projects = await self.memory.sqlite_store.get_stale_items(days=3)
+            
+            if stale_projects:
+                # Pick top 1
+                project = stale_projects[0]
+                
+                # 3. Generate Question (Smart Escalation)
+                if project.nag_count == 0:
+                    feedback_question = f"\n💡 **Follow-up:** By the way, no updates on *{project.project}* recently. Everything okay?"
+                elif project.nag_count in [1, 2]:
+                    feedback_question = f"\n🚀 **Action:** *{project.project}* is still active but silent. Do you need to break it down into tasks?"
+                else:
+                    feedback_question = f"\n🤔 **Strategy:** *{project.project}* seems stuck. Should we move it to 'On Hold' to clear your mind?"
+                
+                # 4. Update State
+                project.nag_count += 1
+                await self.memory.sqlite_store.save_memory(project)
+
         # Format Report
         report = f"""
 🌅 **Morning Briefing**
@@ -93,13 +121,17 @@ You have {len(tasks)} pending tasks.
 Battery: {battery_percent}%
 """
 
+        if feedback_question:
+            report += f"{feedback_question}\n"
+
         return {
             "text": report,
             "data": {
                 "weather": weather,
                 "tasks_count": len(tasks),
                 "events_count": len(events),
-                "battery": battery_percent
+                "battery": battery_percent,
+                "feedback_question": feedback_question
             }
         }
 

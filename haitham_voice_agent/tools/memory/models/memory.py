@@ -87,6 +87,13 @@ class Memory:
     created_by: str = "HVA v1.0"
     updated_at: Optional[datetime] = None
     
+    # Intelligence Upgrade v1.1
+    status: str = "active"
+    structured_data: Dict[str, Any] = field(default_factory=dict)
+    
+    # Intelligence Upgrade v1.2
+    nag_count: int = 0
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for storage"""
         return {
@@ -119,7 +126,10 @@ class Memory:
             "last_accessed": self.last_accessed.isoformat() if self.last_accessed else None,
             "version": self.version,
             "created_by": self.created_by,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "status": self.status,
+            "structured_data": self.structured_data,
+            "nag_count": self.nag_count
         }
 
     @classmethod
@@ -156,5 +166,8 @@ class Memory:
             embedding=data.get("embedding"),
             version=data.get("version", 1),
             created_by=data.get("created_by", "HVA v1.0"),
-            updated_at=datetime.fromisoformat(data["updated_at"]) if data.get("updated_at") else None
+            updated_at=datetime.fromisoformat(data["updated_at"]) if data.get("updated_at") else None,
+            status=data.get("status", "active"),
+            structured_data=data.get("structured_data", {}),
+            nag_count=data.get("nag_count", 0)
         )

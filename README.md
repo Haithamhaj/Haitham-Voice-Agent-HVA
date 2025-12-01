@@ -1,16 +1,20 @@
+Of course. As an expert technical writer for the Haitham Voice Agent project, I will update the README.md to accurately reflect the current state of the codebase.
+
+Here is the full, updated `README.md` content:
+
 # Haitham Voice Agent (HVA) 🎤🤖
 
 <div dir="rtl">
 
-**وكيل صوتي ذكي لنظام macOS مع توجيه هجين للذكاء الاصطناعي، وعي كامل بالنظام، وتكامل Gmail**
+**وكيل صوتي ذكي لنظام macOS مع توجيه هجين للذكاء الاصطناعي، ذاكرة حية، وعي كامل بالنظام، وتكامل عميق مع خدمات Google.**
 
 </div>
 
-A voice-operated automation agent for macOS with hybrid LLM routing, full system awareness, Gmail integration, and an advanced memory system.
+A voice-operated automation agent for macOS with hybrid LLM routing, a living memory system, full system awareness, and deep Google Suite integration.
 
 > [!NOTE]
 > **Status: Production Ready** 🚀
-> The system has undergone a major architectural refactoring (Dec 2025) to ensure stability, unified routing, and zero state drift.
+> The system has undergone a major architectural refactoring to ensure stability, deterministic routing, and a unified, state-aware memory system.
 
 ---
 
@@ -19,10 +23,10 @@ A voice-operated automation agent for macOS with hybrid LLM routing, full system
 - [نظرة عامة | Overview](#-نظرة-عامة--overview)
 - [المميزات الرئيسية | Key Features](#-المميزات-الرئيسية--key-features)
 - [البنية المعمارية | Architecture](#-البنية-المعمارية--architecture)
-- [التثبيت والإعداد | Installation & Setup](#-التثبيت-والإعداد--installation--setup)
-- [الاستخدام | Usage](#-الاستخدام--usage)
 - [الوحدات والأدوات | Modules & Tools](#-الوحدات-والأدوات--modules--tools)
 - [نظام الأمان | Safety System](#-نظام-الأمان--safety-system)
+- [التثبيت والإعداد | Installation & Setup](#-التثبيت-والإعداد--installation--setup)
+- [الاستخدام | Usage](#-الاستخدام--usage)
 - [استكشاف الأخطاء | Troubleshooting](#-استكشاف-الأخطاء--troubleshooting)
 
 ---
@@ -31,133 +35,118 @@ A voice-operated automation agent for macOS with hybrid LLM routing, full system
 
 <div dir="rtl">
 
-**Haitham Voice Agent (HVA)** هو وكيل صوتي ذكي مصمم خصيصاً لنظام macOS، يجمع بين قوة الذكاء الاصطناعي المتقدم والتحكم الصوتي الطبيعي. يدعم النظام اللغتين العربية والإنجليزية، ويستخدم استراتيجية توجيه هجينة بين نماذج Gemini و GPT، بالإضافة إلى نظام "وعي بالنظام" (System Awareness) لفهم جهازك وملفاتك بدقة.
+**Haitham Voice Agent (HVA)** هو وكيل صوتي ذكي مصمم خصيصاً لنظام macOS، يجمع بين قوة الذكاء الاصطناعي المتقدم والتحكم الصوتي الطبيعي. يدعم النظام اللغتين العربية والإنجليزية، ويستخدم استراتيجية توجيه ذكية متعددة الطبقات، ونظام "ذاكرة حية" يجمع بين قواعد البيانات العلائقية، الموجهة، والمتجهة لفهم السياق والعلاقات.
 
 </div>
 
-**Haitham Voice Agent (HVA)** is an intelligent voice-operated automation agent designed specifically for macOS. It combines the power of advanced AI with natural voice control, supporting both Arabic and English languages. The system uses a hybrid routing strategy between Gemini and GPT models, along with a "System Awareness" module to deeply understand your device and files.
+**Haitham Voice Agent (HVA)** is an intelligent voice-operated automation agent for macOS. It combines advanced AI with natural voice control, supporting both Arabic and English. The system uses a multi-layered, deterministic routing strategy and a "Living Memory" system that merges graph, vector, and relational databases to understand context and relationships.
 
 ### 🎯 الأهداف الأساسية | Core Objectives
 
-- ✅ **Voice-to-Action Automation**: تحويل الأوامر الصوتية إلى إجراءات تلقائية
-- ✅ **System Awareness**: فهم عميق للجهاز، التطبيقات، والملفات (3-Layer Architecture)
-- ✅ **Hybrid LLM Intelligence**: توجيه ذكي بين نماذج الذكاء الاصطناعي
-- ✅ **Unified Memory System**: ذاكرة موحدة تعتمد على SQLite و Vector Store (لا يوجد انقسام في الذاكرة)
-- ✅ **Unified Memory System**: ذاكرة موحدة تعتمد على SQLite و Vector Store (لا يوجد انقسام في الذاكرة)
-- ✅ **Full Google Integration**: ربط كامل مع Gmail, Calendar, Drive (Unified OAuth)
-- ✅ **Proactive Notifications**: نظام تنبيهات ذكي للمواعيد والإيميلات الهامة
-- ✅ **Safety First**: نظام أمان شامل يمنع الإجراءات المدمرة
-- ✅ **Robust Architecture**: نظام غير محجوب (Non-blocking I/O) مع معالجة ذكية للأخطاء
+- ✅ **Voice-to-Action Automation**: تحويل الأوامر الصوتية إلى إجراءات تلقائية.
+- ✅ **Deterministic Routing**: اختيار النموذج الصحيح للمهمة بناءً على البيانات الوصفية، وليس عبر LLM آخر.
+- ✅ **Living Memory System**: ذاكرة موحدة (Graph + Vector + SQL) تفهم العلاقات، المفاهيم، والحقائق.
+- ✅ **System Awareness**: فهم عميق للجهاز، التطبيقات، والملفات.
+- ✅ **Executive Personas**: أدوات متخصصة (سكرتير، مستشار) لإدارة المهام وتقديم الرؤى.
+- ✅ **Full Google Integration**: ربط كامل مع Gmail, Calendar, Drive (Unified OAuth & Keychain).
+- ✅ **Proactive Notifications**: نظام تنبيهات ذكي للمواعيد والإيميلات الهامة.
+- ✅ **Safety First**: نظام أمان متعدد الطبقات يمنع الإجراءات المدمرة.
 
 ---
 
 ## ✨ المميزات الرئيسية | Key Features
 
-### 🧠 الوعي بالنظام | System Awareness (New)
+### 🧠 التوجيه الذكي والحتمي | Intelligent & Deterministic Routing
 
 <div dir="rtl">
 
-نظام ذكي مكون من 3 طبقات يمنح الوكيل معرفة فورية بجهازك:
-1.  **Layer 1 (System Profile)**: يعرف مواصفات جهازك (M4 Chip, RAM) والتطبيقات المثبتة بدقة.
-2.  **Layer 2 (Quick Access)**: فهرس فوري للملفات في سطح المكتب، التنزيلات، والمستندات.
-3.  **Layer 3 (Deep Search)**: بحث عميق باستخدام Spotlight (`mdfind`) للعثور على أي ملف في ثوانٍ.
+بنية توجيه من 4 طبقات تضمن الدقة والكفاءة والتكلفة المثلى:
+1.  **Intent Router**: يتعرف فوراً على الأوامر العربية الأساسية (مثل "احفظ ملاحظة") لتجاوز LLM بالكامل.
+2.  **Ollama Orchestrator**: يعمل كطبقة وسطى لتوجيه الطلبات بين النماذج المحلية والسحابية.
+3.  **LLM Router**: يوجه المهام استراتيجياً: **Gemini** للمستندات والتحليل، و **GPT** للتخطيط والأدوات (JSON).
+4.  **Model Router**: الطبقة النهائية التي تختار النموذج الأمثل (مثل Flash مقابل Pro) بناءً على بيانات وصفية للمهمة (الجودة، التكلفة، المخاطر)، مما يضمن أفضل أداء بأقل تكلفة.
 
 </div>
 
-A smart 3-layer system giving the agent instant knowledge of your device:
-1.  **Layer 1 (System Profile)**: Knows your hardware specs and installed apps.
-2.  **Layer 2 (Quick Access)**: Instant index of Desktop, Downloads, and Documents.
-3.  **Layer 3 (Deep Search)**: Deep search using Spotlight (`mdfind`) to find any file in seconds.
+A 4-layer routing architecture ensures accuracy, efficiency, and cost-optimization:
+1.  **Intent Router**: Instantly catches core Arabic commands (e.g., "save note") to bypass the LLM entirely for speed and reliability.
+2.  **Ollama Orchestrator**: Acts as a middleware to route requests between local and cloud LLMs.
+3.  **LLM Router**: Strategically routes tasks: **Gemini** for documents/analysis, **GPT** for planning/tools (JSON).
+4.  **Model Router**: The final layer that deterministically chooses the best model variant (e.g., Flash vs. Pro) based on task metadata (quality, cost, risk), ensuring optimal performance at the lowest price.
 
-### 👂 استراتيجية الصوت الموحدة | Unified Voice Strategy (Golden Rule)
+### 🧑‍💼 السكرتير التنفيذي والمستشار النزيه | Executive Secretary & Honest Advisor
 
 <div dir="rtl">
 
-نستخدم استراتيجية "القاعدة الذهبية" لضمان أفضل دقة:
-*   **الأوامر العربية القصيرة**: نستخدم **Google Cloud STT** (دقة عالية وسرعة).
-*   **الجلسات الطويلة**: نستخدم **Whisper Large-v3** (مجاني، محلي، ويفهم السياق الطويل).
-*   **الإنجليزية**: نستخدم **Whisper** (محلي وسريع).
+شخصيات الذكاء الاصطناعي المدمجة التي تعمل مع الذاكرة الحية:
+*   **السكرتير (Secretary)**: "المنفذ". يدير المهام، والمشاريع، والملاحظات، وينظم مساحات العمل.
+*   **المستشار (Advisor)**: "المفكر". يقدم رؤى، ويتحقق من سلامة الإجراءات المقترحة، ويراقب موارد النظام.
 
 </div>
 
-We use the "Golden Rule" strategy for best accuracy:
-*   **Short Arabic Commands**: Uses **Google Cloud STT** (High accuracy & speed).
-*   **Long Sessions**: Uses **Whisper Large-v3** (Free, local, handles long context).
-*   **English**: Uses **Whisper** (Local & fast).
+Integrated AI personas that work with the Living Memory:
+*   **Secretary**: The "doer." Manages tasks, projects, notes, and organizes workspaces.
+*   **Advisor**: The "thinker." Provides insights, validates proposed actions for safety, and monitors system resources.
 
-### 💾 الذاكرة الموحدة | Unified Memory (New)
+### 💾 الذاكرة الحية | Living Memory (Graph + Vector + SQL)
 
 <div dir="rtl">
 
-تم توحيد نظام الذاكرة بالكامل ليعمل كـ "عقل واحد":
-*   **SQLite Store**: تخزين منظم للملاحظات، المشاريع، والمهام.
-*   **Vector Store**: بحث دلالي (Semantic Search) للعثور على المعلومات بالمعنى.
-*   **Transactional Logic**: ضمان نزاهة البيانات (Data Integrity) عبر التراجع التلقائي عند الخطأ.
-*   **تكامل كامل**: السكرتير (Secretary) والمستشار (Advisor) يقرأون ويكتبون في نفس قاعدة البيانات.
+تم توحيد نظام الذاكرة ليعمل كـ "عقل واحد" مترابط:
+*   **Graph Store**: يفهم **العلاقات** بين الكيانات (مثل "مشروع ألف" مرتبط بـ "ملف التقرير" و "اجتماع الغد").
+*   **Vector Store**: يبحث عن **المفاهيم** والأفكار (بحث دلالي للعثور على المعلومات بالمعنى).
+*   **SQLite Store**: يخزن **الحقائق** بشكل منظم (الملاحظات، المهام، البيانات الوصفية).
+*   **Transactional Logic**: يضمن نزاهة البيانات (Data Integrity) عبر التراجع التلقائي عند الخطأ.
 
 </div>
 
-The memory system is fully unified to act as a "Single Brain":
-*   **SQLite Store**: Structured storage for notes, projects, and tasks.
-*   **Vector Store**: Semantic search to find information by meaning.
+The memory system is unified to act as a single, interconnected "brain":
+*   **Graph Store**: Understands **relationships** between entities (e.g., "Project Alpha" is linked to "report.pdf" and "tomorrow's meeting").
+*   **Vector Store**: Searches for **concepts** and ideas using semantic search.
+*   **SQLite Store**: Stores structured **facts** like notes, tasks, and metadata.
 *   **Transactional Logic**: Ensures data integrity via automatic rollback on failure.
-*   **Full Integration**: Secretary and Advisor read/write to the same database.
 
-### ⚡️ أداء عالي واستقرار | High Performance & Stability
-
-<div dir="rtl">
-
-- **Non-blocking I/O**: النظام لا يتجمد أثناء التسجيل ويستجيب للمقاطعة (Ctrl+C).
-- **Smart Fallback**: الأوامر غير المفهومة أو القصيرة تُحفظ تلقائياً كملاحظات بدلاً من رفضها.
-- **Thread-Safe**: تسجيل ومعالجة متزامنة دون تضارب.
-
-</div>
-
-- **Non-blocking I/O**: System remains responsive during recording and handles interrupts gracefully.
-- **Smart Fallback**: Unrecognized or short commands are automatically saved as notes.
-- **Thread-Safe**: Concurrent recording and processing without conflicts.
-
-### 🧠 الترقية الذكية | Intelligence Upgrade (New)
+### 📧 تكامل Gmail المتقدم | Advanced Gmail Integration
 
 <div dir="rtl">
 
-- **📅 Calendar Integration**: إدارة المواعيد، إنشاء اجتماعات، والاستعلام عن الجدول اليومي.
-- **☁️ Drive Integration**: البحث عن الملفات في السحابة وعرضها.
-- **🔔 Proactive Notifications**: "الجهاز العصبي" للنظام. ينبهك قبل الاجتماعات بـ 15 دقيقة وعند وصول إيميلات هامة.
+- **اتصال ذكي**: تبديل تلقائي بين **Gmail API** (الأساسي) و **IMAP** (الاحتياطي) لضمان استمرارية الخدمة.
+- **تخزين آمن**: استخدام **macOS Keychain** لتخزين مفاتيح التشفير بشكل آمن.
+- **مساعد LLM**: استخدام **Gemini** لتلخيص الرسائل واستخراج الإجراءات، و **GPT** لتوليد ردود ذكية.
 
 </div>
 
-- **📅 Calendar Integration**: Manage events, schedule meetings, and query daily schedule.
-- **☁️ Drive Integration**: Search and view cloud files.
-- **🔔 Proactive Notifications**: The system's "Nervous System". Alerts you 15 mins before meetings and for important emails.
+- **Intelligent Connection**: Auto-switches between **Gmail API** (primary) and **IMAP** (fallback) for maximum uptime.
+- **Secure Storage**: Uses **macOS Keychain** for secure encryption key storage.
+- **LLM Helpers**: Leverages **Gemini** for summarization and action extraction, and **GPT** for generating smart replies.
 
-### 🚦 الطرفية الآمنة | Secure Terminal (New)
+### 🖥️ الوعي بالنظام والتحكم | System Awareness & Control
 
 <div dir="rtl">
 
-- **Traffic Light System**: نظام أمان يمنع الأوامر الخطرة تلقائياً.
-- **Developer Friendly**: دعم تنفيذ أوامر git, python, pip بأمان.
-- **Injection Protection**: حماية ضد هجمات التسلسل (Command Chaining).
+- **نظام 3 طبقات**: (ملف تعريف النظام، فهرس سريع، بحث عميق) لمعرفة كل شيء عن جهازك.
+- **المنظم الذكي**: أدوات لتنظيف سطح المكتب وتنظيم مجلد التنزيلات تلقائياً.
+- **إدارة مساحة العمل**: إنشاء وإدارة هياكل مجلدات المشاريع تلقائياً.
 
 </div>
 
-- **Traffic Light System**: Automatically blocks dangerous commands.
-- **Developer Friendly**: Safely execute git, python, pip commands.
-- **Injection Protection**: Prevents command chaining attacks.
+- **3-Layer System**: (System Profile, Quick Index, Deep Search) to know everything about your machine.
+- **Smart Organizer**: Tools to automatically clean the Desktop and organize the Downloads folder.
+- **Workspace Manager**: Automatically creates and manages project folder structures.
 
-### 📱 تطبيق شريط القوائم | Menu Bar App
+### 📱 تطبيق شريط القوائم وواجهة المستخدم | Menu Bar App & GUI
 
 <div dir="rtl">
 
-- **اختصار عالمي**: `⌘⇧H` (Cmd+Shift+H).
-- **أداء محسن**: تحديثات واجهة سريعة ومعالجة خلفية غير معطلة للنظام.
-- **إشعارات النظام**: تنبيهات عند اكتمال المهام.
+- **اختصار عالمي**: `⌘⇧H` (Cmd+Shift+H) لبدء الاستماع من أي مكان.
+- **واجهة مستخدم رسومية**: لوحة تحكم تعرض حالة النظام، سجل المحادثات، والملفات ذات الصلة.
+- **أداء محسن**: معالجة خلفية غير معطلة للنظام تضمن بقاء الواجهة سريعة الاستجابة.
 
 </div>
 
-- **Global Hotkey**: `⌘⇧H` (Cmd+Shift+H).
-- **Optimized Performance**: Fast UI updates and non-blocking background processing.
-- **System Notifications**: Alerts when tasks complete.
+- **Global Hotkey**: `⌘⇧H` (Cmd+Shift+H) to start listening from anywhere.
+- **GUI Dashboard**: A dedicated window displays system status, chat history, and relevant files.
+- **Optimized Performance**: Non-blocking background processing ensures a responsive UI.
 
 ---
 
@@ -166,77 +155,102 @@ The memory system is fully unified to act as a "Single Brain":
 ### 📊 تدفق النظام | System Flow
 
 ```
-┌─────────────────┐
-│  User Voice     │
-└────────┬────────┘
-         ▼
-┌─────────────────┐      ┌──────────────────┐
-│ Unified STT     │ ───► │ System Awareness │
-│ (Google/Whisper)│      │ (Profile/Index)  │
-└────────┬────────┘      └────────┬─────────┘
-         │                        │
-         ▼                        │
-┌─────────────────┐               │
-│ Ollama          │ ◄─────────────┘
-│ Orchestrator    │
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│ LLM Router      │
-│ (GPT/Gemini)    │
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│   Dispatcher    │
-└────────┬────────┘
-         ▼
-┌──────────────────────────────────────────┐
-│               Tools Layer                │
-├──────────────────────────────────────────┤
-│ Files │ Apps │ Gmail │ Memory │ Terminal │
-│                      │ (SQLite)          │
-└──────────────────────────────────────────┘
+┌───────────────┐
+│  User Voice   │
+└───────┬───────┘
+        ▼
+┌───────────────┐      ┌──────────────────┐
+│ Unified STT   │ ───► │ System Awareness │
+│(Google/Whisper)│      │ (Profile/Index)  │
+└───────┬───────┘      └────────┬─────────┘
+        │                       │
+        ▼                       │
+┌───────────────┐               │
+│ Intent Router │◄──────────────┘
+│ (Rule-based)  │
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  LLM Routing  │
+│(Ollama/LLM/Model)│
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│  Dispatcher   │
+└───────┬───────┘
+        ▼
+┌───────────────────────────────────────────────┐
+│                    Tools Layer                │
+├───────────────────────────────────────────────┤
+│ Secretary │ Advisor │ Files │ Gmail │ Terminal │
+│           │         │       │       │          │
+└───────────┴────┬────┴───────┴───────┴──────────┘
+                 │
+                 ▼
+┌───────────────────────────────────────────────┐
+│               Living Memory Layer             │
+│        (Graph ◀─── Manager ───▶ Vector/SQL)   │
+└───────────────────────────────────────────────┘
 ```
 
 ### 🗂️ هيكل المشروع | Project Structure
 
 ```
 haitham_voice_agent/
-├── 📱 hva_menubar.py             # تطبيق شريط القوائم الرئيسي
-├── 🖥️ gui_process.py             # عملية الواجهة الرسومية
-├── ⚙️ config.py                  # التكوين المركزي
-├── main.py                      # نقطة الدخول (CLI - Non-blocking)
+├── main.py                      # نقطة الدخول الرئيسية (CLI)
+├── hva_menubar.py               # 📱 تطبيق شريط القوائم (مشغل الواجهة)
+├── gui_process.py               # 🖥️ عملية نافذة الواجهة الرئيسية
 │
-├── 🧠 tools/system_awareness/    # وحدة الوعي بالنظام
-│   ├── system_profiler.py       # Layer 1: Hardware & Apps
-│   ├── quick_indexer.py         # Layer 2: Quick Access
-│   └── ...
+├── ⚙️ config.py                  # الإعدادات المركزية
+├── dispatcher.py                # موزع المهام والأدوات
 │
-├── 🎤 tools/voice/               # وحدة الصوت الموحدة
-│   ├── stt.py                   # Unified STT Handler
-│   ├── models.py                # Shared Whisper Models
-│   ├── stt_google.py            # Google Cloud Backend
-│   ├── stt_whisper_ar.py        # Whisper Arabic Backend
-│   └── tts.py                   # Text-to-Speech
+├── intent_router.py             # 1. موجه الأوامر الحتمي (عربي)
+├── ollama_orchestrator.py       # 2. منسق النماذج (محلي/سحابي)
+├── llm_router.py                # 3. موجه LLM الهجين (GPT/Gemini)
+└── model_router.py              # 4. موجه النموذج الحتمي (جودة/تكلفة)
 │
-├── 🛠️ tools/                     # الأدوات
-│   ├── files.py                 # Smart Sandbox File Operations
-│   ├── system_tools.py          # أدوات النظام
-│   ├── terminal.py              # Traffic Light Terminal Tools
-│   ├── gmail/                   # وحدة Gmail
-│   ├── secretary.py             # (Memory Integrated - SQLite)
-│   └── advisor.py               # (Memory Integrated - SQLite)
+├── 💾 memory/                     # --- نظام الذاكرة الحية ---
+│   ├── manager.py               # المدير الموحد للذاكرة
+│   ├── graph_store.py           # مخزن الرسم البياني (علاقات)
+│   └── vector_store.py          # مخزن المتجهات (بحث دلالي)
 │
-├── 💾 memory/                    # نظام الذاكرة الموحد
-│   ├── manager.py               # Unified Wrapper (Transactional)
-│   └── ...
+├── 🛠️ tools/                     # --- الأدوات والقدرات الأساسية ---
+│   ├── secretary.py             # السكرتير التنفيذي (مهام، ملاحظات)
+│   ├── advisor.py               # المستشار النزيه (رؤى، تحقق)
+│   ├── files.py                 # عمليات ملفات آمنة (Sandbox)
+│   ├── terminal.py              # طرفية آمنة (Traffic Light)
+│   ├── smart_organizer.py       # منظم الملفات الذكي
+│   │
+│   ├── 🎤 voice/                # وحدة الصوت الموحدة
+│   │   └── stt.py               #   معالج STT الموحد (القاعدة الذهبية)
+│   │
+│   ├── 📧 gmail/                 # وحدة Gmail المتقدمة
+│   │   ├── connection_manager.py#   مدير اتصال ذكي (API/IMAP)
+│   │   └── auth/                #   مصادقة آمنة (OAuth/Keychain)
+│   │
+│   └── 🌐 system_awareness/     # وحدة الوعي بالنظام
 │
-├── ☁️ ollama_orchestrator.py     # منسق الذكاء الاصطناعي المحلي
-└── 🛡️ docs/                      # وثائق الأمان والنظام
-    ├── PROJECT_MAP.md
-    ├── CHANGE_RULES.md
-    └── TEST_COMMANDS.md
+└── 🧪 tests/                     # الاختبارات الوحدوية والتكاملية
 ```
+
+---
+
+## 📚 الوحدات والأدوات | Modules & Tools
+
+A high-level overview of the key components in the HVA ecosystem:
+
+| Module / Tool             | Description                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Core Orchestration**    | `main.py`, `dispatcher.py`: Handles the main application loop and routes tasks to the correct tools.      |
+| **Intelligence & Routing**| `intent_router.py`, `llm_router.py`, `model_router.py`: The 4-layer system for smart, deterministic routing. |
+| **Living Memory**         | `memory/`: The unified brain (Graph, Vector, SQL) for storing and retrieving contextual information.      |
+| **Executive Secretary**   | `tools/secretary.py`: Manages notes, tasks, and projects, integrating deeply with the memory system.    |
+| **Honest Advisor**        | `tools/advisor.py`: Provides insights, validates actions, and ensures system wellbeing.                 |
+| **Secure System Tools**   | `tools/files.py`, `tools/terminal.py`: Safe file and command-line operations with sandbox security.       |
+| **Google Suite**          | `tools/gmail/`, `calendar.py`, `drive.py`: Deep integration with Google services.                         |
+| **Unified Voice Engine**  | `tools/voice/`: Manages all Speech-to-Text (STT) and Text-to-Speech (TTS) operations.                    |
+| **System Awareness**      | `tools/system_awareness/`: Discovers and indexes files, apps, and system specifications.                |
+| **GUI System**            | `hva_menubar.py`, `gui_process.py`: Provides the user-facing menu bar app and dashboard.                  |
 
 ---
 
@@ -244,33 +258,31 @@ haitham_voice_agent/
 
 <div dir="rtl">
 
-تم تعزيز المشروع بنظام أمان متقدم (Security Architecture 2.0):
+تم تعزيز المشروع بنظام أمان متقدم:
 
 *   **🚦 Traffic Light Terminal**:
     *   **🟢 أخضر**: أوامر آمنة (`ls`, `pwd`) تنفذ فوراً.
-    *   **🟡 أصفر**: أوامر مقيدة (`python`, `pip`) تطلب تأكيداً.
-    *   **🔴 أحمر**: أوامر خطرة (`rm -rf`, `mkfs`) محظورة تماماً.
+    *   **🟡 أصفر**: أوامر مقيدة (`git`, `pip`) تطلب تأكيداً.
+    *   **🔴 أحمر**: أوامر خطرة (`rm -rf`, `sudo`) محظورة تماماً.
 *   **🏖️ Smart User Sandbox**:
     *   يمنع الوصول لأي ملف خارج مجلد المستخدم (`~/`).
     *   يحظر المجلدات الحساسة (`.ssh`, `Library`) حتى داخل مجلد المستخدم.
-*   **🛡️ Documentation**:
-    *   **`PROJECT_MAP.md`**: خريطة كاملة للمشروع.
-    *   **`CHANGE_RULES.md`**: بروتوكولات صارمة لتعديل الكود.
+*   **🔐 Secure Credential Store**:
+    *   يستخدم **macOS Keychain** لتخزين بيانات اعتماد Google API بشكل آمن.
 
 </div>
 
-The project is fortified with an advanced security system (Security Architecture 2.0):
+The project is fortified with an advanced security system:
 
 *   **🚦 Traffic Light Terminal**:
-    *   **🟢 Green**: Safe commands (`ls`, `pwd`) execute immediately.
-    *   **🟡 Yellow**: Restricted commands (`python`, `pip`) require confirmation.
-    *   **🔴 Red**: Dangerous commands (`rm -rf`, `mkfs`) are strictly blocked.
+    *   **🟢 Green**: Safe, read-only commands (`ls`, `pwd`) execute immediately.
+    *   **🟡 Yellow**: Restricted commands with side-effects (`git`, `pip`) require confirmation.
+    *   **🔴 Red**: Dangerous commands (`rm -rf`, `sudo`) are strictly blocked.
 *   **🏖️ Smart User Sandbox**:
-    *   Blocks access to any file outside the user's home directory (`~/`).
-    *   Blacklists sensitive folders (`.ssh`, `Library`) even within home.
-*   **🛡️ Documentation**:
-    *   **`PROJECT_MAP.md`**: Full project map.
-    *   **`CHANGE_RULES.md`**: Strict protocols for code modification.
+    *   Blocks file access outside the user's home directory (`~/`).
+    *   Blacklists sensitive folders (`.ssh`, `Library`) even within the home directory.
+*   **🔐 Secure Credential Store**:
+    *   Uses **macOS Keychain** to securely store Google API credentials.
 
 ---
 
@@ -279,25 +291,25 @@ The project is fortified with an advanced security system (Security Architecture
 ### المتطلبات | Prerequisites
 - macOS (Apple Silicon recommended)
 - Python 3.11+
-- API Keys: OpenAI, Gemini, Google Cloud (STT/Gmail)
+- API Keys: OpenAI, Gemini, Google Cloud (STT/Gmail/Calendar/Drive)
 
 ### التثبيت | Installation
 
 ```bash
-# 1. Clone
+# 1. Clone the repository
 git clone <repo_url>
 cd haitham-voice-agent
 
-# 2. Venv
+# 2. Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 3. Install
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Config
+# 4. Configure environment variables
 cp .env.example .env
-# Edit .env with your API keys
+# Edit the .env file with your API keys
 ```
 
 ---
@@ -306,36 +318,38 @@ cp .env.example .env
 
 ### التشغيل | Running
 
+To run the agent, launch the menu bar application from your terminal:
 ```bash
-# تشغيل التطبيق (شريط القوائم)
+# Run the HVA Menu Bar App
 python -m haitham_voice_agent.hva_menubar
 ```
+Click the icon in your menu bar or use the global hotkey `Cmd+Shift+H` to start listening.
 
 ### أوامر صوتية للتجربة | Voice Commands to Try
 
 <div dir="rtl">
 
-*   **"افتح كروم"** (يستخدم System Awareness لفتح التطبيق بدقة)
-*   **"وين ملف التقرير؟"** (يبحث في الفهرس السريع ثم Spotlight)
-*   **"كم المساحة المتبقية؟"** (يعطيك حالة التخزين فوراً)
-*   **"صباح الخير"** (الموجز الصباحي مع سياق الذاكرة)
-*   **"صباح الخير"** (الموجز الصباحي مع سياق الذاكرة)
-*   **"اقرأ آخر إيميل"** (Gmail Integration)
-*   **"ما هي مواعيدي اليوم؟"** (Calendar Integration)
-*   **"ابحث في درايف عن ملف العقد"** (Drive Integration)
-*   **"نفذ أمر git status"** (Terminal Integration)
+*   **"صباح الخير"** (يقدم موجزاً صباحياً مخصصاً من الذاكرة والتقويم).
+*   **"احفظ ملاحظة: فكرة المشروع الجديد هي بناء نظام ذكاء اصطناعي"** (يستخدم السكرتير لحفظ الملاحظة في الذاكرة).
+*   **"ما هي مهامي لهذا اليوم؟"** (يستعلم من السكرتير عن المهام المفتوحة).
+*   **"هل تعتقد أن حذف جميع الملفات الموجودة على سطح المكتب فكرة جيدة؟"** (يسأل المستشار الذي سيرفض الإجراء).
+*   **"لخص آخر بريد إلكتروني من المدير"** (يستخدم تكامل Gmail المتقدم مع Gemini).
+*   **"ما هي مواعيدي اليوم؟"** (يستخدم تكامل تقويم Google).
+*   **"ابحث في درايف عن ملف العقد"** (يستخدم تكامل Google Drive).
+*   **"نظف مجلد التنزيلات"** (يستخدم المنظم الذكي لتصنيف الملفات).
+*   **"نفذ أمر git status"** (يستخدم الطرفية الآمنة بعد طلب التأكيد).
 
 </div>
 
-*   **"Open Chrome"** (Uses System Awareness for precise launch)
-*   **"Find report file"** (Searches Quick Index then Spotlight)
-*   **"How much storage left?"** (Instant storage status)
-*   **"Good morning"** (Morning briefing with Memory context)
-*   **"Good morning"** (Morning briefing with Memory context)
-*   **"Read last email"** (Gmail Integration)
-*   **"What are my events today?"** (Calendar Integration)
-*   **"Search Drive for contract"** (Drive Integration)
-*   **"Run git status"** (Terminal Integration)
+*   **"Good morning"** (Gives a personalized morning brief from memory and calendar).
+*   **"Save a note: the new project idea is to build an AI system"** (Uses the Secretary to save a note to memory).
+*   **"What are my tasks for today?"** (Queries the Secretary for open tasks).
+*   **"Do you think deleting all files on the desktop is a good idea?"** (Asks the Advisor, who will reject the action).
+*   **"Summarize the last email from my manager"** (Uses the advanced Gmail integration with Gemini).
+*   **"What are my events today?"** (Uses Calendar Integration).
+*   **"Search Drive for the contract file"** (Uses Drive Integration).
+*   **"Clean up my downloads folder"** (Uses the Smart Organizer to categorize files).
+*   **"Run the command git status"** (Uses the Secure Terminal after requesting confirmation).
 
 ---
 

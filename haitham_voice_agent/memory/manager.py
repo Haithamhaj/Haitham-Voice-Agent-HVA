@@ -231,14 +231,14 @@ Text:
         Secretary code: `[f"- {m.content}" for m in recent_memories]`
         So it expects an object with .content.
         """
-        results = self.vector_store.search(query, limit=limit)
+        results = self.vector_store.search(query, n_results=limit)
         
         class MemoryResult:
             def __init__(self, text, meta):
                 self.content = text
                 self.metadata = meta
                 
-        return [MemoryResult(r['text'], r['metadata']) for r in results]
+        return [MemoryResult(r['content'], r['metadata']) for r in results]
 
 # Singleton
 _memory_manager = None
