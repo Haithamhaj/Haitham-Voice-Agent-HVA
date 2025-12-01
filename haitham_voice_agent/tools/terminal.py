@@ -1,157 +1,141 @@
 """
-Terminal Tools (Safe Mode)
+Terminal Tools (Traffic Light Security Model)
 
 Safe terminal command execution for HVA.
-Implements operations from Master SRS Section 3.7.
+Implements "Traffic Light" security logic:
+- GREEN: Safe, read-only commands (Execute immediately)
+- YELLOW: Restricted/Side-effects (Require Confirmation)
+- RED: Blocked/System Critical (Deny)
 """
 
 import subprocess
 import logging
-from typing import Dict, Any, List
+import shlex
+from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class TerminalTools:
-    """Safe terminal operations"""
+    """
+    Safe terminal operations with Traffic Light Security.
+    """
     
-    # Whitelist of allowed commands (from Master SRS)
-    ALLOWED_COMMANDS = {
-        'ls', 'pwd', 'echo', 'whoami', 'df'
+    # 🟢 GREEN: Safe, Read-Only, Informational
+    GREEN_LIST = {
+        'ls', 'pwd', 'echo', 'cat', 'grep', 'find', 'whoami', 'df', 
+        'git status', 'git log', 'git diff', 'date', 'uptime', 'hostname'
+    }
+
+    # 🔴 RED: Blocked, Dangerous, System Critical
+    RED_LIST = {
+        'mkfs', 'dd', 'shutdown', 'reboot', 'visudo', 'su', 'sudo', 
+        'chmod', 'chown', 'rm -rf /', ':(){ :|:& };:'
     }
     
-    def __init__(self):
-        logger.info("TerminalTools initialized (safe mode)")
+    # 🟡 YELLOW: Everything else (Requires Confirmation)
+    # Examples: python3, pip, npm, docker, ffmpeg, rm, mv, code, mkdir, git commit
     
-    async def execute_command(self, command: str) -> Dict[str, Any]:
+    def __init__(self):
+        logger.info("TerminalTools initialized (Traffic Light Security)")
+    
+    def _classify_command(self, command_name: str) -> str:
+        """Classify command as GREEN, YELLOW, or RED"""
+        if command_name in self.GREEN_LIST:
+            return "GREEN"
+        if command_name in self.RED_LIST:
+            return "RED"
+        return "YELLOW"
+
+    async def execute_command(self, command: str, confirmed: bool = False) -> Dict[str, Any]:
         """
-        Execute a safe terminal command
+        Execute a terminal command with security checks.
         
         Args:
-            command: Command to execute
+            command: Command string to execute
+            confirmed: Whether the user has explicitly confirmed execution (for YELLOW commands)
             
         Returns:
-            dict: Command output
+            dict: Execution result or confirmation request
         """
         try:
-            # Parse command
-            parts = command.strip().split()
+            # 1. Basic Validation
+            if not command or not command.strip():
+                return {"error": True, "message": "Empty command"}
             
-            if not parts:
+            # 2. Block Chaining & Injection (Strict)
+            dangerous_chars = [';', '&&', '|', '`', '$(']
+            if any(char in command for char in dangerous_chars):
+                logger.warning(f"Blocked chained command: {command}")
                 return {
                     "error": True,
-                    "message": "Empty command"
+                    "message": "Command chaining (;, &&, |) is NOT allowed. Please execute steps sequentially.",
+                    "security_alert": "Injection Attempt Blocked"
                 }
-            
+
+            # 3. Parse Command safely
+            try:
+                parts = shlex.split(command)
+            except ValueError as e:
+                return {"error": True, "message": f"Invalid command syntax: {e}"}
+                
+            if not parts:
+                return {"error": True, "message": "Empty command parsed"}
+                
             cmd_name = parts[0]
             
-            # Check if command is allowed
-            if cmd_name not in self.ALLOWED_COMMANDS:
-                logger.warning(f"Blocked unsafe command: {cmd_name}")
+            # 4. Traffic Light Classification
+            security_level = self._classify_command(cmd_name)
+            
+            # 🔴 RED: Block immediately
+            if security_level == "RED":
+                logger.warning(f"Blocked RED command: {cmd_name}")
                 return {
                     "error": True,
-                    "message": f"Command not allowed: {cmd_name}",
-                    "suggestion": f"Allowed commands: {', '.join(self.ALLOWED_COMMANDS)}"
+                    "message": f"Command '{cmd_name}' is BLOCKED by security policy.",
+                    "security_alert": "Critical Command Blocked"
                 }
-            
-            # Check for dangerous patterns
-            if 'sudo' in command or '&&' in command or '|' in command or ';' in command:
-                logger.warning(f"Blocked command with dangerous pattern: {command}")
+                
+            # 🟡 YELLOW: Require Confirmation
+            if security_level == "YELLOW" and not confirmed:
+                logger.info(f"Paused YELLOW command for confirmation: {cmd_name}")
                 return {
-                    "error": True,
-                    "message": "Command contains dangerous patterns (sudo, pipes, chaining)",
-                    "suggestion": "Only simple, safe commands are allowed"
+                    "status": "confirmation_required",
+                    "message": f"Command '{cmd_name}' requires confirmation.",
+                    "command": command,
+                    "risk_level": "medium",
+                    "suggestion": "Please confirm if you want to execute this command."
                 }
+
+            # 🟢 GREEN or Confirmed YELLOW: Execute
+            logger.info(f"Executing {security_level} command: {command}")
             
-            # Execute command
+            # Execute without shell=True for security
             result = subprocess.run(
-                command,
-                shell=True,
+                parts,
                 capture_output=True,
                 text=True,
-                timeout=5  # 5 second timeout
+                timeout=30  # 30s timeout for safety
             )
             
-            logger.info(f"Executed safe command: {command}")
-            
             return {
+                "success": result.returncode == 0,
                 "command": command,
                 "output": result.stdout,
                 "error_output": result.stderr if result.stderr else None,
-                "return_code": result.returncode,
-                "success": result.returncode == 0
+                "return_code": result.returncode
             }
             
         except subprocess.TimeoutExpired:
-            logger.error(f"Command timed out: {command}")
-            return {
-                "error": True,
-                "message": "Command timed out (5 second limit)"
-            }
+            return {"error": True, "message": "Command timed out (30s limit)"}
+        except FileNotFoundError:
+            return {"error": True, "message": f"Command not found: {parts[0]}"}
         except Exception as e:
             logger.error(f"Command execution failed: {e}")
-            return {
-                "error": True,
-                "message": str(e)
-            }
-    
+            return {"error": True, "message": str(e)}
+
     async def list_allowed_commands(self) -> Dict[str, Any]:
-        """
-        Get list of allowed commands
-        
-        Returns:
-            dict: Allowed commands with descriptions
-        """
-        commands_info = {
-            "ls": "List directory contents",
-            "pwd": "Print working directory",
-            "echo": "Display a line of text",
-            "whoami": "Print current user name",
-            "df": "Display disk space usage"
-        }
-        
+        """Return list of safe (GREEN) commands"""
         return {
-            "allowed_commands": list(self.ALLOWED_COMMANDS),
-            "descriptions": commands_info,
-            "count": len(self.ALLOWED_COMMANDS)
+            "green_commands": list(self.GREEN_LIST),
+            "policy": "Green commands execute immediately. Others require confirmation. Chaining is blocked."
         }
-
-
-if __name__ == "__main__":
-    # Test terminal tools
-    import asyncio
-    
-    async def test():
-        tools = TerminalTools()
-        
-        print("Testing TerminalTools...")
-        
-        # Test allowed commands
-        print("\nAllowed commands:")
-        result = await tools.list_allowed_commands()
-        for cmd, desc in result["descriptions"].items():
-            print(f"  {cmd}: {desc}")
-        
-        # Test safe command
-        print("\nExecuting 'pwd':")
-        result = await tools.execute_command("pwd")
-        print(f"Output: {result.get('output', '').strip()}")
-        
-        # Test safe command
-        print("\nExecuting 'whoami':")
-        result = await tools.execute_command("whoami")
-        print(f"Output: {result.get('output', '').strip()}")
-        
-        # Test blocked command
-        print("\nTrying blocked command 'rm':")
-        result = await tools.execute_command("rm test.txt")
-        print(f"Result: {result.get('message')}")
-        
-        # Test dangerous pattern
-        print("\nTrying dangerous pattern 'ls && rm':")
-        result = await tools.execute_command("ls && rm test.txt")
-        print(f"Result: {result.get('message')}")
-        
-        print("\nTerminalTools test completed")
-    
-    asyncio.run(test())
