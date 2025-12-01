@@ -8,6 +8,10 @@
 
 A voice-operated automation agent for macOS with hybrid LLM routing, full system awareness, Gmail integration, and an advanced memory system.
 
+> [!NOTE]
+> **Status: Production Ready** 🚀
+> The system has undergone a major architectural refactoring (Dec 2025) to ensure stability, unified routing, and zero state drift.
+
 ---
 
 ## 📋 جدول المحتويات | Table of Contents
@@ -38,7 +42,7 @@ A voice-operated automation agent for macOS with hybrid LLM routing, full system
 - ✅ **Voice-to-Action Automation**: تحويل الأوامر الصوتية إلى إجراءات تلقائية
 - ✅ **System Awareness**: فهم عميق للجهاز، التطبيقات، والملفات (3-Layer Architecture)
 - ✅ **Hybrid LLM Intelligence**: توجيه ذكي بين نماذج الذكاء الاصطناعي
-- ✅ **Persistent Memory System**: نظام ذاكرة دائم مع بحث دلالي
+- ✅ **Persistent Memory System**: نظام ذاكرة دائم مع بحث دلالي (Integrated with Secretary & Advisor)
 - ✅ **Full Gmail Integration**: قراءة، تلخيص، وإنشاء مسودات البريد الإلكتروني
 - ✅ **Safety First**: نظام أمان شامل يمنع الإجراءات المدمرة
 
@@ -146,6 +150,7 @@ haitham_voice_agent/
 │
 ├── 🎤 tools/voice/               # وحدة الصوت الموحدة
 │   ├── stt.py                   # Unified STT Handler
+│   ├── models.py                # Shared Whisper Models
 │   ├── stt_google.py            # Google Cloud Backend
 │   ├── stt_whisper_ar.py        # Whisper Arabic Backend
 │   └── tts.py                   # Text-to-Speech
@@ -154,7 +159,8 @@ haitham_voice_agent/
 │   ├── files.py                 # عمليات الملفات
 │   ├── system_tools.py          # أدوات النظام
 │   ├── gmail/                   # وحدة Gmail
-│   └── ...
+│   ├── secretary.py             # (Memory Integrated)
+│   └── advisor.py               # (Memory Integrated)
 │
 ├── ☁️ ollama_orchestrator.py     # منسق الذكاء الاصطناعي المحلي
 └── 🛡️ docs/                      # وثائق الأمان والنظام
