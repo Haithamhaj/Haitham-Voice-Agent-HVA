@@ -642,6 +642,18 @@ Output format: JSON
             elif intent in ["fetch_latest_email", "check_email"]:
                 tool = "gmail"
                 action = "fetch_email"
+
+            elif intent in ["check_availability", "check_schedule", "am_i_free"]:
+                tool = "calendar"
+                action = "check_availability"
+                if "date" in params:
+                    params["day_str"] = params.pop("date")
+            
+            elif intent in ["list_events", "show_calendar"]:
+                tool = "calendar"
+                action = "list_events"
+                if "date" in params:
+                    params["day_str"] = params.pop("date")
             
             return {
                 "intent": intent,
@@ -711,9 +723,10 @@ Output format: JSON
 - ملاحظة: الأوامر الخطرة محظورة تلقائياً.
 
 ## 10. calendar (التقويم)
-- list_events: عرض المواعيد القادمة
-- create_event: إضافة موعد جديد
-- الكلمات الدالة: "مواعيدي"، "جدول اليوم"، "احجز اجتماع"، "ذكرني بموعد"
+- list_events: عرض المواعيد (يقبل: "today", "tomorrow", "next monday")
+- create_event: إضافة موعد (يقبل: "meeting at 5pm tomorrow")
+- check_availability: فحص التوفر (يقبل: "today", "tomorrow")
+- الكلمات الدالة: "مواعيدي"، "جدول اليوم"، "احجز اجتماع"، "هل أنا مشغول غداً؟"
 
 ## 11. drive (جوجل درايف)
 - list_files: عرض ملفات درايف

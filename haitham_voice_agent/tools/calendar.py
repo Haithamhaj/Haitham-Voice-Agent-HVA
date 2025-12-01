@@ -117,18 +117,57 @@ class CalendarTools:
             logger.error(f"Failed to build calendar service: {e}")
             return False
 
-    async def list_events(self, limit: int = 10, days: int = 7) -> Dict[str, Any]:
-        """List upcoming events"""
+    async def list_events(self, day_str: str = "today", max_results: int = 10) -> Dict[str, Any]:
+        """List upcoming events with natural language date parsing"""
         try:
             if not self._ensure_service():
                 return {"error": True, "message": "Calendar not authorized. Please say 'Authorize Calendar'."}
             
-            now = datetime.datetime.utcnow().isoformat() + 'Z'
+            # Parse date range
+            import dateparser
+            base_date = dateparser.parse(day_str)
+            
+            if not base_date:
+                # Fallback to now
+                base_date = datetime.datetime.now()
+            
+            # Determine range
+            # If "today", range is now -> end of day
+            # If "tomorrow", range is 00:00 -> 23:59 tomorrow
+            # If specific date, range is 00:00 -> 23:59 that day
+            
+            now = datetime.datetime.now()
+            
+            if day_str.lower() in ["today", "اليوم"]:
+                time_min = now
+                time_max = now.replace(hour=23, minute=59, second=59)
+            elif day_str.lower() in ["tomorrow", "بكرة", "غدا"]:
+                tomorrow = now + datetime.timedelta(days=1)
+                time_min = tomorrow.replace(hour=0, minute=0, second=0)
+                time_max = tomorrow.replace(hour=23, minute=59, second=59)
+            else:
+                # Use parsed date
+                time_min = base_date.replace(hour=0, minute=0, second=0)
+                time_max = base_date.replace(hour=23, minute=59, second=59)
+                
+                # If parsed date is in the past (e.g. "Monday" referring to next week but parsed as last week),
+                # dateparser usually handles "next monday".
+                # If it's today but earlier, clamp min to now if we only want upcoming?
+                # The user might want to see past events of the day. Let's keep it as is.
+
+            # Convert to ISO format with Z (UTC) or offset
+            # Google API expects RFC3339.
+            # We should be careful with timezones. dateparser returns naive or aware.
+            # Let's assume system local time for now.
+            
+            time_min_iso = time_min.isoformat() + 'Z'
+            time_max_iso = time_max.isoformat() + 'Z'
             
             events_result = self.service.events().list(
                 calendarId='primary',
-                timeMin=now,
-                maxResults=limit,
+                timeMin=time_min_iso,
+                timeMax=time_max_iso,
+                maxResults=max_results,
                 singleEvents=True,
                 orderBy='startTime'
             ).execute()
@@ -147,30 +186,83 @@ class CalendarTools:
             return {
                 "success": True,
                 "count": len(events),
-                "events": formatted_events
+                "events": formatted_events,
+                "period": f"{time_min.strftime('%Y-%m-%d %H:%M')} to {time_max.strftime('%H:%M')}"
             }
             
         except Exception as e:
             logger.error(f"List events failed: {e}")
             return {"error": True, "message": str(e)}
 
+    async def check_availability(self, day_str: str = "today") -> Dict[str, Any]:
+        """Check availability for a given day"""
+        # Reuse list_events logic to get events
+        res = await self.list_events(day_str=day_str, max_results=50)
+        if res.get("error"):
+            return res
+            
+        events = res.get("events", [])
+        count = res.get("count", 0)
+        
+        if count == 0:
+            return {
+                "success": True,
+                "status": "free",
+                "message": f"You are completely free on {day_str}!"
+            }
+        
+        # Simple busy analysis
+        # Ideally we calculate free slots, but for now just returning the count and list is good.
+        # Let's return a summary string.
+        
+        summary = f"You have {count} events on {day_str}."
+        if count > 5:
+            summary += " It's a busy day!"
+        elif count < 3:
+            summary += " It's a relatively light day."
+            
+        return {
+            "success": True,
+            "status": "busy" if count > 0 else "free",
+            "message": summary,
+            "events": events
+        }
+
     async def create_event(self, summary: str, start_time: str, duration_minutes: int = 60) -> Dict[str, Any]:
-        """Create a new event"""
+        """Create a new event with natural language parsing"""
         try:
             if not self._ensure_service():
                 return {"error": True, "message": "Calendar not authorized."}
             
-            # Parse start time (expecting ISO format or simple natural language handled by LLM)
-            # For simplicity, let's assume LLM gives ISO or we parse it.
-            # If LLM gives "tomorrow at 5pm", we rely on LLM to convert to ISO in params.
+            import dateparser
             
-            try:
-                start_dt = datetime.datetime.fromisoformat(start_time.replace('Z', '+00:00'))
-            except:
-                # Fallback: try to parse loosely or return error
-                return {"error": True, "message": "Invalid date format. Please use ISO format."}
+            # Parse start time
+            # settings={'PREFER_DATES_FROM': 'future'} ensures "Monday" means next Monday if passed
+            start_dt = dateparser.parse(start_time, settings={'PREFER_DATES_FROM': 'future'})
+            
+            if not start_dt:
+                return {"error": True, "message": f"Could not parse date: {start_time}"}
                 
-            end_dt = start_dt + datetime.timedelta(minutes=duration_minutes)
+            # Check availability (warn if conflict)
+            # We check a small window around the start time
+            time_min = start_dt
+            time_max = start_dt + datetime.timedelta(minutes=duration_minutes)
+            
+            events_result = self.service.events().list(
+                calendarId='primary',
+                timeMin=time_min.isoformat() + 'Z',
+                timeMax=time_max.isoformat() + 'Z',
+                singleEvents=True
+            ).execute()
+            
+            conflicts = events_result.get('items', [])
+            conflict_warning = ""
+            if conflicts:
+                conflict_titles = [e.get('summary', 'Event') for e in conflicts]
+                conflict_warning = f"Warning: This overlaps with {', '.join(conflict_titles)}."
+                # We proceed anyway but return warning
+            
+            end_dt = time_max
             
             event = {
                 'summary': summary,
@@ -186,10 +278,16 @@ class CalendarTools:
             
             event = self.service.events().insert(calendarId='primary', body=event).execute()
             
+            msg = f"Event created: {summary} at {start_dt.strftime('%Y-%m-%d %H:%M')}."
+            if conflict_warning:
+                msg += f" {conflict_warning}"
+            
             return {
                 "success": True,
-                "message": f"Event created: {event.get('htmlLink')}",
-                "event_id": event.get('id')
+                "message": msg,
+                "event_id": event.get('id'),
+                "link": event.get('htmlLink'),
+                "warning": conflict_warning
             }
             
         except Exception as e:
@@ -202,7 +300,9 @@ if __name__ == "__main__":
     async def test():
         cal = CalendarTools()
         # print(cal.authorize()) # Uncomment to auth manually
-        res = await cal.list_events()
-        print(res)
+        print("--- Today ---")
+        print(await cal.list_events("today"))
+        print("--- Availability Tomorrow ---")
+        print(await cal.check_availability("tomorrow"))
     
     asyncio.run(test())
