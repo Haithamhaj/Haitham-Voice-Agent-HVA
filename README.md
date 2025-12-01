@@ -143,6 +143,7 @@ The memory system is unified to act as a single, interconnected "brain":
 - **iPhone Sync**: اربط هاتفك بالوكيل! قل لـ Siri: "Add task to HVA Inbox" وسيظهر في ذاكرة HVA فوراً.
 - **Smart Calendar**: فهم كامل للوقت ("غداً"، "الاثنين القادم") وفحص ذكي للتوفر ("هل أنا مشغول؟").
 - **Premium GUI**: واجهة فخمة (Dark Mode) مع مؤشر ذكاء حي يظهر من يفكر الآن (Ollama vs GPT).
+- **Timezone-Aware Scheduling**: يفهم "اجتماع الساعة 5 بتوقيت القاهرة" ويحسب فرق التوقيت تلقائياً ليحجز الموعد الصحيح.
 
 </div>
 
@@ -154,6 +155,7 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Premium GUI (v1.9)**: Stunning Dark Mode interface with live "Active Agent" indicators, simulated depth, and polished interactions.
 - **Desktop Experience**: Native macOS App Bundle (`HVA Premium.app`) for one-click launch.
 - **Smart File Listing**: Ask "Show files in Downloads" to get a categorized list (Today, Yesterday, Older) directly in the chat.
+- **Timezone-Aware Scheduling**: Smartly handles "Meeting at 5pm Cairo time" by calculating the correct time difference relative to your local timezone.
 
 ### 📱 تطبيق شريط القوائم وواجهة المستخدم | Menu Bar App & GUI
 
@@ -170,6 +172,7 @@ The memory system is unified to act as a single, interconnected "brain":
 - **Premium Dashboard**: Displays system status, weather, and tasks.
 - **Active Agent Indicator**: Live indicator showing the system's "brain" at work (Analyzing, Cloud Thinking, Tool Execution).
 - **Quick Actions**: Buttons for instant access to Morning Briefing and Calendar.
+- **Copy/Paste Support**: Right-click on chat bubbles to copy text, or use full context menu in the input field.
 
 ---
 
