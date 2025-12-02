@@ -1,47 +1,76 @@
 import sys
 import os
 import subprocess
-import importlib.util
+import time
+import signal
 from pathlib import Path
 
-def check_and_install(package_name):
-    """Check if package is installed, if not install it"""
-    if importlib.util.find_spec(package_name) is None:
-        print(f"📦 Installing missing package: {package_name}...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
-            print(f"✅ Installed {package_name}")
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Failed to install {package_name}: {e}")
-
 def main():
-    # 1. Ensure Critical Dependencies
-    print("🔍 Checking dependencies...")
-    check_and_install("aiohttp")
-    check_and_install("rumps")
-    check_and_install("SpeechRecognition")
-    check_and_install("pyaudio")
-    check_and_install("psutil")
-    check_and_install("openai")
-    check_and_install("google.generativeai")
-
-    # 2. Setup Environment
     project_root = Path(__file__).parent
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(project_root) + os.pathsep + env.get("PYTHONPATH", "")
+    processes = []
     
-    # 3. Launch App
-    app_script = project_root / "haitham_voice_agent" / "hva_menubar.py"
+    def cleanup(signum=None, frame=None):
+        print("\n🛑 Shutting down HVA...")
+        for p in processes:
+            if p.poll() is None:
+                p.terminate()
+        sys.exit(0)
     
-    print(f"🚀 Launching HVA from: {app_script}")
-    print(f"🐍 Using Python: {sys.executable}")
+    signal.signal(signal.SIGINT, cleanup)
+    signal.signal(signal.SIGTERM, cleanup)
     
+    # 1. Start API Server
+    print("🚀 Starting HVA API Server...")
+    api_process = subprocess.Popen(
+        [sys.executable, "-m", "api.main"],
+        cwd=project_root,
+        env={**os.environ, "PYTHONPATH": str(project_root)}
+    )
+    processes.append(api_process)
+    
+    # Wait for API to be ready
+    print("⏳ Waiting for API...")
+    time.sleep(3)
+    
+    # 2. Start Electron App
+    print("🖥️ Starting HVA Desktop...")
+    desktop_dir = project_root / "desktop"
+    
+    # Check if we are in dev mode or prod
+    # For now, we assume dev mode or manual build
+    # In a real scenario, we might check for the built .app or use 'npm run electron'
+    
+    if (desktop_dir / "node_modules").exists():
+        # Use npm run electron:dev for development if arguments say so, else just electron
+        # For simplicity in this phase, let's use the electron script which waits for vite
+        # But wait, 'electron' script in package.json waits for port 5173.
+        # If we want to run the FULL app, we need to start vite server too if it's not running.
+        # The 'electron:dev' script does both.
+        
+        cmd = ["npm", "run", "electron:dev"]
+        
+        electron_process = subprocess.Popen(
+            cmd,
+            cwd=desktop_dir,
+            shell=True
+        )
+        processes.append(electron_process)
+    else:
+        print("⚠️ Desktop dependencies not found. Run: cd desktop && npm install")
+    
+    # Keep running
     try:
-        subprocess.run([sys.executable, str(app_script)], env=env, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"❌ App crashed with exit code {e.returncode}")
+        while True:
+            time.sleep(1)
+            # Check if processes are still running
+            for p in processes:
+                if p.poll() is not None:
+                    # If API dies, we should probably exit
+                    if p == api_process:
+                        print("⚠️ API Server stopped unexpectedly")
+                        cleanup()
     except KeyboardInterrupt:
-        print("\n🛑 App stopped by user")
+        cleanup()
 
 if __name__ == "__main__":
     main()

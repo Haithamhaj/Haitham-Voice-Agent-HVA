@@ -167,6 +167,8 @@ The memory system is unified to act as a single, interconnected "brain":
 
 - **اختصار عالمي**: `⌘⇧H` (Cmd+Shift+H) لبدء الاستماع من أي مكان.
 - **Premium Dashboard**: لوحة تحكم تعرض حالة النظام، الطقس، والمهام.
+- **Memory View**: استعراض وإدارة قاعدة المعرفة (Graph, Vector, SQL).
+- **Gmail & Calendar**: واجهات مخصصة لعرض الرسائل والمواعيد.
 - **Active Agent Indicator**: مؤشر حي يظهر لك "عقل" النظام وهو يعمل (تحليل، تفكير سحابي، تنفيذ أدوات).
 - **إجراءات سريعة**: أزرار للوصول السريع للموجز الصباحي والتقويم.
 
@@ -174,6 +176,8 @@ The memory system is unified to act as a single, interconnected "brain":
 
 - **Global Hotkey**: `⌘⇧H` (Cmd+Shift+H) to start listening from anywhere.
 - **Premium Dashboard**: Displays system status, weather, and tasks.
+- **Memory View**: Browse and manage the knowledge base (Graph, Vector, SQL).
+- **Gmail & Calendar**: Dedicated views for emails and events.
 - **Active Agent Indicator**: Live indicator showing the system's "brain" at work (Analyzing, Cloud Thinking, Tool Execution).
 - **Quick Actions**: Buttons for instant access to Morning Briefing and Calendar.
 - **Copy/Paste Support**: Right-click on chat bubbles to copy text, or use full context menu in the input field.
