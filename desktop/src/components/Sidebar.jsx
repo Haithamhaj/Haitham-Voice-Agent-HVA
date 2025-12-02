@@ -1,11 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Brain, Mail, Calendar, CheckSquare, Settings, Mic } from 'lucide-react';
+import { LayoutDashboard, Brain, Mail, Calendar, CheckSquare, Settings, Mic, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 
-const Sidebar = ({ isListening, wsConnected }) => {
+const Sidebar = ({ isListening, wsConnected, toggleListening }) => {
     const navItems = [
         { path: '/', icon: LayoutDashboard, label: 'الرئيسية' },
+        { path: '/chat', icon: MessageSquare, label: 'المحادثة' },
         { path: '/memory', icon: Brain, label: 'الذاكرة' },
         { path: '/gmail', icon: Mail, label: 'البريد' },
         { path: '/calendar', icon: Calendar, label: 'التقويم' },
@@ -16,12 +17,15 @@ const Sidebar = ({ isListening, wsConnected }) => {
     return (
         <div className="w-64 bg-hva-card border-l border-hva-card-hover flex flex-col h-full">
             <div className="p-6 flex flex-col items-center border-b border-hva-card-hover">
-                <div className={clsx(
-                    "w-16 h-16 rounded-full flex items-center justify-center mb-3 transition-all duration-300",
-                    isListening ? "bg-red-500/20 text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "bg-hva-accent/20 text-hva-accent"
-                )}>
+                <button
+                    onClick={toggleListening}
+                    className={clsx(
+                        "w-16 h-16 rounded-full flex items-center justify-center mb-3 transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95",
+                        isListening ? "bg-red-500/20 text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "bg-hva-accent/20 text-hva-accent hover:bg-hva-accent/30"
+                    )}
+                >
                     <Mic size={32} />
-                </div>
+                </button>
                 <h2 className="text-hva-cream font-bold text-lg">HVA Premium</h2>
                 <div className="flex items-center gap-2 mt-1">
                     <div className={clsx("w-2 h-2 rounded-full", wsConnected ? "bg-green-500" : "bg-red-500")}></div>

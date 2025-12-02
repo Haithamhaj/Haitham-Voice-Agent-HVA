@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import TitleBar from './components/TitleBar';
 import Sidebar from './components/Sidebar';
@@ -8,16 +8,23 @@ import GmailView from './components/GmailView';
 import CalendarView from './components/CalendarView';
 import TasksView from './components/TasksView';
 import SettingsView from './components/SettingsView';
+import ChatView from './components/ChatView';
 import VoiceOverlay from './components/VoiceOverlay';
 
 function App() {
   const [isListening, setIsListening] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
 
+  const wsRef = useRef(null);
+
   // WebSocket Connection
   useEffect(() => {
     const connectWs = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+      console.log('Attempting to connect to WebSocket...');
       const ws = new WebSocket('ws://127.0.0.1:8765/ws');
+      wsRef.current = ws;
 
       ws.onopen = () => {
         setWsConnected(true);
@@ -25,23 +32,39 @@ function App() {
       };
 
       ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'status') {
-          setIsListening(data.listening);
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'status') {
+            setIsListening(data.listening);
+          }
+        } catch (e) {
+          console.error("Failed to parse WS message", e);
         }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
+        console.log('WebSocket Disconnected', event.code, event.reason);
         setWsConnected(false);
+        wsRef.current = null;
         // Reconnect after 3 seconds
         setTimeout(connectWs, 3000);
       };
 
-      return ws;
+      ws.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+        ws.close();
+      };
     };
 
-    const ws = connectWs();
-    return () => ws.close();
+    connectWs();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.onclose = null; // Prevent reconnect on cleanup
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
   }, []);
 
   // Listen for keyboard shortcut from Electron
@@ -69,11 +92,12 @@ function App() {
         <TitleBar />
 
         <div className="flex flex-1 overflow-hidden">
-          <Sidebar isListening={isListening} wsConnected={wsConnected} />
+          <Sidebar isListening={isListening} wsConnected={wsConnected} toggleListening={toggleListening} />
 
           <main className="flex-1 overflow-auto p-8 bg-hva-primary/30">
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/chat" element={<ChatView />} />
               <Route path="/memory" element={<MemoryView />} />
               <Route path="/gmail" element={<GmailView />} />
               <Route path="/calendar" element={<CalendarView />} />
