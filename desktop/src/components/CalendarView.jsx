@@ -9,7 +9,8 @@ const CalendarView = () => {
         fetch('http://localhost:8765/calendar/today')
             .then(res => res.json())
             .then(data => {
-                setEvents(Array.isArray(data) ? data : []);
+                const list = Array.isArray(data) ? data : (data.events || []);
+                setEvents(list);
             })
             .catch(err => console.error(err))
             .finally(() => setLoading(false));

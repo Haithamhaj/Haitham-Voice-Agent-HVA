@@ -9,7 +9,6 @@ const Dashboard = () => {
     });
 
     useEffect(() => {
-        // Fetch stats from API
         const fetchStats = async () => {
             try {
                 const [tasksRes, gmailRes, calendarRes] = await Promise.all([
@@ -18,14 +17,24 @@ const Dashboard = () => {
                     fetch('http://localhost:8765/calendar/today')
                 ]);
 
-                // Handle responses (mocking for now if API returns complex objects)
-                // In real implementation, we'd parse the JSON
+                const tasksData = await tasksRes.json();
+                const gmailData = await gmailRes.json();
+                const calendarData = await calendarRes.json();
+
+                setStats({
+                    tasks: Array.isArray(tasksData) ? tasksData.length : (tasksData.tasks ? tasksData.tasks.length : 0),
+                    emails: gmailData.count || (Array.isArray(gmailData) ? gmailData.length : 0),
+                    events: calendarData.count || (Array.isArray(calendarData.events) ? calendarData.events.length : 0)
+                });
             } catch (error) {
                 console.error("Failed to fetch dashboard stats", error);
             }
         };
 
         fetchStats();
+        // Refresh every minute
+        const interval = setInterval(fetchStats, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     return (
@@ -47,7 +56,7 @@ const Dashboard = () => {
                         <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
                             <Activity size={20} />
                         </div>
-                        <span className="text-2xl font-bold text-hva-cream">5</span>
+                        <span className="text-2xl font-bold text-hva-cream">{stats.tasks}</span>
                     </div>
                     <h3 className="text-hva-muted font-medium">مهام معلقة</h3>
                 </div>
@@ -57,7 +66,7 @@ const Dashboard = () => {
                         <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 group-hover:scale-110 transition-transform">
                             <Activity size={20} />
                         </div>
-                        <span className="text-2xl font-bold text-hva-cream">12</span>
+                        <span className="text-2xl font-bold text-hva-cream">{stats.emails}</span>
                     </div>
                     <h3 className="text-hva-muted font-medium">رسائل غير مقروءة</h3>
                 </div>
@@ -67,7 +76,7 @@ const Dashboard = () => {
                         <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform">
                             <Clock size={20} />
                         </div>
-                        <span className="text-2xl font-bold text-hva-cream">3</span>
+                        <span className="text-2xl font-bold text-hva-cream">{stats.events}</span>
                     </div>
                     <h3 className="text-hva-muted font-medium">مواعيد اليوم</h3>
                 </div>
