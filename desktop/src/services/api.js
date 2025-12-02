@@ -46,5 +46,10 @@ export const api = {
 
     // System
     fetchSystemLogs: () => monitoredFetch('/system/logs'),
+    saveDebugReport: (report) => monitoredFetch('/system/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(report)
+    }),
 };
 

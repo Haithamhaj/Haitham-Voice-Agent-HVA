@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Server, RefreshCw, Trash2, AlertCircle, Info, AlertTriangle, X, Stethoscope, Activity, Network, Database, Download } from 'lucide-react';
+import { Terminal, Server, RefreshCw, Trash2, AlertCircle, Info, AlertTriangle, X, Stethoscope, Activity, Network, Database, Download, Send } from 'lucide-react';
 import { logger, useLogs } from '../services/logger';
 import { api } from '../services/api';
 import { diagnoseError } from '../services/diagnostics';
@@ -64,8 +64,8 @@ const LogsView = () => {
         setDiagnosis(null);
     };
 
-    const exportReport = () => {
-        const report = {
+    const generateReport = () => {
+        return {
             timestamp: new Date().toISOString(),
             system: {
                 userAgent: navigator.userAgent,
@@ -82,7 +82,10 @@ const LogsView = () => {
             },
             network: networkRequests
         };
+    };
 
+    const exportReport = () => {
+        const report = generateReport();
         const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -92,6 +95,18 @@ const LogsView = () => {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    };
+
+    const saveReportToAI = async () => {
+        try {
+            const report = generateReport();
+            await api.saveDebugReport(report);
+            // Show success toast (using logger for now as we don't have direct toast access here, but logger triggers toast)
+            logger.info("تم حفظ التقرير بنجاح! أخبر هيثم لفحصه الآن.");
+        } catch (error) {
+            console.error("Failed to save report", error);
+            logger.error("فشل حفظ التقرير", error.message);
+        }
     };
 
     const getLevelColor = (level) => {
@@ -126,6 +141,13 @@ const LogsView = () => {
                     >
                         <Download size={18} />
                         تصدير تقرير
+                    </button>
+                    <button
+                        onClick={saveReportToAI}
+                        className="px-4 py-2 bg-hva-accent hover:bg-hva-accent/90 text-hva-primary font-bold rounded-lg border border-hva-accent flex items-center gap-2 transition-colors"
+                    >
+                        <Send size={18} />
+                        حفظ للتحليل (AI)
                     </button>
                     <div className="flex bg-hva-card rounded-lg p-1 border border-hva-border-subtle">
                         <button onClick={() => setActiveTab('frontend')} className={`px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${activeTab === 'frontend' ? 'bg-hva-accent text-hva-primary font-bold' : 'text-hva-muted hover:text-hva-cream'}`}>
