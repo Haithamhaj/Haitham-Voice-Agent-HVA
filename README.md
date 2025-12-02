@@ -13,8 +13,8 @@ Here is the full, updated `README.md` content:
 A voice-operated automation agent for macOS with hybrid LLM routing, a living memory system, full system awareness, and deep Google Suite integration.
 
 > [!NOTE]
-> **Status: Production Ready** 🚀
-> The system has undergone a major architectural refactoring to ensure stability, deterministic routing, and a unified, state-aware memory system.
+> **Status: Production Ready (v2.0)** 🚀
+> The system has undergone a major architectural refactoring to introduce a **Client-Server Architecture** using **FastAPI** (Backend) and **Electron + React** (Frontend), ensuring a modern, responsive, and beautiful user experience.
 
 ---
 
@@ -185,18 +185,25 @@ The memory system is unified to act as a single, interconnected "brain":
 ### 📊 تدفق النظام | System Flow
 
 ```
-┌───────────────┐
-│  User Voice   │
-└───────┬───────┘
-        ▼
 ┌───────────────┐      ┌──────────────────┐
-│ Unified STT   │ ───► │ System Awareness │
-│(Google/Whisper)│      │ (Profile/Index)  │
+│  Electron UI  │ ◄──► │   FastAPI API    │
+│ (React/Vite)  │      │ (Python Server)  │
+└───────┬───────┘      └────────┬─────────┘
+        │                       │
+        ▼                       ▼
+┌───────────────┐      ┌──────────────────┐
+│  User Voice   │      │ System Awareness │
+│               │      │ (Profile/Index)  │
 └───────┬───────┘      └────────┬─────────┘
         │                       │
         ▼                       │
 ┌───────────────┐               │
-│ Intent Router │◄──────────────┘
+│ Unified STT   │ ◄─────────────┘
+│(Google/Whisper)│
+└───────┬───────┘
+        ▼
+┌───────────────┐
+│ Intent Router │
 │ (Rule-based)  │
 └───────┬───────┘
         ▼
@@ -207,6 +214,7 @@ The memory system is unified to act as a single, interconnected "brain":
         ▼
 ┌───────────────┐
 │  Dispatcher   │
+│ (Tool Execution)│
 └───────┬───────┘
         ▼
 ┌───────────────────────────────────────────────┐
@@ -227,9 +235,15 @@ The memory system is unified to act as a single, interconnected "brain":
 
 ```
 haitham_voice_agent/
-├── main.py                      # نقطة الدخول الرئيسية (CLI)
-├── hva_menubar.py               # 📱 تطبيق شريط القوائم (مشغل الواجهة)
-├── gui_process.py               # 🖥️ عملية نافذة الواجهة الرئيسية
+haitham_voice_agent/
+├── api/                         # 🆕 FastAPI Backend
+│   ├── main.py                  # API Entry Point
+│   └── routes/                  # API Routes (Voice, Memory, etc.)
+├── desktop/                     # 🆕 Electron + React Frontend
+│   ├── src/                     # React Source Code
+│   └── main.js                  # Electron Main Process
+├── main.py                      # CLI Entry Point
+├── run_app.py                   # 🆕 Unified Launcher (API + Electron)
 │
 ├── ⚙️ config.py                  # الإعدادات المركزية
 ├── dispatcher.py                # موزع المهام والأدوات
@@ -272,6 +286,8 @@ A high-level overview of the key components in the HVA ecosystem:
 | Module / Tool             | Description                                                                                             |
 | ------------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Core Orchestration**    | `main.py`, `dispatcher.py`: Handles the main application loop and routes tasks to the correct tools.      |
+| **Backend API**           | `api/`: FastAPI server exposing HVA capabilities via REST and WebSockets.                               |
+| **Frontend GUI**          | `desktop/`: Modern Electron + React application for a premium user experience.                          |
 | **Intelligence & Routing**| `intent_router.py`, `llm_router.py`, `model_router.py`: The 4-layer system for smart, deterministic routing. |
 | **Living Memory**         | `memory/`: The unified brain (Graph, Vector, SQL) for storing and retrieving contextual information.      |
 | **Executive Secretary**   | `tools/secretary.py`: Manages notes, tasks, and projects, integrating deeply with the memory system.    |
@@ -335,7 +351,13 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # 3. Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
+
+# 4. Install Frontend dependencies
+cd desktop
+npm install
+cd ..
 
 # 4. Configure environment variables
 cp .env.example .env
@@ -354,7 +376,8 @@ Double-click the **HVA Premium.app** on your Desktop.
 **Alternative (Terminal):**
 ```bash
 # Run the HVA Menu Bar App
-python -m haitham_voice_agent.hva_menubar
+# Run the HVA Unified App (API + GUI)
+python run_app.py
 ```
 Click the icon in your menu bar or use the global hotkey `Cmd+Shift+H` to start listening.
 

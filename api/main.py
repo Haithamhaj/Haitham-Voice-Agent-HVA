@@ -51,6 +51,16 @@ async def websocket_endpoint(websocket: WebSocket):
         if websocket in active_connections:
             active_connections.remove(websocket)
 
+from api.routes import voice, memory, gmail, calendar, tasks, system
+
+# Include routers
+app.include_router(voice.router)
+app.include_router(memory.router)
+app.include_router(gmail.router)
+app.include_router(calendar.router)
+app.include_router(tasks.router)
+app.include_router(system.router)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8765)
