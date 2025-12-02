@@ -239,46 +239,19 @@ The memory system is unified to act as a single, interconnected "brain":
 
 ```
 haitham_voice_agent/
-haitham_voice_agent/
 ├── api/                         # 🆕 FastAPI Backend
-│   ├── main.py                  # API Entry Point
-│   └── routes/                  # API Routes (Voice, Memory, etc.)
+│   ├── main.py                  # API Entry Point (WebSocket + REST)
+│   └── routes/                  # API Routes (Voice, Memory, Gmail, etc.)
 ├── desktop/                     # 🆕 Electron + React Frontend
-│   ├── src/                     # React Source Code
-│   └── main.js                  # Electron Main Process
-├── main.py                      # CLI Entry Point
-├── run_app.py                   # 🆕 Unified Launcher (API + Electron)
-│
-├── ⚙️ config.py                  # الإعدادات المركزية
-├── dispatcher.py                # موزع المهام والأدوات
-│
-├── intent_router.py             # 1. موجه الأوامر الحتمي (عربي)
-├── ollama_orchestrator.py       # 2. منسق النماذج (محلي/سحابي)
-├── llm_router.py                # 3. موجه LLM الهجين (GPT/Gemini)
-└── model_router.py              # 4. موجه النموذج الحتمي (جودة/تكلفة)
-│
-├── 💾 memory/                     # --- نظام الذاكرة الحية ---
-│   ├── manager.py               # المدير الموحد للذاكرة
-│   ├── graph_store.py           # مخزن الرسم البياني (علاقات)
-│   └── vector_store.py          # مخزن المتجهات (بحث دلالي)
-│
-├── 🛠️ tools/                     # --- الأدوات والقدرات الأساسية ---
-│   ├── secretary.py             # السكرتير التنفيذي (مهام، ملاحظات)
-│   ├── advisor.py               # المستشار النزيه (رؤى، تحقق)
-│   ├── files.py                 # عمليات ملفات آمنة (Sandbox)
-│   ├── terminal.py              # طرفية آمنة (Traffic Light)
-│   ├── smart_organizer.py       # منظم الملفات الذكي
-│   │
-│   ├── 🎤 voice/                # وحدة الصوت الموحدة
-│   │   └── stt.py               #   معالج STT الموحد (القاعدة الذهبية)
-│   │
-│   ├── 📧 gmail/                 # وحدة Gmail المتقدمة
-│   │   ├── connection_manager.py#   مدير اتصال ذكي (API/IMAP)
-│   │   └── auth/                #   مصادقة آمنة (OAuth/Keychain)
-│   │
-│   └── 🌐 system_awareness/     # وحدة الوعي بالنظام
-│
-└── 🧪 tests/                     # الاختبارات الوحدوية والتكاملية
+│   ├── src/                     # React Components (Dashboard, Sidebar, etc.)
+│   ├── main.js                  # Electron Main Process
+│   └── package.json             # Build & Packaging Config
+├── haitham_voice_agent/         # Core Logic
+│   ├── dispatcher.py            # Task Dispatcher
+│   ├── memory/                  # Living Memory System
+│   └── tools/                   # Tools (Gmail, Calendar, etc.)
+├── run_app.py                   # Unified Launcher (Dev Mode)
+└── requirements.txt             # Python Dependencies
 ```
 
 ---
@@ -289,8 +262,8 @@ A high-level overview of the key components in the HVA ecosystem:
 
 | Module / Tool             | Description                                                                                             |
 | ------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Core Orchestration**    | `main.py`, `dispatcher.py`: Handles the main application loop and routes tasks to the correct tools.      |
-| **Backend API**           | `api/`: FastAPI server exposing HVA capabilities via REST and WebSockets.                               |
+| **Core Orchestration**    | `dispatcher.py`: Handles the main application loop and routes tasks to the correct tools.               |
+| **Backend API**           | `api/`: FastAPI server exposing HVA capabilities via REST and WebSockets (Port 8765).                   |
 | **Frontend GUI**          | `desktop/`: Modern Electron + React application for a premium user experience.                          |
 | **Intelligence & Routing**| `intent_router.py`, `llm_router.py`, `model_router.py`: The 4-layer system for smart, deterministic routing. |
 | **Living Memory**         | `memory/`: The unified brain (Graph, Vector, SQL) for storing and retrieving contextual information.      |
@@ -300,7 +273,6 @@ A high-level overview of the key components in the HVA ecosystem:
 | **Google Suite**          | `tools/gmail/`, `calendar.py`, `drive.py`: Deep integration with Google services.                         |
 | **Unified Voice Engine**  | `tools/voice/`: Manages all Speech-to-Text (STT) and Text-to-Speech (TTS) operations.                    |
 | **System Awareness**      | `tools/system_awareness/`: Discovers and indexes files, apps, and system specifications.                |
-| **GUI System**            | `hva_menubar.py`, `gui_process.py`: Provides the user-facing menu bar app and dashboard.                  |
 
 ---
 
@@ -341,6 +313,7 @@ The project is fortified with an advanced security system:
 ### المتطلبات | Prerequisites
 - macOS (Apple Silicon recommended)
 - Python 3.11+
+- Node.js & npm (for Frontend)
 - API Keys: OpenAI, Gemini, Google Cloud (STT/Gmail/Calendar/Drive)
 
 ### التثبيت | Installation
@@ -354,8 +327,7 @@ cd haitham-voice-agent
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 3. Install dependencies
-# 3. Install dependencies
+# 3. Install Python dependencies
 pip install -r requirements.txt
 
 # 4. Install Frontend dependencies
@@ -363,7 +335,7 @@ cd desktop
 npm install
 cd ..
 
-# 4. Configure environment variables
+# 5. Configure environment variables
 cp .env.example .env
 # Edit the .env file with your API keys
 ```
@@ -374,43 +346,28 @@ cp .env.example .env
 
 ### التشغيل | Running
 
-**Desktop Launcher (Recommended):**
-Double-click the **HVA Premium.app** on your Desktop.
+**1. Desktop App (Recommended for Daily Use):**
+Run the packaged application:
+`desktop/dist/mac-arm64/HVA Premium.app`
 
-**Alternative (Terminal):**
+**2. Development Mode (For Developers):**
+To run the application with hot-reloading and see logs:
+
 ```bash
-# Run the HVA Menu Bar App
-# Run the HVA Unified App (API + GUI)
 python run_app.py
-```
-Click the icon in your menu bar or use the global hotkey `Cmd+Shift+H` to start listening.
-
-### التطوير | Development
-
-To run the application in development mode (Hot Reloading):
-
-```bash
-# Terminal 1: Start Backend API
-python -m api.main
-
-# Terminal 2: Start Electron Frontend
-cd desktop
-npm run electron:dev
 ```
 
 ### بناء النسخة النهائية | Production Build
 
-لبناء التطبيق كملف `.app` مستقل (يتضمن الواجهة الخلفية والأمامية):
+To build the standalone `.app` file (includes both Backend and Frontend):
 
 ```bash
 cd desktop
 npm run package
 ```
 
-ستجد التطبيق الناتج في:
+The output application will be located at:
 `desktop/dist/mac-arm64/HVA Premium.app`
-
-يمكنك نقله إلى مجلد `Applications` وتشغيله مباشرة.
 
 <div dir="rtl">
 
