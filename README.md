@@ -24,6 +24,7 @@ A voice-operated automation agent for macOS with hybrid LLM routing, a living me
 - [المميزات الرئيسية | Key Features](#-المميزات-الرئيسية--key-features)
 - [البنية المعمارية | Architecture](#-البنية-المعمارية--architecture)
 - [الوحدات والأدوات | Modules & Tools](#-الوحدات-والأدوات--modules--tools)
+- [أدوات المطور | Developer Toolkit](#-أدوات-المطور--developer-toolkit)
 - [نظام الأمان | Safety System](#-نظام-الأمان--safety-system)
 - [التثبيت والإعداد | Installation & Setup](#-التثبيت-والإعداد--installation--setup)
 - [الاستخدام | Usage](#-الاستخدام--usage)
@@ -273,6 +274,32 @@ A high-level overview of the key components in the HVA ecosystem:
 | **Google Suite**          | `tools/gmail/`, `calendar.py`, `drive.py`: Deep integration with Google services.                         |
 | **Unified Voice Engine**  | `tools/voice/`: Manages all Speech-to-Text (STT) and Text-to-Speech (TTS) operations.                    |
 | **System Awareness**      | `tools/system_awareness/`: Discovers and indexes files, apps, and system specifications.                |
+
+---
+
+## 🛠️ أدوات المطور | Developer Toolkit
+
+<div dir="rtl">
+
+يحتوي HVA على مجموعة أدوات مدمجة للمطورين لتسهيل عملية التطوير وتصحيح الأخطاء:
+
+*   **Network Monitor**: مراقبة حية لجميع طلبات API وتفاصيلها (Request/Response).
+*   **Smart Diagnostics**: تحليل ذكي للأخطاء مع تحديد الملف والسطر (Source Location) واقتراح الحلول.
+*   **State Inspector**: مراقبة حالة WebSocket والذاكرة في الوقت الفعلي.
+*   **Debug Export**: تصدير تقرير شامل عن حالة النظام والسجلات بضغطة زر.
+
+[📄 اقرأ الدليل الكامل لأدوات المطور (DEVELOPER_TOOLKIT.md)](DEVELOPER_TOOLKIT.md)
+
+</div>
+
+HVA includes a built-in Developer Toolkit to streamline development and debugging:
+
+*   **Network Monitor**: Live monitoring of all API requests and details.
+*   **Smart Diagnostics**: Intelligent error analysis with source location (File/Line) and solution recommendations.
+*   **State Inspector**: Real-time monitoring of WebSocket status and memory.
+*   **Debug Export**: One-click export of a comprehensive system state and log report.
+
+[📄 Read the full Developer Toolkit Guide (DEVELOPER_TOOLKIT.md)](DEVELOPER_TOOLKIT.md)
 
 ---
 
