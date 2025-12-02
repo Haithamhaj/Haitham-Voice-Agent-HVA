@@ -1,215 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HVA - لوحة الخدمات | Services Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <!-- Background -->
-    <div class="background-gradient"></div>
-    <div class="background-pattern"></div>
-
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <div class="logo-icon">🎤</div>
-                    <div class="logo-text">
-                        <h1>Haitham Voice Agent</h1>
-                        <p>وكيلك الصوتي الذكي</p>
-                    </div>
-                </div>
-                <button class="lang-toggle" onclick="toggleLanguage()">
-                    <span class="lang-icon">🌐</span>
-                    <span id="lang-text">EN</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <h2 class="hero-title">استكشف خدمات HVA</h2>
-            <p class="hero-subtitle">تسع خدمات ذكية تحت أمرك الصوتي</p>
-        </div>
-    </section>
-
-    <!-- Services Grid -->
-    <main class="main">
-        <div class="container">
-            <div class="services-grid">
-                
-                <!-- Service 1: Memory System -->
-                <div class="service-card" data-service="memory">
-                    <div class="service-icon">🧠</div>
-                    <h3 class="service-title">نظام الذاكرة المتقدم</h3>
-                    <p class="service-description">حفظ واسترجاع ذكي للملاحظات والأفكار والقرارات</p>
-                    <div class="service-features">
-                        <span class="feature-tag">بحث دلالي</span>
-                        <span class="feature-tag">تصنيف تلقائي</span>
-                        <span class="feature-tag">تخزين آمن</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('memory')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 2: Gmail Integration -->
-                <div class="service-card" data-service="gmail">
-                    <div class="service-icon">📧</div>
-                    <h3 class="service-title">تكامل Gmail</h3>
-                    <p class="service-description">إدارة البريد الإلكتروني بالصوت مع تلخيص ذكي</p>
-                    <div class="service-features">
-                        <span class="feature-tag">قراءة الرسائل</span>
-                        <span class="feature-tag">إنشاء مسودات</span>
-                        <span class="feature-tag">تلخيص ذكي</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('gmail')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 3: File Management -->
-                <div class="service-card" data-service="files">
-                    <div class="service-icon">📁</div>
-                    <h3 class="service-title">إدارة الملفات</h3>
-                    <p class="service-description">التحكم الكامل في ملفاتك ومجلداتك بالصوت</p>
-                    <div class="service-features">
-                        <span class="feature-tag">بحث متقدم</span>
-                        <span class="feature-tag">نقل ونسخ</span>
-                        <span class="feature-tag">ترتيب ذكي</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('files')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 4: Document Processing -->
-                <div class="service-card" data-service="docs">
-                    <div class="service-icon">📄</div>
-                    <h3 class="service-title">معالجة المستندات</h3>
-                    <p class="service-description">قراءة وتحليل وترجمة المستندات بذكاء Gemini</p>
-                    <div class="service-features">
-                        <span class="feature-tag">قراءة PDF</span>
-                        <span class="feature-tag">تلخيص</span>
-                        <span class="feature-tag">ترجمة</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('docs')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 5: Task Management -->
-                <div class="service-card" data-service="tasks">
-                    <div class="service-icon">✅</div>
-                    <h3 class="service-title">إدارة المهام</h3>
-                    <p class="service-description">تنظيم وتتبع مهامك اليومية بسهولة</p>
-                    <div class="service-features">
-                        <span class="feature-tag">إضافة سريعة</span>
-                        <span class="feature-tag">تتبع الحالة</span>
-                        <span class="feature-tag">تذكير</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('tasks')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 6: Browser Tools -->
-                <div class="service-card" data-service="browser">
-                    <div class="service-icon">🌐</div>
-                    <h3 class="service-title">أدوات المتصفح</h3>
-                    <p class="service-description">فتح المواقع والبحث في الإنترنت بالصوت</p>
-                    <div class="service-features">
-                        <span class="feature-tag">فتح المواقع</span>
-                        <span class="feature-tag">بحث Google</span>
-                        <span class="feature-tag">تنقل سريع</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('browser')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 7: System Tools -->
-                <div class="service-card" data-service="system">
-                    <div class="service-icon">💻</div>
-                    <h3 class="service-title">أدوات النظام</h3>
-                    <p class="service-description">التحكم في تطبيقات macOS بالأوامر الصوتية</p>
-                    <div class="service-features">
-                        <span class="feature-tag">فتح التطبيقات</span>
-                        <span class="feature-tag">معلومات النظام</span>
-                        <span class="feature-tag">آمن</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('system')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 8: Safe Terminal -->
-                <div class="service-card" data-service="terminal">
-                    <div class="service-icon">⌨️</div>
-                    <h3 class="service-title">الطرفية الآمنة</h3>
-                    <p class="service-description">تنفيذ أوامر Terminal الآمنة فقط</p>
-                    <div class="service-features">
-                        <span class="feature-tag">أوامر آمنة</span>
-                        <span class="feature-tag">بدون sudo</span>
-                        <span class="feature-tag">محمي</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('terminal')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-                <!-- Service 9: Voice System -->
-                <div class="service-card" data-service="voice">
-                    <div class="service-icon">🎤</div>
-                    <h3 class="service-title">نظام الصوت</h3>
-                    <p class="service-description">تحويل متقدم بين الكلام والنص بدقة عالية</p>
-                    <div class="service-features">
-                        <span class="feature-tag">دعم العربية</span>
-                        <span class="feature-tag">دقة 90%+</span>
-                        <span class="feature-tag">هجين ذكي</span>
-                    </div>
-                    <button class="btn-primary" onclick="showServiceDetails('voice')">
-                        <span>استكشف الخدمة</span>
-                        <span class="btn-arrow">←</span>
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal -->
-    <div class="modal" id="serviceModal">
-        <div class="modal-overlay" onclick="closeModal()"></div>
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">×</button>
-            <div id="modalBody"></div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>Made with ❤️ by Haitham | 🎤 Voice-Powered • 🤖 AI-Driven • 🔒 Privacy-First</p>
-        </div>
-    </footer>
-
-    <script src="script.js"></script>
-</body>
-</html>

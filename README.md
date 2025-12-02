@@ -264,8 +264,26 @@ A high-level overview of the key components in the HVA ecosystem:
 | Module / Tool             | Description                                                                                             |
 | ------------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Core Orchestration**    | `dispatcher.py`: Handles the main application loop and routes tasks to the correct tools.               |
-| **Backend API**           | `api/`: FastAPI server exposing HVA capabilities via REST and WebSockets (Port 8765).                   |
-| **Frontend GUI**          | `desktop/`: Modern Electron + React application for a premium user experience.                          |
+| **Backend API**           | `api/`: FastAPI server exposing HVA capabilities via REST and WebSockets (Port 8765, Bound to 0.0.0.0). |
+| **Frontend GUI**          | `desktop/`: Modern Electron + React application for a premium user experience (Connects via localhost). |
+
+---
+
+## 🔧 استكشاف الأخطاء (Troubleshooting)
+
+### Common Issues
+
+1.  **Failed to Fetch / Network Error**:
+    *   **Cause**: The frontend cannot connect to the backend.
+    *   **Solution**: Ensure the backend is running. If using the packaged app, check that `hva_backend` is listening on port 8765 (`lsof -i :8765`). Ensure you are using the latest version with `0.0.0.0` binding.
+
+2.  **Permission Denied (Microphone/Network)**:
+    *   **Cause**: macOS security restrictions (Hardened Runtime).
+    *   **Solution**: The app must be signed with correct entitlements (`com.apple.security.network.client`, `device.audio-input`). Re-download the latest release or rebuild with `npm run package`.
+
+3.  **App Crashes on Launch**:
+    *   **Cause**: Backend failed to spawn or path issue.
+    *   **Solution**: Check `/tmp/hva_backend.log` for errors. Ensure the `hva_backend` executable is correctly placed in `Contents/Resources`.
 | **Intelligence & Routing**| `intent_router.py`, `llm_router.py`, `model_router.py`: The 4-layer system for smart, deterministic routing. |
 | **Living Memory**         | `memory/`: The unified brain (Graph, Vector, SQL) for storing and retrieving contextual information.      |
 | **Executive Secretary**   | `tools/secretary.py`: Manages notes, tasks, and projects, integrating deeply with the memory system.    |

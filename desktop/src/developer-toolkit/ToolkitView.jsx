@@ -191,7 +191,7 @@ const ToolkitView = ({
                                 {networkRequests.map(req => (
                                     <div key={req.id} onClick={() => setSelectedRequest(req)} className="flex items-center gap-4 p-3 bg-hva-primary/20 hover:bg-hva-primary/40 rounded-lg cursor-pointer border border-transparent hover:border-hva-border-subtle transition-all">
                                         <span className={`px-2 py-1 rounded text-xs font-bold w-16 text-center ${req.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>{req.method}</span>
-                                        <span className="flex-1 text-hva-cream truncate dir-ltr text-left">{req.url.replace('http://127.0.0.1:8765', '')}</span>
+                                        <span className="flex-1 text-hva-cream truncate dir-ltr text-left">{req.url.replace('http://127.0.0.1:8765', '').replace('http://localhost:8765', '')}</span>
                                         <span className={`text-xs font-bold ${req.status === 'error' ? 'text-red-500' : req.status >= 400 ? 'text-red-400' : 'text-green-400'}`}>{req.status}</span>
                                         <span className="text-hva-muted text-xs w-16 text-right">{req.duration ? `${req.duration}ms` : '...'}</span>
                                     </div>
