@@ -381,6 +381,19 @@ python run_app.py
 ```
 Click the icon in your menu bar or use the global hotkey `Cmd+Shift+H` to start listening.
 
+### التطوير | Development
+
+To run the application in development mode (Hot Reloading):
+
+```bash
+# Terminal 1: Start Backend API
+python -m api.main
+
+# Terminal 2: Start Electron Frontend
+cd desktop
+npm run electron:dev
+```
+
 ### أوامر صوتية للتجربة | Voice Commands to Try
 
 <div dir="rtl">
