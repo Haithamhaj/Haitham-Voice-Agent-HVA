@@ -52,7 +52,7 @@
       "gatekeeperAssess": false
     },
     "files": [
-      "dist/**/*",
+      "dist_renderer/**/*",
       "main.js",
       "preload.js",
       "package.json"
