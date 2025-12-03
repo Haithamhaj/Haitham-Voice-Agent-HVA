@@ -257,6 +257,42 @@ haitham_voice_agent/
 
 ---
 
+## 🚀 التشغيل (Startup)
+
+<div dir="rtl">
+
+الطريقة المعتمدة لتشغيل النظام هي تشغيل الخادم يدوياً ثم فتح التطبيق.
+
+1.  **تشغيل الخادم (Backend)**:
+    افتح التيرمينال في مجلد المشروع ونفذ الملف التالي:
+    ```bash
+    ./start_hva.sh
+    ```
+    *سيقوم هذا السكربت بتفعيل البيئة الافتراضية وتشغيل الخادم.*
+
+2.  **تشغيل التطبيق (Frontend)**:
+    بمجرد أن يعمل الخادم، افتح تطبيق **HVA Premium** من سطح المكتب.
+
+</div>
+
+## 🛠️ التثبيت (لأول مرة فقط) | Installation
+
+<div dir="rtl">
+
+1.  **تجهيز البيئة**:
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+2.  **إعداد الملفات**:
+    تأكد من وجود ملف `.env` وملفات `client_secret.json` في المجلد الرئيسي.
+
+</div>
+
+---
+
 ## 📚 الوحدات والأدوات | Modules & Tools
 
 A high-level overview of the key components in the HVA ecosystem:
@@ -266,6 +302,7 @@ A high-level overview of the key components in the HVA ecosystem:
 | **Core Orchestration**    | `dispatcher.py`: Handles the main application loop and routes tasks to the correct tools.               |
 | **Backend API**           | `api/`: FastAPI server exposing HVA capabilities via REST and WebSockets (Port 8765, Bound to 0.0.0.0). |
 | **Frontend GUI**          | `desktop/`: Modern Electron + React application for a premium user experience (Connects via localhost). |
+
 
 ---
 
@@ -284,12 +321,6 @@ A high-level overview of the key components in the HVA ecosystem:
 3.  **App Crashes on Launch**:
     *   **Cause**: Backend failed to spawn or path issue.
     *   **Solution**: Check `/tmp/hva_backend.log` for errors. Ensure the `hva_backend` executable is correctly placed in `Contents/Resources`.
-| **Intelligence & Routing**| `intent_router.py`, `llm_router.py`, `model_router.py`: The 4-layer system for smart, deterministic routing. |
-| **Living Memory**         | `memory/`: The unified brain (Graph, Vector, SQL) for storing and retrieving contextual information.      |
-| **Executive Secretary**   | `tools/secretary.py`: Manages notes, tasks, and projects, integrating deeply with the memory system.    |
-| **Honest Advisor**        | `tools/advisor.py`: Provides insights, validates actions, and ensures system wellbeing.                 |
-| **Secure System Tools**   | `tools/files.py`, `tools/terminal.py`: Safe file and command-line operations with sandbox security.       |
-| **Google Suite**          | `tools/gmail/`, `calendar.py`, `drive.py`: Deep integration with Google services.                         |
 | **Unified Voice Engine**  | `tools/voice/`: Manages all Speech-to-Text (STT) and Text-to-Speech (TTS) operations.                    |
 | **System Awareness**      | `tools/system_awareness/`: Discovers and indexes files, apps, and system specifications.                |
 

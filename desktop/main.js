@@ -15,7 +15,7 @@ async function startApi() {
         return;
     }
 
-    const apiPath = path.join(process.resourcesPath, 'hva_backend', 'hva_backend');
+    const apiPath = path.join(process.resourcesPath, 'hva_backend');
     console.log('Starting API from:', apiPath);
 
     const logFile = path.join('/tmp', 'hva_backend.log');
