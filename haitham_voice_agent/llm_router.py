@@ -242,12 +242,17 @@ The plan must include:
 - requires_confirmation: Boolean (true if any destructive action)
 
 Available tools:
-- files: list_files, search_files, create_folder, delete_folder, move_file, copy_file
+- files: 
+    - list_files(directory="path", pattern="*.txt", recursive=true/false)
+    - search_files(directory="path", name_pattern="filename", content_pattern="text inside")
+    - create_folder(directory="path")
+    - delete_folder(directory="path")
 - docs: summarize_file, translate_file, compare_files, extract_tasks, read_pdf
 - browser: open_url, search_google
 - terminal: execute_command(command="...") (safe: ls, pwd, echo, whoami, df)
 - gmail: fetch_latest_email, search_emails, create_draft, send_draft (requires confirmation)
 - memory: save_note, search, get_notes
+- tasks: add_task(description="..."), list_tasks(), complete_task(task_id="...")
 
 CRITICAL RULES:
 - ALWAYS set requires_confirmation=true for: delete, send email, destructive operations
@@ -255,6 +260,7 @@ CRITICAL RULES:
 - Keep steps clear and sequential
 - "Calendar" or "Meeting" requests -> Use 'tasks' to add a task OR 'memory' to save a note. There is NO 'calendar' tool.
 - "Remember" or "Save" -> Use 'memory' tool (action: save_note).
+- For file search, use 'files.search_files' with 'name_pattern' (e.g. "*report*") NOT 'query'.
 """
         
         prompt = f"""

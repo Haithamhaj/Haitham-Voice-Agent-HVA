@@ -47,7 +47,7 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
 
-from api.routes import voice, memory, gmail, calendar, tasks, system, chat
+from api.routes import voice, memory, gmail, calendar, tasks, system, chat, files
 
 # Include routers
 app.include_router(voice.router)
@@ -57,6 +57,7 @@ app.include_router(gmail.router)
 app.include_router(calendar.router)
 app.include_router(tasks.router)
 app.include_router(system.router)
+app.include_router(files.router)
 
 if __name__ == "__main__":
     import uvicorn

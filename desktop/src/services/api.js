@@ -51,5 +51,16 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(report)
     }),
+
+    // Files
+    openFile: async (path) => {
+        const response = await fetch(`${API_BASE_URL}/files/open`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path })
+        });
+        if (!response.ok) throw new Error('Failed to open file');
+        return response.json();
+    }
 };
 

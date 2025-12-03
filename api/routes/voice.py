@@ -36,5 +36,6 @@ async def start_listening():
 @router.post("/stop")
 async def stop_listening():
     """Stop voice listening"""
-    # This would signal the STT loop to stop
+    # Force update status to False
+    await manager.broadcast({"type": "status", "listening": False})
     return {"status": "stopped"}

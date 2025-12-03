@@ -106,11 +106,12 @@ class FileTools:
             scan_iter = dir_path.rglob(pattern or "*") if recursive else dir_path.glob(pattern or "*")
             
             for file_path in scan_iter:
-                if file_path.is_file():
-                    # Double check each file (e.g. don't show .env even if dir is allowed)
-                    if file_path.name in self.BLACKLIST_DIRS:
-                        continue
-                    files.append(self._get_file_info(file_path))
+                # Skip blacklisted
+                if file_path.name in self.BLACKLIST_DIRS:
+                    continue
+                    
+                # Get info for both files and directories
+                files.append(self._get_file_info(file_path))
             
             # Format output
             file_names = [f["name"] for f in files]
@@ -219,17 +220,38 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
+    async def open_file(self, path: str) -> Dict[str, Any]:
+        """Open a file or folder using system default app"""
+        try:
+            target_path = self._validate_path(path)
+            if not target_path:
+                return {"error": True, "message": "Access denied or invalid path"}
+            
+            if not target_path.exists():
+                return {"error": True, "message": "File not found"}
+                
+            # Use macOS 'open' command
+            import subprocess
+            subprocess.run(['open', str(target_path)], check=True)
+            
+            return {"status": "opened", "path": str(target_path)}
+            
+        except Exception as e:
+            return {"error": True, "message": str(e)}
+
     def _get_file_info(self, file_path: Path) -> Dict[str, Any]:
         """Get file metadata"""
         try:
             stat = file_path.stat()
+            is_dir = file_path.is_dir()
             return {
                 "name": file_path.name,
                 "path": str(file_path),
-                "size": stat.st_size,
-                "size_human": self._format_size(stat.st_size),
+                "size": stat.st_size if not is_dir else 0,
+                "size_human": self._format_size(stat.st_size) if not is_dir else "DIR",
                 "modified": stat.st_mtime,
-                "extension": file_path.suffix
+                "extension": file_path.suffix if not is_dir else "DIR",
+                "type": "directory" if is_dir else "file"
             }
         except:
             return {"name": file_path.name, "error": "access_error"}

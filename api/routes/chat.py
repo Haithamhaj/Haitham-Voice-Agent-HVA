@@ -73,11 +73,14 @@ async def chat(request: ChatRequest):
         if last_result.get("error") and "Tool not found" in last_result.get("message", ""):
              logger.info("Tool not found, falling back to direct chat")
              response_text = await llm_router.generate_with_gpt(text)
-             return {"response": response_text}
+             return {"response": response_text, "type": "text"}
 
-        response_text = str(last_result.get("message") or last_result.get("result") or "تم التنفيذ بنجاح.")
-        
-        return {"response": response_text}
+        # Return full result for rich rendering
+        return {
+            "response": str(last_result.get("message") or "تم التنفيذ."),
+            "type": "action_result",
+            "data": last_result
+        }
 
     except Exception as e:
         logger.error(f"Error in chat: {e}", exc_info=True)
