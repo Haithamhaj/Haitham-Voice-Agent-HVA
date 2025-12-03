@@ -1,0 +1,105 @@
+---
+description: PROJECT MEMORY - READ THIS BEFORE ANSWERING
+globs: 
+---
+
+# 🛡️ Project Guardian: HVA Memory
+
+> **DO NOT DELETE OR IGNORE THIS FILE.**
+> This file is the "Long Term Memory" of the project.
+> It contains the Source of Truth for tech stack, file structure, and current state.
+
+---
+
+## 🏗️ Tech Stack (The "No-Go" Zone)
+
+> **CRITICAL:** Do NOT suggest changes to these unless explicitly asked.
+
+| Layer | Technology | Details |
+|-------|------------|---------|
+| **Frontend** | React 19 + Vite | TailwindCSS, Lucide React |
+| **Desktop** | Electron 39 | `desktop/` folder |
+| **Backend** | Python FastAPI | `api/` folder, Uvicorn |
+| **AI/Voice** | Faster Whisper | `haitham_voice_agent/` |
+| **Database** | ChromaDB | Vector store for memory |
+
+---
+
+## 🗺️ File Map (Where things live)
+
+> **CRITICAL:** Do NOT create new files outside these conventions.
+
+```
+/Users/haitham/development/Haitham Voice Agent (HVA)/
+├── desktop/                  # Electron + React Frontend
+│   ├── src/
+│   │   ├── pages/            # UI Pages (ChatView.jsx)
+│   │   ├── components/       # Reusable UI
+│   │   ├── context/          # Global State (WebSocketContext)
+│   │   └── services/         # API Client (api.js)
+│   ├── main.js               # Electron Main Process
+│   └── package.json          # Frontend Deps
+├── api/                      # FastAPI Backend
+│   ├── routes/               # API Endpoints (voice, chat, files)
+│   └── main.py               # Server Entry Point
+├── haitham_voice_agent/      # Core AI Logic
+│   ├── tools/                # Tools (files, voice, memory)
+│   ├── llm_router.py         # LLM Decision Logic
+│   └── dispatcher.py         # Tool Execution
+└── start_hva.sh              # Startup Script
+```
+
+---
+
+## 🚦 Running Now (Don't start duplicates!)
+
+| Service | Port | Command | Status |
+|---------|------|---------|--------|
+| **Backend** | `8765` | `./start_hva.sh` | ✅ Running |
+| **Frontend** | `5173` | `npm run dev` | ✅ Running |
+
+---
+
+## 📝 Change Management Rules
+
+### 1. PURE_UI_STYLE (Low Risk)
+*Examples: Colors, spacing, text changes, CSS tweaks.*
+- **Action:** Just do it. No deep planning needed.
+
+### 2. UI_BEHAVIOUR_TWEAK (Medium Risk)
+*Examples: Button clicks, form validation, loading states.*
+- **Action:** Check `api.js` first. Ensure backend supports it.
+
+### 3. NEW_FEATURE_FLOW (High Risk)
+*Examples: New page, new API route, new tool.*
+- **Action:**
+  1. **Plan:** Create/Update `implementation_plan.md`
+  2. **Review:** Ask user for approval
+  3. **Execute:** Implement step-by-step
+
+---
+
+## 🐛 Known Issues (Don't rediscover them)
+
+- **Voice/Chat Sync:** Bot sometimes responds before transcript appears (Fix in progress).
+- **Microphone:** Sometimes gets stuck if stop signal isn't received (Fixed via WebSocketContext).
+
+---
+
+## 🔄 Recent Changes (Context)
+
+- **[2025-12-03]** Added `files` tool and API route for opening files.
+- **[2025-12-03]** Fixed `FileTools` to include directories and handle aliases (download -> Downloads).
+- **[2025-12-03]** Integrated Voice & Chat into unified UI (`ChatView.jsx`).
+- **[2025-12-03]** Created `WebSocketContext` for global voice state.
+- **[2025-12-03]** Updated Dashboard header font size to `text-5xl` (PURE_UI_STYLE).
+
+---
+
+## 💬 When Unsure
+
+> "I see [X] in the project memory. Before I proceed:
+> - Is [server] currently running on port [PORT]?
+> - Should I modify [existing file] or create new?"
+
+**Never assume. Always verify.**

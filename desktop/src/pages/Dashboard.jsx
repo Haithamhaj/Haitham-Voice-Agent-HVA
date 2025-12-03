@@ -39,7 +39,7 @@ const Dashboard = () => {
         <div className="space-y-6">
             <header className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-hva-cream">صباح الخير، هيثم</h1>
+                    <h1 className="text-5xl font-bold text-hva-cream">صباح الخير، هيثم</h1>
                     <p className="text-hva-muted mt-1">إليك ملخص سريع ليومك</p>
                 </div>
                 <div className="bg-hva-card p-3 rounded-2xl border border-hva-border-subtle flex items-center gap-3">

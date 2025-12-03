@@ -43,6 +43,20 @@ class FileTools:
             clean_path = path_str.strip()
             if clean_path.lower() in ["~", "home", "هيثم", "haitham"]:
                 return self.home_dir
+
+            # Smart Folder Aliases (Handle case/plural variations)
+            COMMON_FOLDERS = {
+                "download": "Downloads", "downloads": "Downloads",
+                "document": "Documents", "documents": "Documents",
+                "desktop": "Desktop",
+                "picture": "Pictures", "pictures": "Pictures",
+                "movie": "Movies", "movies": "Movies",
+                "music": "Music",
+                "public": "Public"
+            }
+            
+            if clean_path.lower() in COMMON_FOLDERS:
+                return self.home_dir / COMMON_FOLDERS[clean_path.lower()]
                 
             # 2. Resolve Path
             # Expand user (~) and resolve absolute path
