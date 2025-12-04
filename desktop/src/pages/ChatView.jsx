@@ -117,8 +117,8 @@ const ChatView = () => {
                                 className="flex items-center gap-3 bg-black/20 p-3 rounded-lg hover:bg-black/30 transition-colors cursor-pointer group"
                             >
                                 <div className={`w-8 h-8 rounded flex items-center justify-center transition-transform group-hover:scale-110 ${file.type === 'directory' || file.extension === 'DIR'
-                                        ? 'bg-blue-500/20 text-blue-400'
-                                        : 'bg-hva-accent/20 text-hva-accent'
+                                    ? 'bg-blue-500/20 text-blue-400'
+                                    : 'bg-hva-accent/20 text-hva-accent'
                                     }`}>
                                     {file.type === 'directory' || file.extension === 'DIR'
                                         ? <span className="text-xs font-bold">DIR</span>
@@ -152,7 +152,7 @@ const ChatView = () => {
     return (
         <div className="flex flex-col h-full space-y-4">
             <header>
-                <h1 className="text-3xl font-bold text-hva-cream flex items-center gap-3">
+                <h1 className="text-5xl font-bold text-hva-cream flex items-center gap-3">
                     <Bot className="text-hva-accent" size={32} />
                     المحادثة
                 </h1>

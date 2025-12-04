@@ -93,6 +93,7 @@ globs:
 - **[2025-12-03]** Integrated Voice & Chat into unified UI (`ChatView.jsx`).
 - **[2025-12-03]** Created `WebSocketContext` for global voice state.
 - **[2025-12-03]** Updated Dashboard header font size to `text-5xl` (PURE_UI_STYLE).
+- **[2025-12-03]** Updated ChatView header font size to `text-5xl` (PURE_UI_STYLE).
 
 ---
 
