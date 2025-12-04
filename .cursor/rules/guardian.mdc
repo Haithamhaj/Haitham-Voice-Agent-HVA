@@ -116,7 +116,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
-| 2025-12-04 16:55 | BUG_FIX_FLOW | **UI Display Fix**: Updated `api/routes/chat.py` to correctly label responses as **GPT-5 (Premium)** instead of the hardcoded default `GPT-5-mini`. | api/routes/chat.py |
+| 2025-12-04 17:00 | PERFORMANCE_FLOW | **DeepOrganizer Optimization**: Parallelized file analysis in `scan_and_plan` using `asyncio.gather` (max 5 concurrent) and added a 20-file limit per batch to prevent timeouts and high costs. | haitham_voice_agent/tools/deep_organizer.py |
 | 2025-12-04 14:00 | BUG_FIX_FLOW | Fixed **Action not found** error for "Organize Documents". Updated `ollama_orchestrator.py` to include `organize_documents` intent and mapped `open_folder` to `open_file` in `chat.py`. | haitham_voice_agent/ollama_orchestrator.py, api/routes/chat.py |
 | 2025-12-04 13:50 | BUG_FIX_FLOW | Fixed **File Tree Interaction**: Added click handler to `FileSystemTree` to open files using the system default app via `/files/open` API. | desktop/src/components/dashboard/FileSystemTree.jsx |
 | 2025-12-04 13:40 | BUG_FIX_FLOW | Fixed **File Tree API**: Added missing `/files` prefix to router in `main.py` and added `/open` endpoint. Rearranged **Dashboard Layout**: System Activity and Usage Widget are now side-by-side, with File Tree full-width at the bottom. | api/main.py, api/routes/files.py, desktop/src/pages/Dashboard.jsx |

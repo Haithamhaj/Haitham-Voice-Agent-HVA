@@ -53,7 +53,8 @@ class DeepOrganizer:
             "scanned": 0
         }
         
-        # Recursive scan
+        # Collect all valid files first
+        files_to_process = []
         for root, dirs, files in os.walk(root_path):
             # Filter directories in-place
             dirs[:] = [d for d in dirs if d not in self.IGNORE_DIRS and not d.startswith(".")]
@@ -69,12 +70,29 @@ class DeepOrganizer:
                     plan["ignored"] += 1
                     continue
                 
-                # Analyze and propose change
-                change = await self._analyze_file(file_path, root_path)
-                if change:
-                    plan["changes"].append(change)
+                files_to_process.append((file_path, root_path))
                 
-                plan["scanned"] += 1
+        # Limit total files to prevent massive bills/timeouts
+        MAX_FILES = 20
+        if len(files_to_process) > MAX_FILES:
+            logger.warning(f"Too many files ({len(files_to_process)}). Limiting to {MAX_FILES}.")
+            files_to_process = files_to_process[:MAX_FILES]
+            
+        # Process in parallel with semaphore
+        import asyncio
+        semaphore = asyncio.Semaphore(5) # Max 5 concurrent GPT calls
+        
+        async def analyze_with_limit(fp, rp):
+            async with semaphore:
+                return await self._analyze_file(fp, rp)
+        
+        tasks = [analyze_with_limit(fp, rp) for fp, rp in files_to_process]
+        results = await asyncio.gather(*tasks)
+        
+        for change in results:
+            plan["scanned"] += 1
+            if change:
+                plan["changes"].append(change)
                 
         return plan
 
