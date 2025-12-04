@@ -20,6 +20,14 @@ const monitoredFetch = async (endpoint, options = {}) => {
 };
 
 export const api = {
+    // Generic
+    get: (endpoint) => monitoredFetch(endpoint),
+    post: (endpoint, body) => monitoredFetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }),
+
     // Voice
     startVoice: () => monitoredFetch('/voice/start', { method: 'POST' }),
     stopVoice: () => monitoredFetch('/voice/stop', { method: 'POST' }),

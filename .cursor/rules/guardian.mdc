@@ -116,7 +116,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
-| 2025-12-04 14:40 | NEW_FEATURE_FLOW | Implemented **System Health Dashboard**: Added `/system/health` endpoint and `SystemHealthWidget` to Dashboard. Displays CPU/RAM/Disk stats and smart cleanup recommendations. | api/routes/system.py, desktop/src/components/dashboard/SystemHealthWidget.jsx, desktop/src/pages/Dashboard.jsx |
+| 2025-12-04 14:50 | BUG_FIX_FLOW | Fixed **Action Not Found Error**: Removed non-existent `open_folder` from `llm_router.py` tool definitions. Instructed GPT to use `open_file` for both files and folders. | haitham_voice_agent/llm_router.py |
 | 2025-12-04 14:00 | BUG_FIX_FLOW | Fixed **Action not found** error for "Organize Documents". Updated `ollama_orchestrator.py` to include `organize_documents` intent and mapped `open_folder` to `open_file` in `chat.py`. | haitham_voice_agent/ollama_orchestrator.py, api/routes/chat.py |
 | 2025-12-04 13:50 | BUG_FIX_FLOW | Fixed **File Tree Interaction**: Added click handler to `FileSystemTree` to open files using the system default app via `/files/open` API. | desktop/src/components/dashboard/FileSystemTree.jsx |
 | 2025-12-04 13:40 | BUG_FIX_FLOW | Fixed **File Tree API**: Added missing `/files` prefix to router in `main.py` and added `/open` endpoint. Rearranged **Dashboard Layout**: System Activity and Usage Widget are now side-by-side, with File Tree full-width at the bottom. | api/main.py, api/routes/files.py, desktop/src/pages/Dashboard.jsx |
