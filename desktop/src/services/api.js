@@ -61,6 +61,9 @@ export const api = {
         });
         if (!response.ok) throw new Error('Failed to open file');
         return response.json();
-    }
+    },
+
+    // Usage
+    fetchUsageStats: (days = 30) => monitoredFetch(`/usage/stats?days=${days}`)
 };
 

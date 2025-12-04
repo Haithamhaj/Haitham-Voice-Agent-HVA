@@ -356,3 +356,6 @@ class MemorySystem:
         except Exception as e:
             logger.error(f"File search failed: {e}")
             return []
+
+# Singleton instance
+memory_system = MemorySystem()

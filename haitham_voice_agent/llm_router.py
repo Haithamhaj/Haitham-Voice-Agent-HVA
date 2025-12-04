@@ -18,6 +18,7 @@ import openai
 import google.generativeai as genai
 
 from .config import Config
+from .token_tracker import get_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +133,25 @@ class LLMRouter:
             )
             
             result = response.text
+            
+            # Track Usage
+            try:
+                # Gemini doesn't always return token counts in simple response, 
+                # but we can estimate or check usage_metadata if available.
+                # usage_metadata is available in recent versions.
+                usage = response.usage_metadata
+                input_tokens = usage.prompt_token_count if usage else len(full_prompt) // 4
+                output_tokens = usage.candidates_token_count if usage else len(result) // 4
+                
+                await get_tracker().track_usage(
+                    model=model_name,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    context={"method": "generate_with_gemini"}
+                )
+            except Exception as e:
+                logger.warning(f"Failed to track Gemini usage: {e}")
+
             logger.debug(f"Gemini response: {result[:100]}...")
             return {"content": result, "model": model_name}
             
@@ -204,6 +224,20 @@ class LLMRouter:
             response = await client.chat.completions.create(**kwargs)
             
             result = response.choices[0].message.content
+            
+            # Track Usage
+            try:
+                usage = response.usage
+                if usage:
+                    await get_tracker().track_usage(
+                        model=model_name,
+                        input_tokens=usage.prompt_tokens,
+                        output_tokens=usage.completion_tokens,
+                        context={"method": "generate_with_gpt"}
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to track GPT usage: {e}")
+
             logger.debug(f"GPT response: {result[:100]}...")
             return {"content": result, "model": model_name}
             

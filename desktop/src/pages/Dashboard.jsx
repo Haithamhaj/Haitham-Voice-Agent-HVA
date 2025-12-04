@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Clock, Sun } from 'lucide-react';
 
 import { api } from '../services/api';
+import UsageWidget from '../components/dashboard/UsageWidget';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -78,6 +79,9 @@ const Dashboard = () => {
                     </div>
                     <h3 className="text-hva-muted font-medium">مواعيد اليوم</h3>
                 </div>
+
+                {/* Usage Widget */}
+                <UsageWidget />
             </div>
 
             <div className="bg-hva-card rounded-2xl border border-hva-border-subtle p-6">

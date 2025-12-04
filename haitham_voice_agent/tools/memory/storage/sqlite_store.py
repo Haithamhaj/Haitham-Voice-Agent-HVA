@@ -81,6 +81,22 @@ class SQLiteStore:
             """)
             await db.execute("CREATE INDEX IF NOT EXISTS idx_file_project ON file_index(project_id)")
             
+            # Create Token Usage Table
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS token_usage (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT NOT NULL,
+                    model TEXT NOT NULL,
+                    input_tokens INTEGER NOT NULL,
+                    output_tokens INTEGER NOT NULL,
+                    total_tokens INTEGER NOT NULL,
+                    cost REAL NOT NULL,
+                    context TEXT -- JSON dict for extra metadata (e.g. tool used)
+                )
+            """)
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_usage_timestamp ON token_usage(timestamp)")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_usage_model ON token_usage(model)")
+            
             await db.commit()
             logger.info("SQLite schema initialized")
 
@@ -338,3 +354,70 @@ class SQLiteStore:
         except Exception as e:
             logger.error(f"Failed to get stale items: {e}")
             return []
+
+    async def log_token_usage(self, model: str, input_tokens: int, output_tokens: int, cost: float, context: Dict[str, Any] = None) -> bool:
+        """Log token usage and cost"""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                await db.execute("""
+                    INSERT INTO token_usage (timestamp, model, input_tokens, output_tokens, total_tokens, cost, context)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    datetime.now().isoformat(),
+                    model,
+                    input_tokens,
+                    output_tokens,
+                    input_tokens + output_tokens,
+                    cost,
+                    json.dumps(context or {})
+                ))
+                await db.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to log token usage: {e}")
+            return False
+
+    async def get_token_usage_stats(self, days: int = 30) -> Dict[str, Any]:
+        """Get usage statistics for the last N days"""
+        try:
+            modifier = f"-{days} days"
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                
+                # Total Stats
+                async with db.execute("""
+                    SELECT 
+                        SUM(cost) as total_cost,
+                        SUM(total_tokens) as total_tokens,
+                        COUNT(*) as request_count
+                    FROM token_usage
+                    WHERE timestamp > date('now', ?)
+                """, (modifier,)) as cursor:
+                    total_row = await cursor.fetchone()
+                    total_stats = dict(total_row) if total_row else {}
+
+                # Stats by Model
+                async with db.execute("""
+                    SELECT 
+                        model,
+                        SUM(cost) as cost,
+                        SUM(total_tokens) as tokens,
+                        COUNT(*) as count
+                    FROM token_usage
+                    WHERE timestamp > date('now', ?)
+                    GROUP BY model
+                    ORDER BY cost DESC
+                """, (modifier,)) as cursor:
+                    model_rows = await cursor.fetchall()
+                    model_stats = [dict(row) for row in model_rows]
+
+                return {
+                    "period_days": days,
+                    "total_cost": total_stats.get("total_cost") or 0.0,
+                    "total_tokens": total_stats.get("total_tokens") or 0,
+                    "request_count": total_stats.get("request_count") or 0,
+                    "by_model": model_stats
+                }
+        except Exception as e:
+            logger.error(f"Failed to get usage stats: {e}")
+            return {}
