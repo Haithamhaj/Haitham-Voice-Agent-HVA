@@ -155,7 +155,7 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def create_folder(self, directory: str) -> Dict[str, Any]:
+    async def create_folder(self, directory: str, **kwargs) -> Dict[str, Any]:
         """Create a new folder (Sandboxed)"""
         try:
             dir_path = self._validate_path(directory)
@@ -175,7 +175,7 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def delete_folder(self, directory: str, confirmed: bool = False) -> Dict[str, Any]:
+    async def delete_folder(self, directory: str, confirmed: bool = False, **kwargs) -> Dict[str, Any]:
         """Delete a folder (Sandboxed + Confirmation)"""
         if not confirmed:
             return {
@@ -204,7 +204,35 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def search_files(self, directory: str, name_pattern: str, content_pattern: Optional[str] = None) -> Dict[str, Any]:
+    async def delete_file(self, path: str, confirmed: bool = False, **kwargs) -> Dict[str, Any]:
+        """Delete a file (Sandboxed + Confirmation)"""
+        if not confirmed:
+            return {
+                "status": "confirmation_required",
+                "message": f"Are you sure you want to delete file '{Path(path).name}'?",
+                "command": "files.delete_file",
+                "risk_level": "high"
+            }
+            
+        try:
+            file_path = self._validate_path(path)
+            if not file_path:
+                return {"error": True, "message": "Access denied or invalid path"}
+            
+            if not file_path.exists():
+                return {"error": True, "message": "File not found"}
+            
+            if not file_path.is_file():
+                return {"error": True, "message": "Not a file"}
+
+            os.remove(file_path)
+            logger.warning(f"Deleted file: {file_path}")
+            return {"status": "deleted", "path": str(file_path)}
+            
+        except Exception as e:
+            return {"error": True, "message": str(e)}
+
+    async def search_files(self, directory: str, name_pattern: str, content_pattern: Optional[str] = None, **kwargs) -> Dict[str, Any]:
         """Search files (Sandboxed)"""
         try:
             dir_path = self._validate_path(directory)
@@ -263,7 +291,7 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def read_file(self, path: str, max_length: int = 5000) -> Dict[str, Any]:
+    async def read_file(self, path: str, max_length: int = 5000, **kwargs) -> Dict[str, Any]:
         """Read content of a text file (Sandboxed)"""
         try:
             target_path = self._validate_path(path)
@@ -322,7 +350,7 @@ class FileTools:
             size /= 1024.0
         return f"{size:.1f} TB"
 
-    async def move_file(self, source: str, destination: str, overwrite: bool = False, confirmed: bool = False) -> Dict[str, Any]:
+    async def move_file(self, source: str, destination: str, overwrite: bool = False, confirmed: bool = False, **kwargs) -> Dict[str, Any]:
         """Move a file from source to destination (Sandboxed)"""
         if not confirmed:
             return {
@@ -426,34 +454,39 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def organize_documents(self, path: str = None) -> Dict[str, Any]:
+    async def organize_documents(self, path: str = None, **kwargs) -> Dict[str, Any]:
         """
         Analyze and propose reorganization for a folder (e.g., Documents).
         Returns a plan that requires confirmation.
         """
+        # Handle LLM parameter hallucinations
+        target_path = path or kwargs.get("folder_path") or kwargs.get("directory")
+        
+        if not target_path:
+            return {"error": True, "message": "Please specify a folder to organize."}
         try:
             from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
             
             target_path = self._validate_path(path or "Documents")
             if not target_path:
                  return {"error": True, "message": "Invalid path"}
-                 
-            organizer = get_deep_organizer()
-            plan = await organizer.scan_and_plan(str(target_path))
             
-            # Return as a special "plan" type for the frontend/chat to handle
+            organizer = get_deep_organizer()
+            # Use target_path instead of path
+            plan = await organizer.propose_organization(target_path)
+            
             return {
-                "type": "organization_plan",
+                "status": "plan_ready",
                 "plan": plan,
-                "message": f"Found {len(plan['changes'])} files to organize.",
-                "status": "confirmation_required",
+                "requires_confirmation": True,
+                "message": f"I've analyzed {target_path}. Found {len(plan['moves'])} files to organize.",
                 "command": "files.execute_organization", # Future command
                 "params": {"plan": plan}
             }
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def execute_organization(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_organization(self, plan: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Execute the approved organization plan"""
         try:
             from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
@@ -462,7 +495,7 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def get_file_tree(self, path: str = "~", depth: int = 2) -> Dict[str, Any]:
+    async def get_file_tree(self, path: str = "~", depth: int = 2, **kwargs) -> Dict[str, Any]:
         """Get file system tree structure (Sandboxed)"""
         try:
             root_path = self._validate_path(path)

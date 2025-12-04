@@ -55,9 +55,9 @@ class Config:
     # Logical model names → actual API model strings
     # This allows us to upgrade models in ONE place without touching routing logic
     MODEL_MAPPING = {
-        "logical.nano":        "gpt-5-mini",       # Fastest, cheapest (New!)
+        "logical.nano":        "gpt-5-mini",       # Keep nano fast
         "logical.nano-plus":   "gpt-5-mini",       
-        "logical.mini":        "gpt-5-mini",       # Main workhorse (upgraded from gpt-4o)
+        "logical.mini":        "gpt-5",            # UPGRADED: Main workhorse is now Premium (User Request)
         "logical.premium":     "gpt-5",            # High intelligence (Standard)
         "logical.thinking":    "gpt-5-thinking",   # Reasoning model
         "logical.doc-gemini":  "logical.gemini.pro", # Delegate to Gemini mapping
