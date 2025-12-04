@@ -92,7 +92,8 @@ class FileTools:
         folder_name: str = None,
         folder: str = None,
         pattern: Optional[str] = None,
-        recursive: bool = False
+        recursive: bool = False,
+        sort_by: str = "name" # name, date, size
     ) -> Dict[str, Any]:
         """List files in a directory (Sandboxed)"""
         try:
@@ -127,6 +128,14 @@ class FileTools:
                 # Get info for both files and directories
                 files.append(self._get_file_info(file_path))
             
+            # Sort files
+            if sort_by == "date":
+                files.sort(key=lambda x: x.get("modified", 0), reverse=True)
+            elif sort_by == "size":
+                files.sort(key=lambda x: x.get("size", 0), reverse=True)
+            else: # name (default)
+                files.sort(key=lambda x: x.get("name", "").lower())
+
             # Format output
             file_names = [f["name"] for f in files]
             display_text = "\n".join(file_names[:10])

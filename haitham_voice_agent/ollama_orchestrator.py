@@ -47,7 +47,7 @@ When request is a simple system command:
 VALID INTENTS:
 - open_folder: افتح مجلد، open folder
 - open_app: افتح برنامج، شغل تطبيق، open app، launch
-- show_files: اعرض الملفات، list files
+- show_files: اعرض الملفات، list files (params: path, sort_by [date, size, name])
 - morning_briefing: صباح الخير، good morning (triggers daily briefing)
 - work_mode: وضع العمل، work mode
 - meeting_mode: وضع الاجتماع، meeting mode
@@ -56,6 +56,7 @@ VALID INTENTS:
 
 Response:
 {"type": "execute_command", "intent": "open_folder", "parameters": {"path": "Downloads"}}
+{"type": "execute_command", "intent": "show_files", "parameters": {"path": "Downloads", "sort_by": "date"}}
 {"type": "execute_command", "intent": "open_app", "parameters": {"app": "Safari"}}
 {"type": "execute_command", "intent": "work_mode", "parameters": {}}
 

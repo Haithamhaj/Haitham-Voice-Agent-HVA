@@ -109,6 +109,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
+| 2025-12-04 08:54 | BUG_FIX | Fixed file sorting by date/size and resolved 'Action not found' for tasks.add_task. | haitham_voice_agent/tools/files.py, haitham_voice_agent/ollama_orchestrator.py, api/routes/chat.py |
 | 2025-12-04 08:43 | UI_BEHAVIOUR_TWEAK | Improved file listing response: added localization and passed full file data to frontend. | api/routes/chat.py |
 | 2025-12-04 08:37 | NEW_FEATURE_FLOW | Updated LLM Router and Tools to propagate Gemini/GPT model names to UI. | haitham_voice_agent/llm_router.py, haitham_voice_agent/tools/docs.py, api/routes/chat.py |
 |------|------|-------------|-------|

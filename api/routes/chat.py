@@ -46,10 +46,23 @@ async def chat(request: ChatRequest):
             elif ollama_result["intent"] == "open_app":
                  step = {"tool": "system", "action": "open_app", "params": {"app_name": ollama_result["parameters"].get("app")}}
             elif ollama_result["intent"] == "show_files":
-                 step = {"tool": "files", "action": "list_files", "params": {"directory": ollama_result["parameters"].get("path")}}
+                 step = {
+                     "tool": "files", 
+                     "action": "list_files", 
+                     "params": {
+                         "directory": ollama_result["parameters"].get("path"),
+                         "sort_by": ollama_result["parameters"].get("sort_by", "name")
+                     }
+                 }
             
             if step:
-                result = await dispatcher.dispatch(step)
+                try:
+                    result = await dispatcher.dispatch(step)
+                except Exception as e:
+                    # Handle "Action not found" or other dispatch errors gracefully
+                    logger.warning(f"Dispatch failed for {step}: {e}")
+                    # Fallback to GPT if local dispatch fails (e.g. for complex tasks)
+                    return {"response": "عذراً، لم أتمكن من تنفيذ هذا الأمر محلياً. سأحاول بطريقة أخرى.", "model": "Qwen 2.5 (Local)"}
                 
                 # Localize response if input is Arabic
                 response_text = str(result.get("message") or result)
@@ -97,6 +110,8 @@ async def chat(request: ChatRequest):
                 step = {"tool": "tasks", "action": "list_tasks", "params": {}}
             elif action == "create_task":
                  # Extract task content if possible, or pass raw text
+                 step = {"tool": "tasks", "action": "add_task", "params": {"description": text}}
+            elif action == "tasks.add_task": # Handle potential LLM hallucinated action name
                  step = {"tool": "tasks", "action": "add_task", "params": {"description": text}}
             else:
                 # Fallback to LLM if mapping not explicit
