@@ -3,6 +3,7 @@ import { Activity, Clock, Sun } from 'lucide-react';
 
 import { api } from '../services/api';
 import UsageWidget from '../components/dashboard/UsageWidget';
+import FileSystemTree from '../components/dashboard/FileSystemTree';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -84,26 +85,34 @@ const Dashboard = () => {
                 <UsageWidget />
             </div>
 
-            <div className="bg-hva-card rounded-2xl border border-hva-border-subtle p-6">
-                <h2 className="text-xl font-bold text-hva-cream mb-4">نشاط النظام</h2>
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4 p-3 rounded-xl bg-hva-primary/50">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <div className="flex-1">
-                            <div className="text-sm text-hva-cream">تم تحديث الذاكرة بنجاح</div>
-                            <div className="text-xs text-hva-dim">قبل 5 دقائق</div>
+            <div className="grid grid-cols-3 gap-6">
+                {/* System Activity - Spans 2 columns */}
+                <div className="col-span-2 bg-hva-card rounded-2xl border border-hva-border-subtle p-6">
+                    <h2 className="text-xl font-bold text-hva-cream mb-4">نشاط النظام</h2>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4 p-3 rounded-xl bg-hva-primary/50">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <div className="flex-1">
+                                <div className="text-sm text-hva-cream">تم تحديث الذاكرة بنجاح</div>
+                                <div className="text-xs text-hva-dim">قبل 5 دقائق</div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-4 p-3 rounded-xl bg-hva-primary/50">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <div className="flex-1">
-                            <div className="text-sm text-hva-cream">تمت مزامنة البريد الإلكتروني</div>
-                            <div className="text-xs text-hva-dim">قبل 15 دقيقة</div>
+                        <div className="flex items-center gap-4 p-3 rounded-xl bg-hva-primary/50">
+                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                            <div className="flex-1">
+                                <div className="text-sm text-hva-cream">تمت مزامنة البريد الإلكتروني</div>
+                                <div className="text-xs text-hva-dim">قبل 15 دقيقة</div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {/* File System Tree - Spans 1 column */}
+                <div className="col-span-1">
+                    <FileSystemTree />
+                </div>
             </div>
-        </div>
+        </div >
     );
 };
 

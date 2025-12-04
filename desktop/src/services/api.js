@@ -74,6 +74,13 @@ export const api = {
         const response = await fetch(`${API_BASE_URL}/usage/logs?limit=${limit}`);
         if (!response.ok) throw new Error('Failed to fetch usage logs');
         return response.json();
+    },
+
+    // File System Tree
+    getFileTree: async (path = "~", depth = 2) => {
+        const response = await fetch(`${API_BASE_URL}/files/tree?path=${encodeURIComponent(path)}&depth=${depth}`);
+        if (!response.ok) throw new Error('Failed to fetch file tree');
+        return response.json();
     }
 };
 

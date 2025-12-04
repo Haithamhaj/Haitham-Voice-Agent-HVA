@@ -460,3 +460,53 @@ class FileTools:
             return await organizer.execute_plan(plan)
         except Exception as e:
             return {"error": True, "message": str(e)}
+
+    async def get_file_tree(self, path: str = "~", depth: int = 2) -> Dict[str, Any]:
+        """Get file system tree structure (Sandboxed)"""
+        try:
+            root_path = self._validate_path(path)
+            if not root_path or not root_path.exists() or not root_path.is_dir():
+                return {"error": True, "message": "Invalid directory"}
+
+            def build_tree(current_path: Path, current_depth: int):
+                if current_depth > depth:
+                    return None
+                
+                node = {
+                    "name": current_path.name,
+                    "path": str(current_path),
+                    "type": "directory",
+                    "children": []
+                }
+                
+                try:
+                    # Sort directories first, then files
+                    items = sorted(list(current_path.iterdir()), key=lambda x: (not x.is_dir(), x.name.lower()))
+                    
+                    for item in items:
+                        # Skip hidden/blacklisted
+                        if item.name.startswith(".") or item.name in self.BLACKLIST_DIRS:
+                            continue
+                            
+                        if item.is_dir():
+                            child = build_tree(item, current_depth + 1)
+                            if child:
+                                node["children"].append(child)
+                        else:
+                            # Add file node (leaf)
+                            node["children"].append({
+                                "name": item.name,
+                                "path": str(item),
+                                "type": "file",
+                                "extension": item.suffix
+                            })
+                except PermissionError:
+                    pass
+                    
+                return node
+
+            tree = build_tree(root_path, 0)
+            return {"success": True, "tree": tree}
+            
+        except Exception as e:
+            return {"error": True, "message": str(e)}

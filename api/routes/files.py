@@ -103,3 +103,10 @@ async def list_checkpoints(limit: int = 10):
     """List recent checkpoints"""
     cm = get_checkpoint_manager()
     return await cm.get_checkpoints(limit)
+
+@router.get("/tree")
+async def get_file_tree(path: str = "~", depth: int = 2):
+    """Get file system tree structure"""
+    from haitham_voice_agent.tools.files import FileTools
+    ft = FileTools()
+    return await ft.get_file_tree(path, depth)

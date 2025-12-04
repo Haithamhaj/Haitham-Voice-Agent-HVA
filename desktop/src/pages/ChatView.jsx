@@ -215,8 +215,51 @@ const ChatView = () => {
                     </div>
                 )}
 
-                {/* Default rich rendering (skip if confirmation or files) */}
-                {msg.data && !msg.data.files && msg.data.status !== 'confirmation_required' && (
+                {/* Organization Plan Visualization */}
+                {msg.data && msg.data.type === 'organization_plan' && (
+                    <div className="space-y-4">
+                        <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl">
+                            <p className="text-blue-200 font-medium mb-2">📋 خطة التنظيم المقترحة</p>
+                            <p className="text-white/90 leading-relaxed mb-4">{msg.data.message}</p>
+
+                            <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                                {msg.data.plan.changes.map((change, i) => (
+                                    <div key={i} className="bg-black/20 p-3 rounded-lg text-sm">
+                                        <div className="flex items-center gap-2 text-hva-muted mb-1">
+                                            <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                                            <span className="truncate" dir="ltr">{change.original_path.split('/').pop()}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-emerald-400 font-medium">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                            <span className="truncate" dir="ltr">{change.category}/{change.new_filename}</span>
+                                        </div>
+                                        <p className="text-xs text-hva-muted mt-1 mr-4">{change.reason}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {msg.data.status === 'confirmation_required' && (
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => handleConfirm(msg.data)}
+                                    className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 py-2 rounded-lg transition-colors font-medium"
+                                >
+                                    تنفيذ الخطة
+                                </button>
+                                <button
+                                    onClick={handleReject}
+                                    className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 py-2 rounded-lg transition-colors font-medium"
+                                >
+                                    إلغاء
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Default rich rendering (skip if confirmation or files or plan) */}
+                {msg.data && !msg.data.files && msg.data.status !== 'confirmation_required' && msg.data.type !== 'organization_plan' && (
                     <div className="space-y-2">
                         <p className="leading-relaxed">{msg.content}</p>
                         {msg.data.data && typeof msg.data.data === 'string' && (
