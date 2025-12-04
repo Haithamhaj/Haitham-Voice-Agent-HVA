@@ -245,6 +245,9 @@ class SmartOrganizer:
                 prompt = f"""
                 Analyze the following text from a file named "{item.name}" and categorize it into a folder structure "Category/Subcategory".
                 
+                CRITICAL INSTRUCTION:
+                Base your classification PRIMARILY on the text content. Use the filename only as a secondary hint if the content is ambiguous.
+                
                 Rules:
                 1. Distinguish between 'Personal' and 'Company/Work' if possible.
                 2. Use standard categories: Financials, Legal, Projects, Health, Travel, Personal.
@@ -256,8 +259,8 @@ class SmartOrganizer:
                 - "Legal/Contracts"
                 - "Projects/Mind_Q"
                 
-                Text snippet:
-                {text[:1000]}
+                Text snippet (First 5000 chars):
+                {text[:5000]}
                 """
                 
                 try:
