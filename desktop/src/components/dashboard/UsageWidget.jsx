@@ -26,7 +26,7 @@ const UsageWidget = () => {
     }, []);
 
     if (loading) return <div className="animate-pulse bg-hva-card h-40 rounded-2xl"></div>;
-    if (!stats) return null;
+    if (!stats || typeof stats.total_cost === 'undefined') return null;
 
     return (
         <div className="bg-hva-card p-6 rounded-2xl border border-hva-border-subtle hover:border-hva-accent/30 transition-colors group">
@@ -35,7 +35,7 @@ const UsageWidget = () => {
                     <DollarSign size={20} />
                 </div>
                 <div className="text-right">
-                    <span className="text-2xl font-bold text-hva-cream">${stats.total_cost.toFixed(4)}</span>
+                    <span className="text-2xl font-bold text-hva-cream">${(stats.total_cost || 0).toFixed(4)}</span>
                     <div className="text-xs text-hva-muted">Total Cost (30d)</div>
                 </div>
             </div>
@@ -45,7 +45,7 @@ const UsageWidget = () => {
                     <Cpu size={16} />
                     <span className="text-sm">Tokens</span>
                 </div>
-                <span className="text-hva-cream font-medium">{(stats.total_tokens / 1000).toFixed(1)}k</span>
+                <span className="text-hva-cream font-medium">{((stats.total_tokens || 0) / 1000).toFixed(1)}k</span>
             </div>
 
             {/* Breakdown Toggle */}
@@ -58,14 +58,14 @@ const UsageWidget = () => {
             </button>
 
             {/* Expanded Details */}
-            {expanded && (
+            {expanded && stats.by_model && (
                 <div className="mt-3 space-y-2 border-t border-hva-border-subtle pt-2">
                     {stats.by_model.map((model, idx) => (
                         <div key={idx} className="flex justify-between text-xs">
                             <span className="text-hva-muted truncate w-24" title={model.model}>{model.model}</span>
                             <div className="flex gap-3">
-                                <span className="text-hva-dim">{(model.tokens / 1000).toFixed(1)}k</span>
-                                <span className="text-hva-cream">${model.cost.toFixed(4)}</span>
+                                <span className="text-hva-dim">{((model.tokens || 0) / 1000).toFixed(1)}k</span>
+                                <span className="text-hva-cream">${(model.cost || 0).toFixed(4)}</span>
                             </div>
                         </div>
                     ))}

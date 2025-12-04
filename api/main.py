@@ -24,6 +24,13 @@ app.add_middleware(
 )
 
 from api.connection_manager import manager
+from haitham_voice_agent.tools.memory.memory_system import memory_system
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Initializing Memory System...")
+    await memory_system.initialize()
+    logger.info("Memory System Initialized")
 
 @app.get("/")
 async def root():

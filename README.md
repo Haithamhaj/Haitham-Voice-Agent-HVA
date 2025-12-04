@@ -136,6 +136,10 @@ The memory system is unified to act as a single, interconnected "brain":
     - **Auto-Cleanup**: Moves files older than 72 hours from `Downloads` to `Documents`.
     - **Content-Based Sorting**: Uses LLM to read file content and sort into granular subfolders (e.g., `Financials/Invoices` vs `Financials/Personal`).
     - **Context-Aware**: Distinguishes between Work and Personal documents.
+- **Tokenization Tracker**:
+    - **Cost Monitoring**: Real-time tracking of token usage and costs for all models (GPT-4o, Gemini, Local).
+    - **Dashboard Widget**: Visualizes spending and token count directly in the UI.
+    - **Detailed Breakdown**: Granular view of usage by model type.
 - **Workspace Manager**: Automatically creates and manages project folder structures.
 
 ### 🤖 ترقيات الذكاء (v1.1 - v1.7) | Intelligence Upgrades

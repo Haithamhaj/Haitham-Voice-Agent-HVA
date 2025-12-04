@@ -116,6 +116,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
+| 2025-12-04 12:10 | NEW_FEATURE_FLOW | Implemented Tokenization Tracker. Added TokenTracker backend, SQLite storage, API endpoints, and Frontend Usage Widget for real-time cost monitoring. | haitham_voice_agent/token_tracker.py, desktop/src/components/dashboard/UsageWidget.jsx |
 | 2025-12-04 11:58 | NEW_FEATURE_FLOW | Implemented Smart Downloads Organizer. Added 72h cleanup rule and content-based categorization (LLM) with subfolder support (Category/Subcategory). | haitham_voice_agent/tools/smart_organizer.py |
 | 2025-12-04 11:34 | NEW_FEATURE_FLOW | Implemented Smart Content Extraction. Added ContentExtractor and SmartSummarizer (Qwen/Gemini). Updated MemorySystem to ingest full content and generate summaries. Fixed VectorStore query syntax. | haitham_voice_agent/intelligence/content_extractor.py, haitham_voice_agent/intelligence/smart_summarizer.py, haitham_voice_agent/tools/memory/memory_system.py |
 | 2025-12-04 11:00 | NEW_FEATURE_FLOW | Implemented Auto-Index Critical Project Files. Added GraphStore, FileRouter, and extended ProjectRegistry. Created api/routes/files.py for scanning endpoints. | haitham_voice_agent/tools/projects.py, haitham_voice_agent/tools/memory/storage/graph_store.py, haitham_voice_agent/intelligence/file_router.py |
