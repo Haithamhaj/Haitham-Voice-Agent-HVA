@@ -33,7 +33,7 @@ class ProjectManager:
     def _save_registry(self, data: Dict[str, Any]):
         self.registry_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         
-    async def create_project(self, name: str, description: str = "", tags: List[str] = None) -> Dict[str, Any]:
+    async def create_project(self, name: str, description: str = "", tags: List[str] = None, is_critical: bool = False, auto_index_mode: str = "off") -> Dict[str, Any]:
         """Create a new project"""
         registry = self._load_registry()
         
@@ -54,7 +54,10 @@ class ProjectManager:
             "status": "active",
             "created_at": now,
             "updated_at": now,
-            "path": str(workspace_manager.get_project_folder(project_id))
+            "path": str(workspace_manager.get_project_folder(project_id)),
+            "is_critical": is_critical,
+            "auto_index_mode": auto_index_mode, # off, ask, auto
+            "watched_folders": []
         }
         
         registry["projects"].append(new_project)
@@ -70,6 +73,11 @@ class ProjectManager:
         registry = self._load_registry()
         projects = [p for p in registry["projects"] if status == "all" or p.get("status") == status]
         return {"success": True, "projects": projects, "count": len(projects)}
+
+    async def list_critical_projects(self) -> List[Dict[str, Any]]:
+        """List critical projects"""
+        registry = self._load_registry()
+        return [p for p in registry["projects"] if p.get("is_critical", False)]
         
     async def get_project(self, name_or_id: str) -> Dict[str, Any]:
         """Get project details"""

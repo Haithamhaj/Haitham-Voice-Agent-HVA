@@ -109,6 +109,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
+| 2025-12-04 11:00 | NEW_FEATURE_FLOW | Implemented Auto-Index Critical Project Files. Added GraphStore, FileRouter, and extended ProjectRegistry. Created api/routes/files.py for scanning endpoints. | haitham_voice_agent/tools/projects.py, haitham_voice_agent/tools/memory/storage/graph_store.py, haitham_voice_agent/intelligence/file_router.py |
 | 2025-12-04 10:06 | NEW_FEATURE_FLOW | Implemented Project Registry and File Index. Created projects.py, updated memory_system.py with file indexing, and integrated files.py to auto-index moved files. | haitham_voice_agent/tools/projects.py, haitham_voice_agent/tools/memory/memory_system.py, haitham_voice_agent/tools/memory/storage/sqlite_store.py |
 | 2025-12-04 09:46 | UI_BEHAVIOUR_TWEAK | Implemented confirmation flow (Approve/Reject buttons) for destructive file operations (move_file). Updated ChatView, chat API, and files tool. | haitham_voice_agent/tools/files.py, api/routes/chat.py, desktop/src/pages/ChatView.jsx |
 | 2025-12-04 09:04 | UI_BEHAVIOUR_TWEAK | Added move_file capability to FileTools and SystemTools (delegated) to enable file organization. | haitham_voice_agent/tools/files.py, haitham_voice_agent/tools/system_tools.py |

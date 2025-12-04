@@ -6,9 +6,11 @@ from typing import List, Optional, Dict, Any, Union
 from .models.memory import Memory, MemoryType, MemorySource, SensitivityLevel
 from .storage.sqlite_store import SQLiteStore
 from .storage.vector_store import VectorStore
+from .storage.graph_store import GraphStore
 from .intelligence.classifier import SmartClassifier
 from .intelligence.summarizer import Summarizer
 from .utils.embeddings import EmbeddingGenerator
+from haitham_voice_agent.intelligence.file_router import file_router
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,7 @@ class MemorySystem:
     def __init__(self):
         self.sqlite_store = SQLiteStore()
         self.vector_store = VectorStore()
+        self.graph_store = GraphStore()
         self.classifier = SmartClassifier()
         self.summarizer = Summarizer()
         self.embedding_generator = EmbeddingGenerator()
@@ -28,6 +31,57 @@ class MemorySystem:
     async def initialize(self):
         """Initialize storage systems"""
         await self.sqlite_store.initialize()
+        await self.graph_store.initialize()
+
+    # ... (existing methods) ...
+
+    async def suggest_file_project(self, path: str) -> Optional[Dict[str, Any]]:
+        """Suggest a project for a new file"""
+        result = await file_router.classify_file(path)
+        if result.confidence > 0.4 and result.candidates:
+            return {
+                "path": result.path,
+                "project_id": result.candidates[0].project_id,
+                "confidence": result.confidence,
+                "reason": result.candidates[0].reason,
+                "predicted_type": result.predicted_type
+            }
+        return None
+
+    async def ingest_file(self, path: str, project_id: str, description: str = None, tags: List[str] = None) -> bool:
+        """
+        Ingest a file into all 3 memory layers (SQLite, Vector, Graph)
+        """
+        try:
+            # 1. SQLite & Vector (via existing index_file)
+            # This handles SQLite file_index and Vector embedding
+            index_success = await self.index_file(path, project_id, description or "", tags or [])
+            if not index_success:
+                return False
+                
+            # 2. Graph Store
+            # Create File Node
+            await self.graph_store.add_node(path, "File", {"description": description})
+            
+            # Create Project Node (ensure exists)
+            await self.graph_store.add_node(project_id, "Project", {})
+            
+            # Link Project -> File
+            await self.graph_store.add_edge(project_id, path, "HAS_FILE", {"since": datetime.now().isoformat()})
+            
+            # Link File -> Concepts (Tags)
+            if tags:
+                for tag in tags:
+                    tag_id = f"concept:{tag.lower()}"
+                    await self.graph_store.add_node(tag_id, "Concept", {"name": tag})
+                    await self.graph_store.add_edge(path, tag_id, "REFERS_TO", {})
+            
+            logger.info(f"Ingested file {path} into Project {project_id} (3-Layer)")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to ingest file {path}: {e}")
+            return False
         
     async def add_memory(
         self, 
