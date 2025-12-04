@@ -381,6 +381,24 @@ The project is fortified with an advanced security system:
     *   Blacklists sensitive folders (`.ssh`, `Library`) even within the home directory.
 *   **🔐 Secure Credential Store**:
     *   Uses **macOS Keychain** to securely store Google API credentials.
+*   **🛡️ Action Confirmation (New)**:
+    *   **Destructive Actions**: Operations like moving, deleting, or renaming files now trigger a **Confirmation UI**.
+    *   **Approve/Reject**: You must explicitly click "Approve" (موافق) or "Reject" (إلغاء) to proceed.
+    *   **Direct Execution**: Once approved, the system executes the command directly with a high-priority flag.
+
+### 🧠 Advanced Memory & Organization (v2.1)
+
+<div dir="rtl">
+
+*   **Project Registry**: نظام مركزي لإدارة المشاريع (`projects.json`) يمنع تشتت الملفات.
+*   **File Index**: فهرس دلالي (Semantic Index) يربط الملفات بالمشاريع والمفاهيم، مما يسمح بالبحث عن الملفات بمحتواها وليس فقط باسمها.
+*   **Auto-Indexing**: عند نقل ملف إلى مشروع، يتم فهرسته وإنشاء "ذكرى" تلقائياً.
+
+</div>
+
+*   **Project Registry**: A centralized system (`projects.json`) to manage projects and prevent file scatter.
+*   **File Index**: A semantic index linking files to projects and concepts, enabling search by content/meaning.
+*   **Auto-Indexing**: Moving a file to a project automatically indexes it and creates a memory entry.
 
 ---
 
