@@ -286,3 +286,57 @@ class FileTools:
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
+
+    async def move_file(self, source: str, destination: str, overwrite: bool = False) -> Dict[str, Any]:
+        """Move a file from source to destination (Sandboxed)"""
+        try:
+            # Validate paths
+            src_path = self._validate_path(source)
+            dest_path = self._validate_path(destination)
+            
+            if not src_path or not dest_path:
+                return {"error": True, "message": "Access denied or invalid path"}
+            
+            if not src_path.exists():
+                # Try relative to home
+                src_path = self._validate_path(f"~/{source}")
+                if not src_path or not src_path.exists():
+                    return {"error": True, "message": f"Source file not found: {source}"}
+            
+            if not src_path.is_file():
+                return {"error": True, "message": f"Source is not a file: {src_path.name}"}
+
+            # Handle destination
+            # If destination is a directory, append filename
+            if dest_path.is_dir():
+                dest_path = dest_path / src_path.name
+            elif not dest_path.parent.exists():
+                 # Create parent dirs if they don't exist? 
+                 # For safety, maybe just require parent to exist or create it?
+                 # Let's create parent dirs to be helpful
+                 dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Check for overwrite
+            if dest_path.exists() and not overwrite:
+                # Auto-rename if not overwriting
+                base = dest_path.stem
+                suffix = dest_path.suffix
+                counter = 1
+                while dest_path.exists():
+                    dest_path = dest_path.with_name(f"{base}_{counter}{suffix}")
+                    counter += 1
+                logger.info(f"Destination exists, renamed to: {dest_path.name}")
+
+            # Perform Move
+            shutil.move(str(src_path), str(dest_path))
+            logger.info(f"Moved file: {src_path} -> {dest_path}")
+            
+            return {
+                "status": "moved",
+                "source": str(src_path),
+                "destination": str(dest_path),
+                "message": f"Moved {src_path.name} to {dest_path.parent.name}"
+            }
+            
+        except Exception as e:
+            return {"error": True, "message": str(e)}

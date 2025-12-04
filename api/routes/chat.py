@@ -113,6 +113,9 @@ async def chat(request: ChatRequest):
                  step = {"tool": "tasks", "action": "add_task", "params": {"description": text}}
             elif action == "tasks.add_task": # Handle potential LLM hallucinated action name
                  step = {"tool": "tasks", "action": "add_task", "params": {"description": text}}
+            elif action == "system.move_file" or action == "files.move_file":
+                 # Map move_file hallucination to files tool
+                 step = {"tool": "files", "action": "move_file", "params": params}
             else:
                 # Fallback to LLM if mapping not explicit
                 logger.info("Intent matched but no direct mapping, falling back to LLM")

@@ -225,3 +225,19 @@ class SystemTools:
         # or better, the dispatcher should map 'morning_briefing' intent to Secretary.
         # However, for now, let's return a success message that triggers the UI/TTS.
         return {"success": True, "message": "Starting Morning Briefing...", "action": "trigger_briefing"}
+
+    async def move_file(self, source: str = None, destination: str = None, source_path: str = None, destination_path: str = None, overwrite: bool = False) -> Dict[str, Any]:
+        """
+        Move a file (Delegates to FileTools).
+        """
+        from haitham_voice_agent.tools.files import FileTools
+        file_tools = FileTools()
+        
+        # Handle aliases
+        final_source = source or source_path
+        final_dest = destination or destination_path
+        
+        if not final_source or not final_dest:
+             return {"error": True, "message": "Missing source or destination path"}
+             
+        return await file_tools.move_file(final_source, final_dest, overwrite)
