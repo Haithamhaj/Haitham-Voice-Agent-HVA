@@ -179,8 +179,18 @@ async def chat(request: ChatRequest):
              return {"response": response_data["content"], "type": "text", "model": response_data["model"]}
 
         # Return full result for rich rendering
+        # Return full result for rich rendering
+        response_text = str(last_result.get("message") or last_result.get("content") or "تم التنفيذ.")
+        
+        # Special handling for Organizer Report
+        if "total_moved" in last_result and "categories" in last_result:
+            count = last_result["total_moved"]
+            cats = last_result["categories"]
+            details = ", ".join([f"{k}: {v}" for k, v in cats.items()])
+            response_text = f"تم نقل {count} ملفات إلى المستندات.\nالتفاصيل: {details}"
+            
         return {
-            "response": str(last_result.get("message") or last_result.get("content") or "تم التنفيذ."),
+            "response": response_text,
             "type": "action_result",
             "data": last_result,
             "model": last_result.get("model", "GPT-5-mini") # Default to GPT if not specified
