@@ -267,7 +267,7 @@ async def chat(request: ChatRequest):
             "response": response_text,
             "type": "action_result",
             "data": last_result,
-            "model": last_result.get("model", "GPT-5-mini") # Default to GPT if not specified
+            "model": last_result.get("model", "GPT-5 (Premium)") # Default to GPT if not specified
         }
 
     except Exception as e:

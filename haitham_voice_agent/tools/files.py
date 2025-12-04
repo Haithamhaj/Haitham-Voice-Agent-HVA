@@ -473,7 +473,7 @@ class FileTools:
             
             organizer = get_deep_organizer()
             # Use target_path instead of path
-            plan = await organizer.propose_organization(target_path)
+            plan = await organizer.scan_and_plan(str(target_path))
             
             return {
                 "status": "plan_ready",
