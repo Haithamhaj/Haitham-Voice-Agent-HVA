@@ -97,6 +97,19 @@ class SQLiteStore:
             await db.execute("CREATE INDEX IF NOT EXISTS idx_usage_timestamp ON token_usage(timestamp)")
             await db.execute("CREATE INDEX IF NOT EXISTS idx_usage_model ON token_usage(model)")
             
+            # Create Checkpoints Table (Time Machine)
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS checkpoints (
+                    id TEXT PRIMARY KEY,
+                    timestamp TEXT NOT NULL,
+                    action_type TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    data TEXT NOT NULL, -- JSON list of operations
+                    status TEXT DEFAULT 'active' -- active, rolled_back
+                )
+            """)
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_checkpoint_timestamp ON checkpoints(timestamp)")
+            
             await db.commit()
             logger.info("SQLite schema initialized")
 

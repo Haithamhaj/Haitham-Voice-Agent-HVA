@@ -62,3 +62,44 @@ async def ingest_file(request: IngestRequest):
         return {"status": "success", "message": f"File ingested into project {request.project_id}"}
     else:
         raise HTTPException(status_code=500, detail="Failed to ingest file")
+
+# --- Deep Organizer Endpoints ---
+
+from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
+
+class OrganizePlanRequest(BaseModel):
+    path: str
+
+class OrganizeExecuteRequest(BaseModel):
+    plan: dict
+
+@router.post("/organize/plan")
+async def plan_organization(request: OrganizePlanRequest):
+    """Generate a plan to reorganize and rename files"""
+    organizer = get_deep_organizer()
+    return await organizer.scan_and_plan(request.path)
+
+@router.post("/organize/execute")
+async def execute_organization(request: OrganizeExecuteRequest):
+    """Execute the approved organization plan"""
+    organizer = get_deep_organizer()
+    return await organizer.execute_plan(request.plan)
+
+# --- Checkpoint Endpoints ---
+
+from haitham_voice_agent.tools.checkpoint_manager import get_checkpoint_manager
+
+class RollbackRequest(BaseModel):
+    checkpoint_id: str
+
+@router.post("/checkpoints/rollback")
+async def rollback_checkpoint(request: RollbackRequest):
+    """Rollback a specific checkpoint"""
+    cm = get_checkpoint_manager()
+    return await cm.rollback_checkpoint(request.checkpoint_id)
+
+@router.get("/checkpoints")
+async def list_checkpoints(limit: int = 10):
+    """List recent checkpoints"""
+    cm = get_checkpoint_manager()
+    return await cm.get_checkpoints(limit)

@@ -390,3 +390,39 @@ class FileTools:
             
         except Exception as e:
             return {"error": True, "message": str(e)}
+
+    async def organize_documents(self, path: str = None) -> Dict[str, Any]:
+        """
+        Analyze and propose reorganization for a folder (e.g., Documents).
+        Returns a plan that requires confirmation.
+        """
+        try:
+            from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
+            
+            target_path = self._validate_path(path or "Documents")
+            if not target_path:
+                 return {"error": True, "message": "Invalid path"}
+                 
+            organizer = get_deep_organizer()
+            plan = await organizer.scan_and_plan(str(target_path))
+            
+            # Return as a special "plan" type for the frontend/chat to handle
+            return {
+                "type": "organization_plan",
+                "plan": plan,
+                "message": f"Found {len(plan['changes'])} files to organize.",
+                "status": "confirmation_required",
+                "command": "files.execute_organization", # Future command
+                "params": {"plan": plan}
+            }
+        except Exception as e:
+            return {"error": True, "message": str(e)}
+
+    async def execute_organization(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the approved organization plan"""
+        try:
+            from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
+            organizer = get_deep_organizer()
+            return await organizer.execute_plan(plan)
+        except Exception as e:
+            return {"error": True, "message": str(e)}

@@ -189,6 +189,57 @@ async def chat(request: ChatRequest):
             details = ", ".join([f"{k}: {v}" for k, v in cats.items()])
             response_text = f"تم نقل {count} ملفات إلى المستندات.\nالتفاصيل: {details}"
             
+        # Special handling for Organization Plan (Deep Organizer)
+        if last_result.get("type") == "organization_plan":
+            plan = last_result.get("plan", {})
+            changes = plan.get("changes", [])
+            count = len(changes)
+            
+            if count == 0:
+                response_text = "لم يتم العثور على ملفات تحتاج إلى تنظيم."
+            else:
+                response_text = f"🔍 تم تحليل {plan.get('scanned', 0)} ملف.\n"
+                response_text += f"✨ تم اقتراح تغييرات لـ {count} ملف:\n\n"
+                for change in changes[:3]: # Show first 3 examples
+                    old_name = change['original_path'].split('/')[-1]
+                    new_name = change['new_filename']
+                    cat = change['category']
+                    response_text += f"📄 {old_name} ➡️ {cat}/{new_name}\n"
+                
+                if count > 3:
+                    response_text += f"\n...و {count - 3} ملفات أخرى."
+                    
+                response_text += "\n\nهل تريد تنفيذ هذه التغييرات؟"
+            
+            return {
+                "response": response_text,
+                "type": "confirmation_required",
+                "data": last_result,
+                "model": "System"
+            }
+
+            return {
+                "response": response_text,
+                "type": "confirmation_required",
+                "data": last_result,
+                "model": "System"
+            }
+            
+        # Special handling for Undo/Rollback
+        if last_result.get("type") == "rollback_report":
+            success = last_result.get("success", 0)
+            failed = last_result.get("failed", 0)
+            response_text = f"✅ تم التراجع عن {success} عملية.\n"
+            if failed > 0:
+                response_text += f"⚠️ فشل التراجع عن {failed} ملفات (قد تكون حذفت أو عدلت)."
+            
+            return {
+                "response": response_text,
+                "type": "action_result",
+                "data": last_result,
+                "model": "System"
+            }
+
         return {
             "response": response_text,
             "type": "action_result",
