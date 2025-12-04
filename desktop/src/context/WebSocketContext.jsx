@@ -9,6 +9,8 @@ export const WebSocketProvider = ({ children }) => {
     const [wsConnected, setWsConnected] = useState(false);
     const wsRef = useRef(null);
 
+    const [lastLog, setLastLog] = useState(null);
+
     useEffect(() => {
         const connectWs = () => {
             if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -28,6 +30,8 @@ export const WebSocketProvider = ({ children }) => {
                     if (data.type === 'status') {
                         setIsListening(data.listening);
                         logger.info(`Voice status updated: ${data.listening}`);
+                    } else if (data.type === 'log') {
+                        setLastLog({ message: data.message, timestamp: Date.now() });
                     }
                 } catch (e) {
                     logger.error("Failed to parse WS message", e.message);
@@ -80,7 +84,7 @@ export const WebSocketProvider = ({ children }) => {
     };
 
     return (
-        <WebSocketContext.Provider value={{ isListening, wsConnected, toggleListening }}>
+        <WebSocketContext.Provider value={{ isListening, wsConnected, toggleListening, lastLog }}>
             {children}
         </WebSocketContext.Provider>
     );

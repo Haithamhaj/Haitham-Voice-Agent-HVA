@@ -11,7 +11,7 @@ const ChatView = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const messagesEndRef = useRef(null);
 
-    const { isListening, toggleListening } = useWebSocketContext();
+    const { isListening, toggleListening, lastLog } = useWebSocketContext();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -20,6 +20,33 @@ const ChatView = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Handle incoming logs
+    useEffect(() => {
+        if (lastLog) {
+            setMessages(prev => {
+                const lastMsg = prev[prev.length - 1];
+                // If last message is a log, update it to avoid clutter
+                if (lastMsg && lastMsg.role === 'system' && lastMsg.type === 'log') {
+                    const newMsgs = [...prev];
+                    newMsgs[newMsgs.length - 1] = {
+                        role: 'system',
+                        content: lastLog.message,
+                        type: 'log',
+                        timestamp: lastLog.timestamp
+                    };
+                    return newMsgs;
+                }
+                // Otherwise add new log message
+                return [...prev, {
+                    role: 'system',
+                    content: lastLog.message,
+                    type: 'log',
+                    timestamp: lastLog.timestamp
+                }];
+            });
+        }
+    }, [lastLog]);
 
     const handleVoiceToggle = async () => {
         if (isListening) {
@@ -313,20 +340,32 @@ const ChatView = () => {
 
             <div className="flex-1 bg-hva-card rounded-2xl border border-hva-border-subtle overflow-hidden flex flex-col">
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {messages.map((msg, index) => (
-                        <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-hva-accent text-hva-primary' : 'bg-hva-primary text-hva-accent'
-                                }`}>
-                                {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
+                    {messages.map((msg, index) => {
+                        if (msg.role === 'system') {
+                            return (
+                                <div key={index} className="flex w-full justify-center my-2 animate-fade-in">
+                                    <div className="bg-black/40 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs text-hva-muted font-mono">
+                                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></div>
+                                        {msg.content}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return (
+                            <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-hva-accent text-hva-primary' : 'bg-hva-primary text-hva-accent'
+                                    }`}>
+                                    {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
+                                </div>
+                                <div className={`max-w-[80%] p-4 rounded-2xl ${msg.role === 'user'
+                                    ? 'bg-hva-accent/10 text-hva-cream rounded-tr-none'
+                                    : 'bg-hva-primary/50 text-hva-cream rounded-tl-none'
+                                    }`}>
+                                    {renderMessageContent(msg)}
+                                </div>
                             </div>
-                            <div className={`max-w-[80%] p-4 rounded-2xl ${msg.role === 'user'
-                                ? 'bg-hva-accent/10 text-hva-cream rounded-tr-none'
-                                : 'bg-hva-primary/50 text-hva-cream rounded-tl-none'
-                                }`}>
-                                {renderMessageContent(msg)}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {/* Voice Listening Indicator */}
                     {isListening && (

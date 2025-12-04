@@ -99,16 +99,29 @@ class DeepOrganizer:
     async def _analyze_file(self, file_path: Path, root_path: Path) -> Optional[Dict[str, Any]]:
         """Analyze file content and propose new name/location"""
         try:
+            # Broadcast: Scanning
+            from api.connection_manager import manager
+            await manager.broadcast({"type": "log", "message": f"🔍 Scanning: {file_path.name}..."})
+            
             # Extract text
             text = content_extractor.extract_text(str(file_path))
             if not text or len(text) < 50:
                 return None # Skip empty/unreadable files
                 
+            # Step 1: Summarize with Gemini (Cost efficient & fast)
+            await manager.broadcast({"type": "log", "message": f"🧠 Gemini: Summarizing {file_path.name}..."})
+            summary_result = await self.llm_router.summarize_with_gemini(text, summary_type="brief")
+            summary = summary_result["content"]
+            
+            # Step 2: Plan with GPT (Reasoning)
+            await manager.broadcast({"type": "log", "message": f"🤖 GPT: Planning organization for {file_path.name}..."})
+            
             # LLM Prompt
             prompt = f"""
-            Analyze the following document content and propose a new filename and folder structure.
+            Analyze the following document summary and propose a new filename and folder structure.
             
             Current File: {file_path.name}
+            Summary: {summary}
             
             Rules:
             1. Rename: Generate a descriptive, concise filename in snake_case (e.g., "invoice_google_oct2025.pdf"). Keep the original extension.
@@ -121,9 +134,6 @@ class DeepOrganizer:
                 "category_path": "Category/Subcategory",
                 "reason": "Brief explanation"
             }}
-            
-            Content Snippet (first 3000 chars):
-            {text[:3000]}
             """
             
             response = await self.llm_router.generate_with_gpt(
@@ -146,9 +156,6 @@ class DeepOrganizer:
                 new_filename += file_path.suffix.lower()
                 
             # Construct proposed path
-            # We move it to root_path / category_path / new_filename
-            # Or should we keep it relative to where it was? 
-            # User wants "Reorganize", so moving to structured folders is better.
             proposed_path = root_path / category_path / new_filename
             
             # Skip if no change
