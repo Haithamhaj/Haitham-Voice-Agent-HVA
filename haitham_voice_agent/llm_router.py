@@ -271,6 +271,7 @@ AVAILABLE TOOLS:
 6. tasks: list_tasks, add_task, complete_task
 7. advisor: ask_advisor (for safety checks or opinions)
 8. system_sentry: check_health, find_hogs, clean_cache
+9. pricing_tools: update_pricing, check_pricing_updates
 
 RESPONSE FORMAT:
 Respond with a JSON object:

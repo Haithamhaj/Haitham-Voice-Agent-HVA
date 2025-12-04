@@ -34,6 +34,7 @@ class ToolDispatcher:
         from haitham_voice_agent.tools.calendar import CalendarTools
         from haitham_voice_agent.tools.drive import DriveTools
         from haitham_voice_agent.tools.system_sentry import SystemSentry
+        from haitham_voice_agent.tools.pricing_tools import PricingTools
         
         # Initialize tools
         # Note: Some might need async init, but for now we register the instances

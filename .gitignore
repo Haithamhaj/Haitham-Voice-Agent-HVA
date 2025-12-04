@@ -59,6 +59,7 @@ credentials/
 !package.json
 !desktop/package.json
 !.env.example
+!haitham_voice_agent/data/pricing.json
 
 # Testing
 .pytest_cache/

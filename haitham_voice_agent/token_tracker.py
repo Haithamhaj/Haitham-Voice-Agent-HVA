@@ -31,7 +31,38 @@ class TokenTracker:
     }
     
     def __init__(self):
-        pass
+        self.pricing_file = Path(__file__).parent / "data" / "pricing.json"
+        self.PRICING = self._load_pricing()
+        
+    def _load_pricing(self) -> Dict[str, Any]:
+        """Load pricing from JSON file"""
+        try:
+            import json
+            if self.pricing_file.exists():
+                with open(self.pricing_file, "r") as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load pricing.json: {e}")
+            
+        # Fallback to hardcoded defaults if file fails
+        return {
+            "gpt-4o": {"input": 0.0025, "output": 0.01},
+            "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
+            "gpt-5": {"input": 0.01, "output": 0.03},
+            "gpt-5-mini": {"input": 0.0002, "output": 0.0008},
+            "gemini-1.5-pro": {"input": 0.0035, "output": 0.0105},
+            "gemini-1.5-flash": {"input": 0.000075, "output": 0.0003},
+            "gemini-2.0-flash": {"input": 0.0001, "output": 0.0004},
+            "qwen": {"input": 0.0, "output": 0.0},
+            "llama3": {"input": 0.0, "output": 0.0},
+            "mistral": {"input": 0.0, "output": 0.0},
+            "whisper": {"input": 0.0, "output": 0.0}
+        }
+
+    def reload_pricing(self):
+        """Reload pricing from file"""
+        self.PRICING = self._load_pricing()
+        logger.info("Pricing reloaded from file")
         
     async def track_usage(self, model: str, input_tokens: int, output_tokens: int, context: Dict[str, Any] = None):
         """
