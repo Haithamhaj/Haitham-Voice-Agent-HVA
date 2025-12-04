@@ -193,6 +193,34 @@ class DeepOrganizer:
                     "dst": str(dst)
                 })
                 
+                # --- Memory Indexing ---
+                try:
+                    from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
+                    memory_tools = VoiceMemoryTools()
+                    await memory_tools.ensure_initialized()
+                    
+                    # Determine Project ID (from path or default)
+                    # Heuristic: If path contains "Projects/X", use X. Else "Documents"
+                    project_id = "documents"
+                    parts = dst.parts
+                    if "Projects" in parts:
+                        try:
+                            idx = parts.index("Projects")
+                            if idx + 1 < len(parts):
+                                project_id = parts[idx+1]
+                        except:
+                            pass
+                    
+                    await memory_tools.memory_system.index_file(
+                        path=str(dst),
+                        project_id=project_id,
+                        description=f"Organized file: {dst.name}",
+                        tags=["organized", change.get("category", "general")]
+                    )
+                except Exception as mem_err:
+                    logger.warning(f"Failed to index organized file {dst}: {mem_err}")
+                # -----------------------
+                
             except Exception as e:
                 logger.error(f"Failed to move {src}: {e}")
                 report["failed"] += 1
