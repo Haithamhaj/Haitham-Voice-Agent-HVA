@@ -116,6 +116,8 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
+| 2025-12-04 12:45 | NEW_FEATURE_FLOW | Implemented Checkpoint & Rollback System (Time Machine). Added CheckpointManager, SQLite table, and API/Chat support for undoing file operations. | haitham_voice_agent/tools/checkpoint_manager.py, haitham_voice_agent/tools/memory/storage/sqlite_store.py, api/routes/files.py |
+| 2025-12-04 12:30 | NEW_FEATURE_FLOW | Implemented Deep Documents Organizer. Added DeepOrganizer class for content-based renaming and reorganization with Dry Run mode. | haitham_voice_agent/tools/deep_organizer.py, haitham_voice_agent/tools/files.py, api/routes/files.py |
 | 2025-12-04 12:10 | NEW_FEATURE_FLOW | Implemented Tokenization Tracker. Added TokenTracker backend, SQLite storage, API endpoints, and Frontend Usage Widget for real-time cost monitoring. | haitham_voice_agent/token_tracker.py, desktop/src/components/dashboard/UsageWidget.jsx |
 | 2025-12-04 11:58 | NEW_FEATURE_FLOW | Implemented Smart Downloads Organizer. Added 72h cleanup rule and content-based categorization (LLM) with subfolder support (Category/Subcategory). | haitham_voice_agent/tools/smart_organizer.py |
 | 2025-12-04 11:34 | NEW_FEATURE_FLOW | Implemented Smart Content Extraction. Added ContentExtractor and SmartSummarizer (Qwen/Gemini). Updated MemorySystem to ingest full content and generate summaries. Fixed VectorStore query syntax. | haitham_voice_agent/intelligence/content_extractor.py, haitham_voice_agent/intelligence/smart_summarizer.py, haitham_voice_agent/tools/memory/memory_system.py |

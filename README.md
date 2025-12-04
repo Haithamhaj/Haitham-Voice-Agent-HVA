@@ -136,6 +136,10 @@ The memory system is unified to act as a single, interconnected "brain":
     - **Auto-Cleanup**: Moves files older than 72 hours from `Downloads` to `Documents`.
     - **Content-Based Sorting**: Uses LLM to read file content and sort into granular subfolders (e.g., `Financials/Invoices` vs `Financials/Personal`).
     - **Context-Aware**: Distinguishes between Work and Personal documents.
+    - **Deep Documents Organizer**:
+        - **Smart Renaming**: Renames files based on content (e.g., `scan01.pdf` -> `Invoice_Google_Oct.pdf`).
+        - **Dry Run Mode**: Generates a "Change Plan" for your review before touching any file.
+        - **Time Machine (Checkpoints)**: Every organization action is saved. You can say "Undo" to reverse all changes instantly.
 - **Tokenization Tracker**:
     - **Cost Monitoring**: Real-time tracking of token usage and costs for all models (GPT-4o, Gemini, Local).
     - **Dashboard Widget**: Visualizes spending and token count directly in the UI.
