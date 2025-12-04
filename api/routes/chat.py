@@ -45,10 +45,29 @@ async def chat(request: ChatRequest):
                  step = {"tool": "files", "action": "open_folder", "params": {"path": ollama_result["parameters"].get("path")}}
             elif ollama_result["intent"] == "open_app":
                  step = {"tool": "system", "action": "open_app", "params": {"app_name": ollama_result["parameters"].get("app")}}
+            elif ollama_result["intent"] == "show_files":
+                 step = {"tool": "files", "action": "list_files", "params": {"directory": ollama_result["parameters"].get("path")}}
             
             if step:
                 result = await dispatcher.dispatch(step)
-                return {"response": str(result.get("message") or result), "model": "Qwen 2.5 (Local)"}
+                
+                # Localize response if input is Arabic
+                response_text = str(result.get("message") or result)
+                is_arabic = any('\u0600' <= char <= '\u06FF' for char in text)
+                
+                if is_arabic and result.get("success"):
+                    if ollama_result["intent"] == "show_files":
+                        count = result.get("count", 0)
+                        dir_name = result.get("directory", "المجلد")
+                        response_text = f"تم العثور على {count} ملف في {dir_name}"
+                    elif ollama_result["intent"] == "open_folder":
+                        response_text = f"تم فتح المجلد: {result.get('path', '')}"
+                
+                return {
+                    "response": response_text,
+                    "data": result, # Pass full result for frontend rendering
+                    "model": "Qwen 2.5 (Local)"
+                }
                 
         elif ollama_result["type"] == "needs_clarification":
             return {"response": ollama_result["question"], "model": "Qwen 2.5 (Local)"}
