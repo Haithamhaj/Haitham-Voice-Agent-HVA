@@ -424,13 +424,54 @@ class SQLiteStore:
                     model_rows = await cursor.fetchall()
                     model_stats = [dict(row) for row in model_rows]
 
+                # Daily Stats (for Chart)
+                # Group by date (YYYY-MM-DD)
+                async with db.execute("""
+                    SELECT 
+                        substr(timestamp, 1, 10) as date,
+                        SUM(cost) as cost,
+                        SUM(total_tokens) as tokens
+                    FROM token_usage
+                    WHERE timestamp > date('now', ?)
+                    GROUP BY date
+                    ORDER BY date ASC
+                """, (modifier,)) as cursor:
+                    daily_rows = await cursor.fetchall()
+                    daily_stats = [dict(row) for row in daily_rows]
+
                 return {
                     "period_days": days,
                     "total_cost": total_stats.get("total_cost") or 0.0,
                     "total_tokens": total_stats.get("total_tokens") or 0,
                     "request_count": total_stats.get("request_count") or 0,
-                    "by_model": model_stats
+                    "by_model": model_stats,
+                    "daily_stats": daily_stats
                 }
         except Exception as e:
             logger.error(f"Failed to get usage stats: {e}")
             return {}
+
+    async def get_token_usage_logs(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get raw usage logs"""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                async with db.execute("""
+                    SELECT * FROM token_usage 
+                    ORDER BY timestamp DESC 
+                    LIMIT ?
+                """, (limit,)) as cursor:
+                    rows = await cursor.fetchall()
+                    results = []
+                    for row in rows:
+                        data = dict(row)
+                        if data["context"]:
+                            try:
+                                data["context"] = json.loads(data["context"])
+                            except:
+                                data["context"] = {}
+                        results.append(data)
+                    return results
+        except Exception as e:
+            logger.error(f"Failed to get usage logs: {e}")
+            return []

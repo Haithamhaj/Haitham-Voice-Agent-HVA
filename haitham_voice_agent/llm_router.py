@@ -96,7 +96,8 @@ class LLMRouter:
         prompt: str,
         system_instruction: Optional[str] = None,
         temperature: float = 0.7,
-        logical_model: str = "logical.gemini.pro"
+        logical_model: str = "logical.gemini.pro",
+        usage_context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, str]:
         """
         Generate response using Gemini
@@ -106,6 +107,7 @@ class LLMRouter:
             system_instruction: System instruction (optional)
             temperature: Sampling temperature
             logical_model: Logical model name to use (default: logical.gemini.pro)
+            usage_context: Optional context for usage tracking
             
         Returns:
             dict: {"content": str, "model": str}
@@ -143,11 +145,15 @@ class LLMRouter:
                 input_tokens = usage.prompt_token_count if usage else len(full_prompt) // 4
                 output_tokens = usage.candidates_token_count if usage else len(result) // 4
                 
+                context = {"method": "generate_with_gemini"}
+                if usage_context:
+                    context.update(usage_context)
+
                 await get_tracker().track_usage(
                     model=model_name,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
-                    context={"method": "generate_with_gemini"}
+                    context=context
                 )
             except Exception as e:
                 logger.warning(f"Failed to track Gemini usage: {e}")
@@ -165,7 +171,8 @@ class LLMRouter:
         system_instruction: Optional[str] = None,
         temperature: float = 0.7,
         response_format: Optional[str] = None,
-        logical_model: str = "logical.mini"
+        logical_model: str = "logical.mini",
+        usage_context: Optional[Dict[str, Any]] = None
     ) -> Dict[str, str]:
         """
         Generate response using GPT
@@ -176,6 +183,7 @@ class LLMRouter:
             temperature: Sampling temperature
             response_format: "json_object" for JSON responses
             logical_model: Logical model name (default: logical.mini -> gpt-4o)
+            usage_context: Optional context for usage tracking
             
         Returns:
             dict: {"content": str, "model": str}
@@ -229,11 +237,15 @@ class LLMRouter:
             try:
                 usage = response.usage
                 if usage:
+                    context = {"method": "generate_with_gpt"}
+                    if usage_context:
+                        context.update(usage_context)
+
                     await get_tracker().track_usage(
                         model=model_name,
                         input_tokens=usage.prompt_tokens,
                         output_tokens=usage.completion_tokens,
-                        context={"method": "generate_with_gpt"}
+                        context=context
                     )
             except Exception as e:
                 logger.warning(f"Failed to track GPT usage: {e}")
@@ -246,70 +258,16 @@ class LLMRouter:
             raise
     
     async def generate_execution_plan(self, user_intent: str) -> Dict[str, Any]:
-        """
-        Generate execution plan using GPT (always JSON format)
-        
-        Args:
-            user_intent: User's voice command or request
-            
-        Returns:
-            dict: Execution plan with structure:
-                {
-                    "intent": "...",
-                    "steps": [...],
-                    "tools": [...],
-                    "risks": [...],
-                    "requires_confirmation": true
-                }
-        """
-        logger.info(f"Generating execution plan for: {user_intent}")
-        
-        system_instruction = """
-You are an execution planner for HVA (Haitham Voice Agent).
-Generate a structured execution plan in JSON format.
-
-The plan must include:
-- intent: Clear description of what the user wants
-- steps: Array of step objects with {tool, action, params}
-- tools: Array of tool names needed
-- risks: Array of potential risks or destructive actions
-- requires_confirmation: Boolean (true if any destructive action)
-
-Available tools:
-- files: 
-    - list_files(directory="path", pattern="*.txt", recursive=true/false)
-    - search_files(directory="path", name_pattern="filename", content_pattern="text inside")
-    - create_folder(directory="path")
-    - delete_folder(directory="path")
-- docs: summarize_file, translate_file, compare_files, extract_tasks, read_pdf
-- browser: open_url, search_google
-- terminal: execute_command(command="...") (safe: ls, pwd, echo, whoami, df)
-- gmail: fetch_latest_email, search_emails, create_draft, send_draft (requires confirmation)
-- memory: save_note, search, get_notes
-- tasks: add_task(description="..."), list_tasks(), complete_task(task_id="...")
-
-CRITICAL RULES:
-- ALWAYS set requires_confirmation=true for: delete, send email, destructive operations
-- NEVER auto-send emails
-- Keep steps clear and sequential
-- "Calendar" or "Meeting" requests -> Use 'tasks' to add a task OR 'memory' to save a note. There is NO 'calendar' tool.
-- "Remember" or "Save" -> Use 'memory' tool (action: save_note).
-- For file search, use 'files.search_files' with 'name_pattern' (e.g. "*report*") NOT 'query'.
-"""
-        
-        prompt = f"""
-User request: "{user_intent}"
-
-Generate an execution plan in JSON format.
-"""
-        
+        # ...
         try:
             response_data = await self.generate_with_gpt(
                 prompt=prompt,
                 system_instruction=system_instruction,
-                temperature=0.3,  # Lower temperature for structured output
-                response_format="json_object"
+                temperature=0.3,
+                response_format="json_object",
+                usage_context={"intent": user_intent, "action": "planning"}
             )
+            # ...
             
             plan = json.loads(response_data["content"])
             

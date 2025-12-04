@@ -64,6 +64,16 @@ export const api = {
     },
 
     // Usage
-    fetchUsageStats: (days = 30) => monitoredFetch(`/usage/stats?days=${days}`)
+    fetchUsageStats: async (days = 30) => {
+        const response = await fetch(`${API_BASE_URL}/usage/stats?days=${days}`);
+        if (!response.ok) throw new Error('Failed to fetch usage stats');
+        return response.json();
+    },
+
+    fetchUsageLogs: async (limit = 50) => {
+        const response = await fetch(`${API_BASE_URL}/usage/logs?limit=${limit}`);
+        if (!response.ok) throw new Error('Failed to fetch usage logs');
+        return response.json();
+    }
 };
 
