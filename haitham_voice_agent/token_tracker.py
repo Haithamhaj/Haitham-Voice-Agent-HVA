@@ -13,7 +13,7 @@ class TokenTracker:
     # As of late 2024/2025 estimates
     PRICING = {
         # OpenAI
-        "gpt-4o": {"input": 0.005, "output": 0.015},
+        "gpt-4o": {"input": 0.0025, "output": 0.01}, # Updated to $2.50/$10.00 per 1M
         "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
         "gpt-5": {"input": 0.01, "output": 0.03}, # Estimated Premium Pricing
         "gpt-5-mini": {"input": 0.0002, "output": 0.0008}, # Estimated Mini Pricing

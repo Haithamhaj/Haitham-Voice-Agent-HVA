@@ -28,6 +28,7 @@ A voice-operated automation agent for macOS with hybrid LLM routing, a living me
 - [نظام الأمان | Safety System](#-نظام-الأمان--safety-system)
 - [التثبيت والإعداد | Installation & Setup](#-التثبيت-والإعداد--installation--setup)
 - [الاستخدام | Usage](#-الاستخدام--usage)
+- [تتبع التكلفة والميزانية | Cost Tracking & Budgeting](#-تتبع-التكلفة-والميزانية--cost-tracking--budgeting)
 - [استكشاف الأخطاء | Troubleshooting](#-استكشاف-الأخطاء--troubleshooting)
 
 ---
