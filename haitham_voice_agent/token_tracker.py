@@ -15,6 +15,8 @@ class TokenTracker:
         # OpenAI
         "gpt-4o": {"input": 0.005, "output": 0.015},
         "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
+        "gpt-5": {"input": 0.01, "output": 0.03}, # Estimated Premium Pricing
+        "gpt-5-mini": {"input": 0.0002, "output": 0.0008}, # Estimated Mini Pricing
         
         # Google Gemini
         "gemini-1.5-pro": {"input": 0.0035, "output": 0.0105}, # < 128k context

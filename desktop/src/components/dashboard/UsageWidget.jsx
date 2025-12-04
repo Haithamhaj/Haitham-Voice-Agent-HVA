@@ -22,8 +22,8 @@ const UsageWidget = () => {
         };
 
         fetchStats();
-        // Refresh every minute
-        const interval = setInterval(fetchStats, 60000);
+        // Refresh every 5 seconds (Real-time tracking)
+        const interval = setInterval(fetchStats, 5000);
         return () => clearInterval(interval);
     }, []);
 
