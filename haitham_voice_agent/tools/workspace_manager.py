@@ -26,7 +26,13 @@ class WorkspaceManager:
     
     def __init__(self, root_path: Optional[Path] = None):
         self.root = root_path or HVA_WORKSPACE_ROOT
-        self.projects_root = self.root / "projects"
+        
+        # CRITICAL: User specified 'development' as the main projects folder
+        self.projects_root = Path("/Users/haitham/development")
+        if not self.projects_root.exists():
+             # Fallback if not on user's machine (e.g. dev env)
+             self.projects_root = self.root / "projects"
+             
         self.inbox_root = self.root / "inbox"
         self._ensure_root_structure()
         

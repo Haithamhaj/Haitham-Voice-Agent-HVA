@@ -28,6 +28,7 @@ globs:
 ## 🗺️ File Map (Where things live)
 
 > **CRITICAL:** Do NOT create new files outside these conventions.
+> **CRITICAL PATH:** `/Users/haitham/development` is the PRIMARY location for all projects.
 
 ```
 /Users/haitham/development/Haitham Voice Agent (HVA)/
