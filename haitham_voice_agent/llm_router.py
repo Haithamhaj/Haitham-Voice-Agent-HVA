@@ -270,6 +270,7 @@ AVAILABLE TOOLS:
 5. calendar: list_events, create_event, check_availability
 6. tasks: list_tasks, add_task, complete_task
 7. advisor: ask_advisor (for safety checks or opinions)
+8. system_sentry: check_health, find_hogs, clean_cache
 
 RESPONSE FORMAT:
 Respond with a JSON object:

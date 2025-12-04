@@ -54,11 +54,13 @@ VALID INTENTS:
 - meeting_mode: وضع الاجتماع، meeting mode
 - chill_mode: وضع الراحة، chill mode
 - system_status: حالة النظام، كم البطارية، system status
+- system_check: افحص الجهاز، الجهاز بطيء، check health, system sentry, check cpu, check ram, clean cache
 
 Response:
 {"type": "execute_command", "intent": "open_folder", "parameters": {"path": "Downloads"}}
 {"type": "execute_command", "intent": "show_files", "parameters": {"path": "Downloads", "sort_by": "date"}}
 {"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Documents"}}
+{"type": "execute_command", "intent": "system_check", "parameters": {"action": "health"}}
 {"type": "execute_command", "intent": "open_app", "parameters": {"app": "Safari"}}
 {"type": "execute_command", "intent": "work_mode", "parameters": {}}
 

@@ -33,6 +33,7 @@ class ToolDispatcher:
         from haitham_voice_agent.tools.terminal import TerminalTools
         from haitham_voice_agent.tools.calendar import CalendarTools
         from haitham_voice_agent.tools.drive import DriveTools
+        from haitham_voice_agent.tools.system_sentry import SystemSentry
         
         # Initialize tools
         # Note: Some might need async init, but for now we register the instances
@@ -47,6 +48,7 @@ class ToolDispatcher:
         self.register_tool("terminal", TerminalTools())
         self.register_tool("calendar", CalendarTools())
         self.register_tool("drive", DriveTools())
+        self.register_tool("system_sentry", SystemSentry())
     
     def register_tool(self, name: str, handler):
         """

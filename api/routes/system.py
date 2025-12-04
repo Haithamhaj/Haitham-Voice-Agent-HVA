@@ -21,6 +21,20 @@ async def get_system_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/health")
+async def get_system_health():
+    """Get detailed system health (CPU, RAM, etc.)"""
+    dispatcher = get_dispatcher()
+    sentry = dispatcher.tools.get("system_sentry")
+    
+    if not sentry:
+        raise HTTPException(status_code=503, detail="System Sentry not available")
+        
+    try:
+        return await sentry.check_health()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/logs")
 async def get_system_logs(lines: int = 100):
     """Get backend logs"""

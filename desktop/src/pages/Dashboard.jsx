@@ -3,6 +3,7 @@ import { Activity, Clock, Sun } from 'lucide-react';
 
 import { api } from '../services/api';
 import UsageWidget from '../components/dashboard/UsageWidget';
+import SystemHealthWidget from '../components/dashboard/SystemHealthWidget';
 import FileSystemTree from '../components/dashboard/FileSystemTree';
 
 const Dashboard = () => {
@@ -84,26 +85,8 @@ const Dashboard = () => {
 
             {/* Middle Row: System Activity + Usage Widget */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* System Activity */}
-                <div className="bg-hva-card rounded-2xl border border-hva-border-subtle p-6">
-                    <h2 className="text-xl font-bold text-hva-cream mb-4">نشاط النظام</h2>
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-4 p-3 rounded-xl bg-hva-primary/50">
-                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            <div className="flex-1">
-                                <div className="text-sm text-hva-cream">تم تحديث الذاكرة بنجاح</div>
-                                <div className="text-xs text-hva-dim">قبل 5 دقائق</div>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4 p-3 rounded-xl bg-hva-primary/50">
-                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                            <div className="flex-1">
-                                <div className="text-sm text-hva-cream">تمت مزامنة البريد الإلكتروني</div>
-                                <div className="text-xs text-hva-dim">قبل 15 دقيقة</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {/* System Health Widget */}
+                <SystemHealthWidget />
 
                 {/* Usage Widget */}
                 <UsageWidget />

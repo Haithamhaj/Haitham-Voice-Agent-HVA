@@ -153,6 +153,13 @@ The memory system is unified to act as a single, interconnected "brain":
         - **Detailed Logs**: Granular log table showing every request (Time, Model, Context, Cost).
     - **Detailed Breakdown**: Granular view of usage by model type.
 - **Workspace Manager**: Automatically creates and manages project folder structures.
+- **System Sentry (v2.4)**:
+    - **Real-Time Monitoring**: Tracks CPU, RAM, Disk, and Battery health.
+    - **Resource Hogs**: Identifies apps slowing down your Mac.
+    - **Smart Cleanup**: Cleans system cache and temporary files to boost performance (with confirmation).
+- **System Health Dashboard**:
+    - **Live Widget**: Visualizes system stats with progress bars and status badges.
+    - **Smart Alerts**: Warns you when the system is strained and suggests fixes.
 
 ### 🤖 ترقيات الذكاء (v1.1 - v1.7) | Intelligence Upgrades
 <div dir="rtl">

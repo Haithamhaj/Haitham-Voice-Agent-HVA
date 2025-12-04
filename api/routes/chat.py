@@ -94,6 +94,20 @@ async def chat(request: ChatRequest):
                          "path": ollama_result["parameters"].get("path")
                      }
                  }
+            elif ollama_result["intent"] == "system_check":
+                 # Default to health check
+                 action = ollama_result["parameters"].get("action", "health")
+                 tool_action = "check_health"
+                 if "clean" in action or "cache" in action:
+                     tool_action = "clean_cache"
+                 elif "slow" in action or "hog" in action:
+                     tool_action = "find_hogs"
+                     
+                 step = {
+                     "tool": "system_sentry",
+                     "action": tool_action,
+                     "params": {}
+                 }
             
             if step:
                 try:
