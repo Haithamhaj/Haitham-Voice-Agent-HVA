@@ -130,8 +130,8 @@ async def chat(request: ChatRequest):
                     elif ollama_result["intent"] == "open_folder":
                         response_text = f"تم فتح المجلد: {result.get('path', '')}"
                 
-                # Special handling for Organization Plan (Deep Organizer)
-                if result.get("type") == "organization_plan":
+                # Special handling for Organization Plan (Deep/Simple Organizer)
+                if result.get("type") == "organization_plan" or result.get("status") == "plan_ready":
                     plan = result.get("plan", {})
                     changes = plan.get("changes", [])
                     count = len(changes)
@@ -241,8 +241,8 @@ async def chat(request: ChatRequest):
             details = ", ".join([f"{k}: {v}" for k, v in cats.items()])
             response_text = f"تم نقل {count} ملفات إلى المستندات.\nالتفاصيل: {details}"
             
-        # Special handling for Organization Plan (Deep Organizer)
-        if last_result.get("type") == "organization_plan":
+        # Special handling for Organization Plan (Deep/Simple Organizer)
+        if last_result.get("type") == "organization_plan" or last_result.get("status") == "plan_ready":
             plan = last_result.get("plan", {})
             changes = plan.get("changes", [])
             count = len(changes)
