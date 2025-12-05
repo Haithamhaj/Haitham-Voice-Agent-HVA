@@ -110,6 +110,12 @@ globs:
     - **Files Modified**: `adaptive_sync.py` (248 lines), `deep_organizer.py` (716 lines), `sqlite_store.py` (630 lines).
     - **Database Stats**: 15 manual_move events logged, avg confidence 1.0, 0 auto_applied events yet.
     - **Result**: System now learns from YOUR manual moves, not generic AI patterns. Zero-cost categorization for high-confidence patterns.
+- **[2025-12-05]** **Qwen Orchestrator Enhancement (Smart Mode Selection)**:
+    - Enhanced `ollama_orchestrator.py` to intelligently determine organization mode based on request keywords.
+    - **Simple Mode** (FREE): Triggered by keywords like "رتب", "sort", "حسب التاريخ", "by date", "نقل", "move" → Uses `SimpleOrganizer`.
+    - **Deep Mode** (AI): Triggered by keywords like "صنف", "categorize", "نظم ذكي", "organize intelligently" → Uses `DeepOrganizer`.
+    - **Result**: Qwen now acts as true orchestrator, routing simple requests to zero-cost handlers and complex requests to AI.
+    - **Example**: "رتب الملفات في مجلد Coaching حسب التاريخ" → `mode="simple"` → $0.00 cost.
 
 ## 📏 Organization Rules (Strict)
 1.  **Applications**: `.app` bundles MUST go to `~/Applications`.
@@ -135,6 +141,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
+| 2025-12-05 23:20 | FEATURE_ADD | **Qwen Orchestrator Enhancement (Smart Mode Selection)**: Enhanced `ollama_orchestrator.py` to intelligently determine organization mode. Simple requests (sort, move, by date) → `mode="simple"` → SimpleOrganizer (FREE). Complex requests (categorize, organize intelligently) → `mode="deep"` → DeepOrganizer (AI). Qwen now acts as true orchestrator, routing requests to appropriate handlers based on keywords. Example: "رتب الملفات في مجلد Coaching حسب التاريخ" → $0.00 cost. | haitham_voice_agent/ollama_orchestrator.py |
 | 2025-12-05 22:50 | FEATURE_ADD | **Adaptive Learning System (Mentor Strategy)**: Implemented complete 4-phase learning system: (1) SHA-256 digital fingerprints for all files, (2) `learning_events` table with confidence scoring, (3) Confidence-based categorization in DeepOrganizer (≥0.8 auto-apply, <0.5 LLM fallback), (4) Passive feedback loop tracking file stability. System now learns from user's manual moves with self-adjusting confidence scores. | haitham_voice_agent/intelligence/adaptive_sync.py, haitham_voice_agent/tools/deep_organizer.py, haitham_voice_agent/tools/memory/storage/sqlite_store.py |
 | 2025-12-05 20:00 | FEATURE_ADD | **Memory UI Overhaul (v2.5)**: Redesigned Memory Page with large visualizations for SQL, Vector, and Graph layers. Added detailed Arabic explanations and fixed stats counting logic. | desktop/src/pages/MemoryView.jsx, haitham_voice_agent/tools/memory/storage/vector_store.py, haitham_voice_agent/tools/memory/storage/graph_store.py |
 | 2025-12-05 19:50 | BUG_FIX | **File Tree Auto-Refresh**: Implemented 10s polling interval in `FileSystemTree` to ensure the UI stays in sync with local file changes automatically. | desktop/src/components/dashboard/FileSystemTree.jsx |

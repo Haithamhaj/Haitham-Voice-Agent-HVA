@@ -54,6 +54,11 @@ VALID INTENTS:
 - open_app: افتح برنامج، شغل تطبيق، open app، launch
 - show_files: اعرض الملفات، list files (params: path, sort_by [date, size, name])
 - organize_documents: نظم الملفات، رتب المستندات، organize documents, organize document, clean up folder, نظم مجلد
+  * IMPORTANT: Add "mode" parameter:
+    - mode="simple": For sorting, moving, or organizing by date/size/name (FREE, no AI)
+      Keywords: رتب، sort، ترتيب، حسب التاريخ، by date، by size، نقل، move
+    - mode="deep": For intelligent categorization based on content (Uses AI, costs $)
+      Keywords: صنف، categorize، organize intelligently، نظم ذكي، حلل، analyze
 - morning_briefing: صباح الخير، good morning (triggers daily briefing)
 - work_mode: وضع العمل، work mode
 - meeting_mode: وضع الاجتماع، meeting mode
@@ -64,7 +69,8 @@ VALID INTENTS:
 Response:
 {"type": "execute_command", "intent": "open_folder", "parameters": {"path": "Downloads"}}
 {"type": "execute_command", "intent": "show_files", "parameters": {"path": "Downloads", "sort_by": "date"}}
-{"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Documents"}}
+{"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Coaching", "mode": "simple"}}
+{"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Downloads", "mode": "deep"}}
 {"type": "execute_command", "intent": "system_check", "parameters": {"action": "health"}}
 {"type": "execute_command", "intent": "open_app", "parameters": {"app": "Safari"}}
 {"type": "execute_command", "intent": "work_mode", "parameters": {}}
@@ -125,11 +131,14 @@ Response:
 EXAMPLES
 ═══════════════════════════════════════════════════════════
 
-User: "كيف حالك؟"
-{"type": "direct_response", "response": "أهلاً! أنا بخير، كيف أقدر أساعدك؟"}
-
 User: "افتح مجلد التنزيلات"
 {"type": "execute_command", "intent": "open_folder", "parameters": {"path": "Downloads"}}
+
+User: "رتب الملفات في مجلد Coaching حسب التاريخ"
+{"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Coaching", "mode": "simple"}}
+
+User: "نظم مجلد التنزيلات بشكل ذكي"
+{"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Downloads", "mode": "deep"}}
 
 User: "صباح الخير"
 {"type": "execute_command", "intent": "morning_briefing", "parameters": {}}

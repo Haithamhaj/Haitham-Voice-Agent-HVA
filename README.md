@@ -134,6 +134,13 @@ The memory system is unified to act as a single, interconnected "brain":
 
 - **3-Layer System**: (System Profile, Quick Index, Deep Search) to know everything about your machine.
 - **Smart Organizer**:
+    - **Intelligent Mode Selection (Qwen Orchestrator)** 🧠:
+        - **Simple Mode** (FREE): For sorting, moving, organizing by date/size/name
+            - Keywords: "رتب", "sort", "حسب التاريخ", "by date", "نقل", "move"
+            - Uses: `SimpleOrganizer` → Zero cost, instant
+        - **Deep Mode** (AI-Powered): For intelligent categorization based on content
+            - Keywords: "صنف", "categorize", "نظم ذكي", "organize intelligently"
+            - Uses: `DeepOrganizer` → Gemini + GPT (with adaptive learning)
     - **Auto-Cleanup (72-Hour Rule)**: Automatically moves files older than 72 hours from `Downloads` to `Documents`, keeping your Downloads folder fresh.
     - **Strict Organization Rules**:
         - **Apps (`.app`)**: Moved to `~/Applications`.
