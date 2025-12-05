@@ -47,12 +47,16 @@ const AppContent = () => {
   );
 };
 
+import { ChatProvider } from './context/ChatContext';
+
 function App() {
   return (
     <WebSocketProvider>
-      <HashRouter>
-        <AppContent />
-      </HashRouter>
+      <ChatProvider>
+        <HashRouter>
+          <AppContent />
+        </HashRouter>
+      </ChatProvider>
     </WebSocketProvider>
   );
 }

@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Send, User, Bot, Mic, MicOff } from 'lucide-react';
 import { api } from '../services/api';
 import { useWebSocketContext } from '../context/WebSocketContext';
+import { useChatContext } from '../context/ChatContext';
 
 const ChatView = () => {
-    const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'مرحباً هيثم، كيف يمكنني مساعدتك اليوم؟' }
-    ]);
-    const [input, setInput] = useState('');
-    const [isProcessing, setIsProcessing] = useState(false);
+    const { messages, setMessages, isProcessing, setIsProcessing } = useChatContext();
+    const [input, setInput] = React.useState('');
     const messagesEndRef = useRef(null);
 
     const { isListening, toggleListening, lastLog } = useWebSocketContext();
@@ -46,7 +44,7 @@ const ChatView = () => {
                 }];
             });
         }
-    }, [lastLog]);
+    }, [lastLog, setMessages]);
 
     const handleVoiceToggle = async () => {
         if (isListening) {
@@ -71,7 +69,6 @@ const ChatView = () => {
                     const response = await api.sendChat(transcript);
                     setMessages(prev => [...prev, {
                         role: 'assistant',
-                        content: response.response,
                         content: response.response,
                         data: response.data, // Store rich data
                         model: response.model // Store model name
