@@ -130,6 +130,35 @@ async def chat(request: ChatRequest):
                     elif ollama_result["intent"] == "open_folder":
                         response_text = f"تم فتح المجلد: {result.get('path', '')}"
                 
+                # Special handling for Organization Plan (Deep Organizer)
+                if result.get("type") == "organization_plan":
+                    plan = result.get("plan", {})
+                    changes = plan.get("changes", [])
+                    count = len(changes)
+                    
+                    if count == 0:
+                        response_text = "لم يتم العثور على ملفات تحتاج إلى تنظيم."
+                    else:
+                        response_text = f"🔍 تم تحليل {plan.get('scanned', 0)} ملف.\n"
+                        response_text += f"✨ تم اقتراح تغييرات لـ {count} ملف:\n\n"
+                        for change in changes[:3]: # Show first 3 examples
+                            old_name = change['original_path'].split('/')[-1]
+                            new_name = change['new_filename']
+                            cat = change['category']
+                            response_text += f"📄 {old_name} ➡️ {cat}/{new_name}\n"
+                        
+                        if count > 3:
+                            response_text += f"\n...و {count - 3} ملفات أخرى."
+                            
+                        response_text += "\n\nهل تريد تنفيذ هذه التغييرات؟"
+                    
+                    return {
+                        "response": response_text,
+                        "type": "organization_plan", # Force type for frontend
+                        "data": result,
+                        "model": "System"
+                    }
+
                 return {
                     "response": response_text,
                     "data": result, # Pass full result for frontend rendering

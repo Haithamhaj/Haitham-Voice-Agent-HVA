@@ -479,7 +479,7 @@ class FileTools:
                 "status": "plan_ready",
                 "plan": plan,
                 "requires_confirmation": True,
-                "message": f"I've analyzed {target_path}. Found {len(plan['moves'])} files to organize.",
+                "message": f"I've analyzed {target_path}. Found {len(plan['changes'])} files to organize.",
                 "command": "files.execute_organization", # Future command
                 "params": {"plan": plan}
             }

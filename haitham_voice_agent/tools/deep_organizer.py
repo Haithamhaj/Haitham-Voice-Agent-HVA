@@ -190,11 +190,18 @@ class DeepOrganizer:
             
         # Track operations for checkpoint
         operations_log = []
+        total_cost = 0.0
+        total_tokens = 0
             
         for change in changes:
             try:
                 src = Path(change["original_path"])
                 dst = Path(change["proposed_path"])
+                
+                # Accumulate usage from analysis
+                if "usage" in change:
+                    total_cost += change["usage"].get("cost", 0.0)
+                    total_tokens += change["usage"].get("input_tokens", 0) + change["usage"].get("output_tokens", 0)
                 
                 if not src.exists():
                     report["failed"] += 1
@@ -259,7 +266,12 @@ class DeepOrganizer:
                 checkpoint_id = await cm.create_checkpoint(
                     action_type="deep_organize",
                     description=f"Deep Organization of {len(operations_log)} files",
-                    operations=operations_log
+                    operations=operations_log,
+                    meta={
+                        "model": "Hybrid (Gemini + GPT-4o)",
+                        "cost": total_cost,
+                        "tokens": total_tokens
+                    }
                 )
                 report["checkpoint_id"] = checkpoint_id
                 logger.info(f"Checkpoint saved: {checkpoint_id}")

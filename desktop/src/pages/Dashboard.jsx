@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import UsageWidget from '../components/dashboard/UsageWidget';
 import SystemHealthWidget from '../components/dashboard/SystemHealthWidget';
 import FileSystemTree from '../components/dashboard/FileSystemTree';
+import CheckpointsWidget from '../components/dashboard/CheckpointsWidget';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -39,62 +40,57 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <div className="space-y-6">
-            <header className="flex items-center justify-between">
+        <div className="h-full flex flex-col gap-6 p-6 overflow-y-auto">
+            <header className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-5xl font-bold text-hva-cream">صباح الخير، هيثم</h1>
-                    <p className="text-hva-muted mt-1">إليك ملخص سريع ليومك</p>
+                    <h1 className="text-2xl font-bold text-hva-cream mb-1">لوحة التحكم</h1>
+                    <p className="text-hva-muted text-sm">نظرة عامة على حالة النظام والأداء</p>
                 </div>
-                <div className="bg-hva-card p-3 rounded-2xl border border-hva-border-subtle flex items-center gap-3">
-                    <Sun className="text-yellow-400" />
-                    <span className="text-hva-cream font-medium">24°C مشمس</span>
+                <div className="flex gap-3">
+                    <button className="bg-hva-primary/20 hover:bg-hva-primary/30 text-hva-primary px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                        تحديث البيانات
+                    </button>
                 </div>
             </header>
 
-            <div className="grid grid-cols-3 gap-6">
-                <div className="bg-hva-card p-6 rounded-2xl border border-hva-border-subtle hover:border-hva-accent/30 transition-colors group">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                            <Activity size={20} />
-                        </div>
-                        <span className="text-2xl font-bold text-hva-cream">{stats.tasks}</span>
-                    </div>
-                    <h3 className="text-hva-muted font-medium">مهام معلقة</h3>
+            <div className="grid grid-cols-12 gap-6">
+                {/* Top Row: System Health & Usage (8 cols) + Quick Stats (4 cols) */}
+                <div className="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <SystemHealthWidget />
+                    <UsageWidget />
                 </div>
 
-                <div className="bg-hva-card p-6 rounded-2xl border border-hva-border-subtle hover:border-hva-accent/30 transition-colors group">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 group-hover:scale-110 transition-transform">
-                            <Activity size={20} />
+                <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
+                    <div className="bg-hva-card p-5 rounded-2xl border border-hva-border-subtle hover:border-hva-accent/30 transition-all group flex-1 flex items-center justify-between">
+                        <div>
+                            <span className="text-3xl font-bold text-hva-cream block mb-1">{stats.emails}</span>
+                            <h3 className="text-hva-muted text-sm font-medium">رسائل غير مقروءة</h3>
                         </div>
-                        <span className="text-2xl font-bold text-hva-cream">{stats.emails}</span>
+                        <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 group-hover:scale-110 transition-transform border border-red-500/20">
+                            <Activity size={24} />
+                        </div>
                     </div>
-                    <h3 className="text-hva-muted font-medium">رسائل غير مقروءة</h3>
+
+                    <div className="bg-hva-card p-5 rounded-2xl border border-hva-border-subtle hover:border-hva-accent/30 transition-all group flex-1 flex items-center justify-between">
+                        <div>
+                            <span className="text-3xl font-bold text-hva-cream block mb-1">{stats.events}</span>
+                            <h3 className="text-hva-muted text-sm font-medium">مواعيد اليوم</h3>
+                        </div>
+                        <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform border border-green-500/20">
+                            <Clock size={24} />
+                        </div>
+                    </div>
                 </div>
 
-                <div className="bg-hva-card p-6 rounded-2xl border border-hva-border-subtle hover:border-hva-accent/30 transition-colors group">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform">
-                            <Clock size={20} />
-                        </div>
-                        <span className="text-2xl font-bold text-hva-cream">{stats.events}</span>
-                    </div>
-                    <h3 className="text-hva-muted font-medium">مواعيد اليوم</h3>
+                {/* Middle Row: System History (Full Width) */}
+                <div className="col-span-12 min-h-[300px]">
+                    <CheckpointsWidget />
                 </div>
-            </div>
 
-            {/* Middle Row: System Activity + Usage Widget */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* System Health Widget */}
-                <SystemHealthWidget />
-
-                {/* Usage Widget */}
-                <UsageWidget />
-            </div>
-
-            {/* Bottom Row: File System Tree */}
-            <div className="w-full">
-                <FileSystemTree />
+                {/* Bottom Row: File System Tree (Full Width) */}
+                <div className="col-span-12 min-h-[400px]">
+                    <FileSystemTree />
+                </div>
             </div>
         </div>
     );

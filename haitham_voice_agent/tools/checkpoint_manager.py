@@ -21,7 +21,7 @@ class CheckpointManager:
         # We access the store via the global memory system
         self.store = memory_system.sqlite_store
         
-    async def create_checkpoint(self, action_type: str, description: str, operations: List[Dict[str, str]]) -> str:
+    async def create_checkpoint(self, action_type: str, description: str, operations: List[Dict[str, str]], meta: Optional[Dict[str, Any]] = None) -> str:
         """
         Create a new checkpoint.
         
@@ -29,10 +29,16 @@ class CheckpointManager:
             action_type: Type of action (e.g., "deep_organize")
             description: User-friendly description
             operations: List of dicts with 'src' and 'dst' keys showing what was moved.
-                        Example: [{"src": "/old/path.txt", "dst": "/new/path.txt"}]
+            meta: Optional metadata (model, cost, tokens)
         """
         checkpoint_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
+        
+        # Store meta inside the data JSON
+        data_to_store = {
+            "operations": operations,
+            "meta": meta or {}
+        }
         
         try:
             async with aiosqlite.connect(self.store.db_path) as db:
@@ -44,7 +50,7 @@ class CheckpointManager:
                     timestamp,
                     action_type,
                     description,
-                    json.dumps(operations),
+                    json.dumps(data_to_store),
                     "active"
                 ))
                 await db.commit()
@@ -99,7 +105,13 @@ class CheckpointManager:
             if checkpoint["status"] == "rolled_back":
                 return {"error": "Checkpoint already rolled back"}
                 
-            operations = json.loads(checkpoint["data"])
+            raw_data = json.loads(checkpoint["data"])
+            
+            # Handle backward compatibility (old format was list, new is dict)
+            if isinstance(raw_data, list):
+                operations = raw_data
+            else:
+                operations = raw_data.get("operations", [])
             
             # 2. Reverse Operations
             # We iterate in reverse order just in case

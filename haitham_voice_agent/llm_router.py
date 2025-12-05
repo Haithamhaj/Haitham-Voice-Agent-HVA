@@ -137,6 +137,7 @@ class LLMRouter:
             result = response.text
             
             # Track Usage
+            usage_data = {"input_tokens": 0, "output_tokens": 0, "cost": 0.0}
             try:
                 # Gemini doesn't always return token counts in simple response, 
                 # but we can estimate or check usage_metadata if available.
@@ -149,17 +150,26 @@ class LLMRouter:
                 if usage_context:
                     context.update(usage_context)
 
-                await get_tracker().track_usage(
+                tracker = get_tracker()
+                cost = tracker.calculate_cost(model_name, input_tokens, output_tokens)
+                
+                await tracker.track_usage(
                     model=model_name,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     context=context
                 )
+                
+                usage_data = {
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "cost": cost
+                }
             except Exception as e:
                 logger.warning(f"Failed to track Gemini usage: {e}")
 
             logger.debug(f"Gemini response: {result[:100]}...")
-            return {"content": result, "model": model_name}
+            return {"content": result, "model": model_name, "usage": usage_data}
             
         except Exception as e:
             logger.error(f"Gemini generation failed: {e}")
@@ -234,6 +244,7 @@ class LLMRouter:
             result = response.choices[0].message.content
             
             # Track Usage
+            usage_data = {"input_tokens": 0, "output_tokens": 0, "cost": 0.0}
             try:
                 usage = response.usage
                 if usage:
@@ -241,17 +252,26 @@ class LLMRouter:
                     if usage_context:
                         context.update(usage_context)
 
-                    await get_tracker().track_usage(
+                    tracker = get_tracker()
+                    cost = tracker.calculate_cost(model_name, usage.prompt_tokens, usage.completion_tokens)
+                    
+                    await tracker.track_usage(
                         model=model_name,
                         input_tokens=usage.prompt_tokens,
                         output_tokens=usage.completion_tokens,
                         context=context
                     )
+                    
+                    usage_data = {
+                        "input_tokens": usage.prompt_tokens,
+                        "output_tokens": usage.completion_tokens,
+                        "cost": cost
+                    }
             except Exception as e:
                 logger.warning(f"Failed to track GPT usage: {e}")
 
             logger.debug(f"GPT response: {result[:100]}...")
-            return {"content": result, "model": model_name}
+            return {"content": result, "model": model_name, "usage": usage_data}
             
         except Exception as e:
             logger.error(f"GPT generation failed: {e}")

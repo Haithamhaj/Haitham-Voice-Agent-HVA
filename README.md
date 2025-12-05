@@ -161,6 +161,10 @@ The memory system is unified to act as a single, interconnected "brain":
 - **System Health Dashboard**:
     - **Live Widget**: Visualizes system stats with progress bars and status badges.
     - **Smart Alerts**: Warns you when the system is strained and suggests fixes.
+- **System History (Time Machine)**:
+    - **Visual Timeline**: View a detailed history of all system operations (file moves, organization).
+    - **Metadata Tracking**: See exactly which AI model was used, the cost, and token usage for each action.
+    - **Instant Rollback**: Undo any operation with a single click, restoring files to their original locations.
 
 ### 🤖 ترقيات الذكاء (v1.1 - v1.7) | Intelligence Upgrades
 <div dir="rtl">
@@ -203,7 +207,7 @@ The memory system is unified to act as a single, interconnected "brain":
 </div>
 
 - **Global Hotkey**: `⌘⇧H` (Cmd+Shift+H) to start listening from anywhere.
-- **Premium Dashboard**: Displays system status, weather, and tasks.
+- **Premium Dashboard**: A dynamic grid layout displaying System Health, Usage, Quick Stats, and a detailed System History timeline.
 - **Memory View**: Browse and manage the knowledge base (Graph, Vector, SQL).
 - **Gmail & Calendar**: Dedicated views for emails and events.
 - **Active Agent Indicator**: Live indicator showing the system's "brain" at work (Analyzing, Cloud Thinking, Tool Execution).
