@@ -275,7 +275,9 @@ class DeepOrganizer:
                 # Log operation
                 operations_log.append({
                     "src": str(src),
-                    "dst": str(dst)
+                    "dst": str(dst),
+                    "reason": change.get("reason"),
+                    "category": change.get("category")
                 })
                 
                 # --- Memory Indexing ---

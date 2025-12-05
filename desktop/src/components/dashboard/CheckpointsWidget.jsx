@@ -133,9 +133,23 @@ const CheckpointsWidget = () => {
                                             <div className="text-xs text-hva-muted font-mono bg-black/40 p-2 rounded border border-white/5 max-h-40 overflow-y-auto">
                                                 {operations.length > 0 ? (
                                                     operations.map((op, idx) => (
-                                                        <div key={idx} className="mb-1 last:mb-0 break-all">
-                                                            <span className="text-red-400/80">SRC:</span> {op.src.split('/').pop()}<br />
-                                                            <span className="text-green-400/80">DST:</span> {op.dst.split('/').pop()}
+                                                        <div key={idx} className="mb-2 last:mb-0 break-all bg-black/20 p-2 rounded border border-white/5">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className="text-[10px] text-hva-muted font-sans bg-white/5 px-1.5 rounded">
+                                                                    {op.category || 'General'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="mb-1">
+                                                                <span className="text-red-400/80 text-[10px]">FROM:</span> <span className="text-hva-cream/80">{op.src.split('/').pop()}</span>
+                                                            </div>
+                                                            <div className="mb-1">
+                                                                <span className="text-green-400/80 text-[10px]">TO:</span> <span className="text-hva-cream/80">{op.dst.split('/').pop()}</span>
+                                                            </div>
+                                                            {op.reason && (
+                                                                <div className="text-[10px] text-hva-accent/80 mt-1 border-l-2 border-hva-accent/30 pl-2 italic font-sans">
+                                                                    "{op.reason}"
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ))
                                                 ) : (

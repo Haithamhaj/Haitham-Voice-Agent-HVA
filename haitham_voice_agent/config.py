@@ -46,7 +46,7 @@ class Config:
     # Gemini model is resolved dynamically via resolve_gemini_model()
     
     # GPT model for actions, plans, tools, classification
-    GPT_MODEL: str = "gpt-5"
+    GPT_MODEL: str = "gpt-5.1"
     
     # Embedding model for Memory module
     EMBEDDING_MODEL: str = "text-embedding-ada-002"
@@ -55,11 +55,11 @@ class Config:
     # Logical model names → actual API model strings
     # This allows us to upgrade models in ONE place without touching routing logic
     MODEL_MAPPING = {
-        "logical.nano":        "gpt-5-mini",       # Keep nano fast
-        "logical.nano-plus":   "gpt-5-mini",       
-        "logical.mini":        "gpt-5",            # UPGRADED: Main workhorse is now Premium (User Request)
-        "logical.premium":     "gpt-5",            # High intelligence (Standard)
-        "logical.thinking":    "gpt-5-thinking",   # Reasoning model
+        "logical.nano":        "gpt-5.1-mini",     # Keep nano fast
+        "logical.nano-plus":   "gpt-5.1-mini",       
+        "logical.mini":        "gpt-5.1",          # UPGRADED: Main workhorse is now Premium (User Request)
+        "logical.premium":     "gpt-5.1",          # High intelligence (Standard)
+        "logical.thinking":    "gpt-5.1-thinking", # Reasoning model
         "logical.doc-gemini":  "logical.gemini.pro", # Delegate to Gemini mapping
     }
     
