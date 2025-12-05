@@ -134,7 +134,11 @@ The memory system is unified to act as a single, interconnected "brain":
 
 - **3-Layer System**: (System Profile, Quick Index, Deep Search) to know everything about your machine.
 - **Smart Organizer**:
-    - **Auto-Cleanup**: Moves files older than 72 hours from `Downloads` to `Documents`.
+    - **Auto-Cleanup (72-Hour Rule)**: Automatically moves files older than 72 hours from `Downloads` to `Documents`, keeping your Downloads folder fresh.
+    - **Strict Organization Rules**:
+        - **Apps (`.app`)**: Moved to `~/Applications`.
+        - **Installers (`.dmg`, `.pkg`)**: Moved to `~/Software`.
+        - **Documents**: Moved to `~/Documents/{Category}` based on content.
     - **Content-Based Sorting**: Uses LLM to read file content and sort into granular subfolders (e.g., `Financials/Invoices` vs `Financials/Personal`).
     - **Context-Aware**: Distinguishes between Work and Personal documents.
     - **Deep Documents Organizer (v2.3)**:
@@ -152,12 +156,13 @@ The memory system is unified to act as a single, interconnected "brain":
     - **Enhanced Analytics**:
         - **Daily Charts**: Visual bar charts showing daily cost trends.
         - **Detailed Logs**: Granular log table showing every request (Time, Model, Context, Cost).
-    - **Detailed Breakdown**: Granular view of usage by model type.
+    - **Detailed Breakdown**: Granular view of usage by model type (Gemini vs GPT) directly on the dashboard card.
 - **Workspace Manager**: Automatically creates and manages project folder structures.
 - **System Sentry (v2.4)**:
     - **Real-Time Monitoring**: Tracks CPU, RAM, Disk, and Battery health.
     - **Resource Hogs**: Identifies apps slowing down your Mac.
     - **Smart Cleanup**: Cleans system cache and temporary files to boost performance (with confirmation).
+    - **Self-Healing (Integrity Check)**: Runs a comprehensive system verification at startup (`verify_integrity.py`) to prevent crashes before they happen.
 - **System Health Dashboard**:
     - **Live Widget**: Visualizes system stats with progress bars and status badges.
     - **Smart Alerts**: Warns you when the system is strained and suggests fixes.
@@ -165,6 +170,18 @@ The memory system is unified to act as a single, interconnected "brain":
     - **Visual Timeline**: View a detailed history of all system operations (file moves, organization).
     - **Metadata Tracking**: See exactly which AI model was used, the cost, and token usage for each action.
     - **Instant Rollback**: Undo any operation with a single click, restoring files to their original locations.
+
+### 🧠 Intelligent Memory & Organization
+- **Deep Organization**: AI-powered analysis to rename and categorize files based on content.
+- **Simple Organization (Free)**: Rule-based organization by file type (Images, Docs, etc.) with zero cost.
+- **Safety Layer**: `OptimizationGuard` prevents re-analyzing unchanged files, ensuring $0.00 cost for duplicate runs.
+- **Vector Memory**: Semantic search for all your notes and documents.
+- **Graph Database**: Tracks relationships between files, projects, and concepts.
+
+### 💰 Cost Transparency
+- **Real-time Tracking**: See exact costs for every operation.
+- **Detailed Breakdown**: View separate costs for **Gemini** (Analysis - Blue) and **GPT** (Reasoning - Green) in the dashboard.
+- **Budget Safety**: System alerts or blocks redundant expensive operations.
 
 ### 🤖 ترقيات الذكاء (v1.1 - v1.7) | Intelligence Upgrades
 <div dir="rtl">
