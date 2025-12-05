@@ -43,6 +43,12 @@ const UsageWidget = () => {
                     <div className="text-right">
                         <span className="text-2xl font-bold text-hva-cream">${(stats.total_cost || 0).toFixed(4)}</span>
                         <div className="text-xs text-hva-muted">Total Cost (30d)</div>
+                        {/* Cost Breakdown */}
+                        <div className="flex items-center justify-end gap-2 mt-1 text-[10px]">
+                            <span className="text-blue-400">Gemini: ${(stats.by_model?.filter(m => m.model.includes('gemini')).reduce((acc, curr) => acc + curr.cost, 0) || 0).toFixed(4)}</span>
+                            <span className="text-hva-dim">|</span>
+                            <span className="text-green-400">GPT: ${(stats.by_model?.filter(m => m.model.includes('gpt')).reduce((acc, curr) => acc + curr.cost, 0) || 0).toFixed(4)}</span>
+                        </div>
                     </div>
                 </div>
 

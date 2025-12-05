@@ -83,14 +83,22 @@ const UsageDetailsModal = ({ onClose }) => {
                     {activeTab === 'chart' ? (
                         <div className="space-y-8">
                             {/* Summary Cards */}
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-4 gap-4">
                                 <div className="bg-hva-bg p-4 rounded-xl border border-hva-border-subtle">
                                     <div className="text-hva-muted text-xs mb-1">Total Cost</div>
                                     <div className="text-2xl font-bold text-hva-cream">${stats?.total_cost?.toFixed(4)}</div>
                                 </div>
                                 <div className="bg-hva-bg p-4 rounded-xl border border-hva-border-subtle">
-                                    <div className="text-hva-muted text-xs mb-1">Total Tokens</div>
-                                    <div className="text-2xl font-bold text-hva-cream">{(stats?.total_tokens / 1000).toFixed(1)}k</div>
+                                    <div className="text-hva-muted text-xs mb-1">Gemini Cost</div>
+                                    <div className="text-xl font-bold text-blue-400">
+                                        ${(stats?.by_model?.filter(m => m.model.includes('gemini')).reduce((acc, curr) => acc + curr.cost, 0) || 0).toFixed(4)}
+                                    </div>
+                                </div>
+                                <div className="bg-hva-bg p-4 rounded-xl border border-hva-border-subtle">
+                                    <div className="text-hva-muted text-xs mb-1">GPT Cost</div>
+                                    <div className="text-xl font-bold text-green-400">
+                                        ${(stats?.by_model?.filter(m => m.model.includes('gpt')).reduce((acc, curr) => acc + curr.cost, 0) || 0).toFixed(4)}
+                                    </div>
                                 </div>
                                 <div className="bg-hva-bg p-4 rounded-xl border border-hva-border-subtle">
                                     <div className="text-hva-muted text-xs mb-1">Requests</div>
