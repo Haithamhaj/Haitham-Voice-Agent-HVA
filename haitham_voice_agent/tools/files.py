@@ -454,6 +454,70 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
+    async def move_all_files(self, source_dir: str, dest_dir: str, overwrite: bool = False, confirmed: bool = False, **kwargs) -> Dict[str, Any]:
+        """Move all files from source directory to destination directory"""
+        if not confirmed:
+            return {
+                "status": "confirmation_required",
+                "message": f"Are you sure you want to move ALL files from '{Path(source_dir).name}' to '{Path(dest_dir).name}'?",
+                "command": "files.move_all_files",
+                "params": {
+                    "source_dir": source_dir,
+                    "dest_dir": dest_dir,
+                    "overwrite": overwrite,
+                    "confirmed": True
+                },
+                "risk_level": "high"
+            }
+
+        try:
+            src_path = self._validate_path(source_dir)
+            dest_path = self._validate_path(dest_dir)
+            
+            if not src_path or not dest_path:
+                return {"error": True, "message": "Access denied or invalid path"}
+            
+            if not src_path.exists() or not src_path.is_dir():
+                return {"error": True, "message": f"Source directory not found: {source_dir}"}
+                
+            if not dest_path.exists():
+                dest_path.mkdir(parents=True, exist_ok=True)
+                
+            moved_count = 0
+            errors = []
+            
+            for item in src_path.iterdir():
+                if item.is_file() and item.name not in self.BLACKLIST_DIRS and not item.name.startswith("."):
+                    try:
+                        # Construct destination path
+                        target = dest_path / item.name
+                        
+                        # Handle overwrite/rename
+                        if target.exists() and not overwrite:
+                            base = target.stem
+                            suffix = target.suffix
+                            counter = 1
+                            while target.exists():
+                                target = target.with_name(f"{base}_{counter}{suffix}")
+                                counter += 1
+                        
+                        shutil.move(str(item), str(target))
+                        moved_count += 1
+                    except Exception as e:
+                        errors.append(f"{item.name}: {str(e)}")
+            
+            return {
+                "status": "completed",
+                "moved_count": moved_count,
+                "source": str(src_path),
+                "destination": str(dest_path),
+                "errors": errors if errors else None,
+                "message": f"Successfully moved {moved_count} files from {src_path.name} to {dest_path.name}"
+            }
+            
+        except Exception as e:
+            return {"error": True, "message": str(e)}
+
     async def organize_documents(self, path: str = None, mode: str = "deep", **kwargs) -> Dict[str, Any]:
         """
         Analyze and propose reorganization for a folder.
