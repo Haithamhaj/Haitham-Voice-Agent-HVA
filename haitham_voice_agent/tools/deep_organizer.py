@@ -34,7 +34,7 @@ class DeepOrganizer:
     def __init__(self):
         self.llm_router = get_router()
         
-    async def scan_and_plan(self, directory: str) -> Dict[str, Any]:
+    async def scan_and_plan(self, directory: str, language: str = "Arabic") -> Dict[str, Any]:
         """
         Scan directory and generate a reorganization plan.
         Does NOT modify files.
@@ -65,10 +65,15 @@ class DeepOrganizer:
                     
                 file_path = Path(root) / file
                 
+                # DEBUG: Log every file found
+                logger.info(f"Found file: {file_path}")
+                
                 # Check extension safety
-                if file_path.suffix.lower() in self.IGNORE_EXTS:
-                    plan["ignored"] += 1
-                    continue
+                # DISABLED FILTER TO CATCH ALL FILES
+                # if file_path.suffix.lower() in self.IGNORE_EXTS:
+                #     logger.info(f"Ignored file (ext): {file_path}")
+                #     plan["ignored"] += 1
+                #     continue
                 
                 files_to_process.append((file_path, root_path))
                 
@@ -84,7 +89,7 @@ class DeepOrganizer:
         
         results = []
         for batch in batches:
-            batch_results = await self._analyze_batch(batch)
+            batch_results = await self._analyze_batch(batch, language=language)
             results.extend(batch_results)
         
         for change in results:
@@ -94,7 +99,7 @@ class DeepOrganizer:
                 
         return plan
 
-    async def _analyze_file(self, file_path: Path, root_path: Path) -> Optional[Dict[str, Any]]:
+    async def _analyze_file(self, file_path: Path, root_path: Path, language: str = "Arabic") -> Optional[Dict[str, Any]]:
         """Analyze file content and propose new name/location"""
         try:
             # Broadcast: Scanning
@@ -122,6 +127,17 @@ class DeepOrganizer:
                 # Cache Hit! Return cached result with zero cost
                 cached_result = guard_check.get("cached_result")
                 if cached_result:
+                    # FIX: Update paths in cached result to match CURRENT file location
+                    # The cache stores where the file WAS, but we need to know where it IS now.
+                    # We rely on the File Hash (ID) to identify the content, but update the path context.
+                    
+                    cached_result["original_path"] = str(file_path)
+                    
+                    # Re-calculate proposed path based on current root and cached category
+                    if cached_result.get("category") and cached_result.get("new_filename"):
+                        new_dst = root_path / cached_result["category"] / cached_result["new_filename"]
+                        cached_result["proposed_path"] = str(new_dst)
+                    
                     await manager.broadcast({
                         "type": "task_progress",
                         "task": "Deep Organize",
@@ -289,7 +305,7 @@ class DeepOrganizer:
             # Step 2: Plan with GPT (Reasoning)
             await manager.broadcast({"type": "log", "message": f"🤖 GPT: Planning organization for {file_path.name}..."})
             
-            # LLM Prompt
+            # LLM Prompt (ARABIC FORCED)
             prompt = f"""
             Analyze the following document summary and propose a new filename and folder structure.
             
@@ -297,19 +313,18 @@ class DeepOrganizer:
             Summary: {summary}
             
             Rules:
-            1. Rename: Generate a descriptive, concise filename in snake_case (e.g., "invoice_google_oct2025.pdf"). Keep the original extension.
-            2. Reorganize: Suggest a Category/Subcategory path (e.g., "Financials/Invoices").
+            1. Rename: Generate a descriptive, concise filename in snake_case.
+            2. Reorganize: Suggest a Category/Subcategory path.
             3. Context: Distinguish between Personal, Work, Legal, Health, etc.
-            4. Language: If the summary suggests Arabic content or the user request was in Arabic, provide the 'reason' field in Arabic.
+            4. Language: OUTPUT MUST BE IN {language.upper()}. The 'reason' field MUST be in {language}.
             
             Return JSON ONLY:
             {{
                 "new_filename": "...",
                 "category": "Category/Subcategory",
-                "reason": "Brief explanation of why this category was chosen (in Arabic if content is Arabic)"
+                "reason": "Explanation of why this category was chosen (in {language})"
             }}
             """
-
             
             response = await self.llm_router.generate_with_gpt(
                 prompt, 
@@ -389,7 +404,7 @@ class DeepOrganizer:
             logger.warning(f"Failed to analyze {file_path.name}: {e}")
             return None
 
-    async def _analyze_batch(self, files: List[tuple[Path, Path]]) -> List[Dict[str, Any]]:
+    async def _analyze_batch(self, files: List[tuple[Path, Path]], language: str = "Arabic") -> List[Dict[str, Any]]:
         """Analyze a batch of files in one LLM call"""
         results = []
         batch_summary = []
@@ -404,8 +419,16 @@ class DeepOrganizer:
                 
                 if not guard_check["should_process"]:
                     # Cache Hit
+                    # Cache Hit
                     if guard_check.get("cached_result"):
-                        results.append(guard_check["cached_result"])
+                        res = guard_check["cached_result"]
+                        # FIX: Update paths for batch cache hits too
+                        res["original_path"] = str(file_path)
+                        if res.get("category") and res.get("new_filename"):
+                             new_dst = root_path / res["category"] / res["new_filename"]
+                             res["proposed_path"] = str(new_dst)
+                        
+                        results.append(res)
                     continue
                     
                 # Extract
@@ -440,6 +463,7 @@ class DeepOrganizer:
         1. Rename: Snake_case, descriptive.
         2. Reorganize: Category/Subcategory.
         3. Context: Personal vs Work.
+        4. Language: The 'reason' field MUST be in {language}.
         
         Files:
         """

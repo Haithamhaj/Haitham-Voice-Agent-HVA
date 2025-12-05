@@ -535,12 +535,13 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def organize_documents(self, path: str = None, mode: str = "deep", **kwargs) -> Dict[str, Any]:
+    async def organize_documents(self, path: str = None, mode: str = "deep", language: str = "Arabic", **kwargs) -> Dict[str, Any]:
         """
         Analyze and propose reorganization for a folder.
         Args:
             path: Folder to organize (default: Documents)
             mode: "deep" (AI-powered, cost $) or "simple" (Extension-based, Free)
+            language: Language for the reasoning/explanation (e.g. "Arabic", "English")
         """
         # Handle LLM parameter hallucinations
         target_path = path or kwargs.get("folder_path") or kwargs.get("directory")
@@ -581,7 +582,7 @@ class FileTools:
             else:
                 from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
                 organizer = get_deep_organizer()
-                plan = await organizer.scan_and_plan(str(target_path_obj))
+                plan = await organizer.scan_and_plan(str(target_path_obj), language=language)
                 
                 if plan.get("error"):
                     return {"error": True, "message": plan["error"]}
@@ -605,22 +606,17 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": f"Error organizing: {str(e)}"}
 
-    async def execute_organization(self, plan: Dict[str, Any] = None, confirm: bool = False, **kwargs) -> Dict[str, Any]:
+    async def execute_organization(self, plan: Dict[str, Any] = None, confirm: bool = False, mode: str = "deep", **kwargs) -> Dict[str, Any]:
         """
         Execute a previously generated organization plan.
         Args:
             plan: The plan object (optional if confirm=True, logic should retrieve last plan)
             confirm: If True, implies user confirmation of pending plan.
+            mode: "deep" or "simple"
         """
-        # In a real stateful system, we'd retrieve the pending plan from a session manager.
-        # For this stateless implementation, we rely on the client passing the plan back 
-        # OR we need a temporary file/cache to store the last plan.
-        
-        # HACK: For now, if 'confirm' is True and no plan is passed, we check a temporary cache file
-        # This is necessary because 'chat.py' constructs the step without the plan data when user says "Ok"
-        
         CACHE_FILE = Path("/tmp/hva_last_plan.json")
         
+        # If confirm is True and no plan, try to load from cache
         if confirm and not plan:
             if CACHE_FILE.exists():
                 import json
@@ -641,48 +637,18 @@ class FileTools:
              with open(CACHE_FILE, 'w') as f:
                  json.dump(plan, f)
         
-        # Execute the changes
-        changes = plan.get("changes", [])
-        executed_count = 0
-        errors = []
-        
-        for change in changes:
-            try:
-                src = Path(change["original_path"])
-                dst = Path(change["proposed_path"])
+        # Delegate execution to the appropriate organizer
+        try:
+            if mode == "simple":
+                from haitham_voice_agent.tools.simple_organizer import get_simple_organizer
+                organizer = get_simple_organizer()
+            else:
+                from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
+                organizer = get_deep_organizer()
                 
-                if not src.exists():
-                    errors.append(f"Source not found: {src.name}")
-                    continue
-                    
-                if not dst.parent.exists():
-                    dst.parent.mkdir(parents=True, exist_ok=True)
-                    
-                # Handle overwrite
-                if dst.exists():
-                    base = dst.stem
-                    suffix = dst.suffix
-                    counter = 1
-                    while dst.exists():
-                        dst = dst.with_name(f"{base}_{counter}{suffix}")
-                        counter += 1
-                
-                shutil.move(str(src), str(dst))
-                executed_count += 1
-                
-                # Log to learning system (if deep mode)
-                # TODO: Add learning event logging here
-                
-            except Exception as e:
-                errors.append(f"Failed to move {src.name}: {str(e)}")
-                
-        return {
-            "status": "completed",
-            "executed_count": executed_count,
-            "total_changes": len(changes),
-            "errors": errors,
-            "message": f"✅ Successfully organized {executed_count} files."
-        }
+            return await organizer.execute_plan(plan)
+        except Exception as e:
+            return {"error": True, "message": f"Error executing plan: {str(e)}"}
 
     async def cleanup_downloads(self, hours: int = 72, **kwargs) -> Dict[str, Any]:
         """
@@ -702,19 +668,7 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def execute_organization(self, plan: Dict[str, Any], mode: str = "deep", **kwargs) -> Dict[str, Any]:
-        """Execute the approved organization plan"""
-        try:
-            if mode == "simple":
-                from haitham_voice_agent.tools.simple_organizer import get_simple_organizer
-                organizer = get_simple_organizer()
-            else:
-                from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
-                organizer = get_deep_organizer()
-                
-            return await organizer.execute_plan(plan)
-        except Exception as e:
-            return {"error": True, "message": str(e)}
+
 
     async def get_file_tree(self, path: str = "~", depth: int = 2, **kwargs) -> Dict[str, Any]:
         """Get file system tree structure (Sandboxed)"""
