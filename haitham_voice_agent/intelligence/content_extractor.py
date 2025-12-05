@@ -33,8 +33,10 @@ class ContentExtractor:
             elif ext in ['.txt', '.md', '.py', '.js', '.json', '.html', '.css', '.csv', '.log']:
                 content = self._extract_text(file_path)
             else:
-                logger.info(f"Unsupported file type for extraction: {ext}")
-                return None
+                # For unsupported files (images, videos, audio), return filename as context
+                # This allows LLM to organize based on filename alone
+                logger.info(f"Unsupported file type {ext}, using filename as content.")
+                return f"File Name: {file_path.name}\nFile Type: {ext}\n(Content extraction not supported for this file type, organize based on filename only)"
                 
             if content:
                 return self._truncate_text(content, max_length)

@@ -108,6 +108,18 @@ async def chat(request: ChatRequest):
                      "action": tool_action,
                      "params": {}
                  }
+            elif ollama_result["intent"] == "confirm_action":
+                 # User said "Ok" / "Yes". Check if we have a pending plan.
+                 # For now, we assume the pending plan is the last organization plan.
+                 # Ideally, we should store state in a session manager.
+                 # We will trigger the execution of the LAST generated plan.
+                 step = {
+                     "tool": "files",
+                     "action": "execute_organization",
+                     "params": {
+                         "confirm": True # Flag to indicate confirmation
+                     }
+                 }
             
             if step:
                 try:
@@ -132,6 +144,9 @@ async def chat(request: ChatRequest):
                 
                 # Special handling for Organization Plan (Deep/Simple Organizer)
                 if result.get("type") == "organization_plan" or result.get("status") == "plan_ready":
+                    # Force type for frontend rendering
+                    result["type"] = "organization_plan"
+                    
                     plan = result.get("plan", {})
                     changes = plan.get("changes", [])
                     count = len(changes)
@@ -243,6 +258,9 @@ async def chat(request: ChatRequest):
             
         # Special handling for Organization Plan (Deep/Simple Organizer)
         if last_result.get("type") == "organization_plan" or last_result.get("status") == "plan_ready":
+            # Force type for frontend rendering
+            last_result["type"] = "organization_plan"
+            
             plan = last_result.get("plan", {})
             changes = plan.get("changes", [])
             count = len(changes)

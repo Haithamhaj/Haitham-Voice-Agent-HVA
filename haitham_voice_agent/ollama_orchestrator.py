@@ -128,6 +128,24 @@ Response:
 {"type": "new_idea", "content": "The full idea text"}
 
 ═══════════════════════════════════════════════════════════
+RULE 7: CONFIRMATION (type: execute_command, intent: confirm_action)
+═══════════════════════════════════════════════════════════
+When user agrees to a proposed plan or action:
+- "ok"
+- "yes"
+- "confirm"
+- "do it"
+- "تمام"
+- "موافق"
+- "نفذ"
+- "اعتمد"
+- "اوك"
+- "طيب"
+
+Response:
+{"type": "execute_command", "intent": "confirm_action", "parameters": {}}
+
+═══════════════════════════════════════════════════════════
 EXAMPLES
 ═══════════════════════════════════════════════════════════
 

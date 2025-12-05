@@ -62,6 +62,23 @@ class FileTools:
             # Expand user (~) and resolve absolute path
             target_path = Path(clean_path).expanduser().resolve()
             
+            # SMART SEARCH: If path doesn't exist, try finding it in common folders
+            if not target_path.exists() and not clean_path.startswith("/"):
+                # Try Documents
+                doc_path = self.home_dir / "Documents" / clean_path
+                if doc_path.exists():
+                    return doc_path
+                
+                # Try Downloads
+                dl_path = self.home_dir / "Downloads" / clean_path
+                if dl_path.exists():
+                    return dl_path
+                    
+                # Try Desktop
+                dt_path = self.home_dir / "Desktop" / clean_path
+                if dt_path.exists():
+                    return dt_path
+
             # 3. Sandbox Check: Must be inside User Home
             if not str(target_path).startswith(str(self.home_dir)):
                 logger.warning(f"Blocked access outside home: {target_path}")
@@ -534,20 +551,49 @@ class FileTools:
 
         try:
             target_path_obj = self._validate_path(target_path)
+            
+            # ULTRA-SMART SEARCH: If standard validation fails, ask the Brain (SQLiteStore)
             if not target_path_obj:
-                 return {"error": True, "message": "Invalid path"}
+                try:
+                    from haitham_voice_agent.tools.memory.storage.sqlite_store import SQLiteStore
+                    # Initialize store (path is usually standard)
+                    store = SQLiteStore() 
+                    found_path = await store.find_path_by_name(target_path)
+                    
+                    if found_path:
+                        logger.info(f"🧠 Brain found path for '{target_path}': {found_path}")
+                        target_path_obj = Path(found_path)
+                except Exception as db_e:
+                    logger.warning(f"Brain lookup failed: {db_e}")
+
+            if not target_path_obj:
+                 return {"error": True, "message": f"Could not find folder: {target_path}"}
             
             if mode == "simple":
                 from haitham_voice_agent.tools.simple_organizer import get_simple_organizer
                 organizer = get_simple_organizer()
                 plan = await organizer.scan_and_plan(str(target_path_obj))
-                msg = f"I've analyzed {target_path_obj} (Simple Mode). Found {len(plan['changes'])} files to organize by type."
+                
+                if plan.get("error"):
+                    return {"error": True, "message": plan["error"]}
+                    
+                msg = f"I've analyzed {target_path_obj} (Simple Mode). Found {len(plan.get('changes', []))} files to organize by type."
             else:
                 from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
                 organizer = get_deep_organizer()
                 plan = await organizer.scan_and_plan(str(target_path_obj))
-                msg = f"I've analyzed {target_path_obj} (Deep Mode). Found {len(plan['changes'])} files to organize intelligently."
+                
+                if plan.get("error"):
+                    return {"error": True, "message": plan["error"]}
+
+                msg = f"I've analyzed {target_path_obj} (Deep Mode). Found {len(plan.get('changes', []))} files to organize intelligently."
             
+            # Cache the plan for confirmation
+            import json
+            CACHE_FILE = Path("/tmp/hva_last_plan.json")
+            with open(CACHE_FILE, 'w') as f:
+                json.dump(plan, f)
+
             return {
                 "status": "plan_ready",
                 "plan": plan,
@@ -557,7 +603,86 @@ class FileTools:
                 "params": {"plan": plan, "mode": mode}
             }
         except Exception as e:
-            return {"error": True, "message": str(e)}
+            return {"error": True, "message": f"Error organizing: {str(e)}"}
+
+    async def execute_organization(self, plan: Dict[str, Any] = None, confirm: bool = False, **kwargs) -> Dict[str, Any]:
+        """
+        Execute a previously generated organization plan.
+        Args:
+            plan: The plan object (optional if confirm=True, logic should retrieve last plan)
+            confirm: If True, implies user confirmation of pending plan.
+        """
+        # In a real stateful system, we'd retrieve the pending plan from a session manager.
+        # For this stateless implementation, we rely on the client passing the plan back 
+        # OR we need a temporary file/cache to store the last plan.
+        
+        # HACK: For now, if 'confirm' is True and no plan is passed, we check a temporary cache file
+        # This is necessary because 'chat.py' constructs the step without the plan data when user says "Ok"
+        
+        CACHE_FILE = Path("/tmp/hva_last_plan.json")
+        
+        if confirm and not plan:
+            if CACHE_FILE.exists():
+                import json
+                try:
+                    with open(CACHE_FILE, 'r') as f:
+                        plan = json.load(f)
+                except:
+                    return {"error": True, "message": "Failed to retrieve pending plan."}
+            else:
+                return {"error": True, "message": "No pending organization plan found to execute."}
+        
+        if not plan:
+             return {"error": True, "message": "No plan provided."}
+
+        # Save plan to cache if it was passed explicitly (so we can confirm it later if needed)
+        if plan and not confirm:
+             import json
+             with open(CACHE_FILE, 'w') as f:
+                 json.dump(plan, f)
+        
+        # Execute the changes
+        changes = plan.get("changes", [])
+        executed_count = 0
+        errors = []
+        
+        for change in changes:
+            try:
+                src = Path(change["original_path"])
+                dst = Path(change["proposed_path"])
+                
+                if not src.exists():
+                    errors.append(f"Source not found: {src.name}")
+                    continue
+                    
+                if not dst.parent.exists():
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    
+                # Handle overwrite
+                if dst.exists():
+                    base = dst.stem
+                    suffix = dst.suffix
+                    counter = 1
+                    while dst.exists():
+                        dst = dst.with_name(f"{base}_{counter}{suffix}")
+                        counter += 1
+                
+                shutil.move(str(src), str(dst))
+                executed_count += 1
+                
+                # Log to learning system (if deep mode)
+                # TODO: Add learning event logging here
+                
+            except Exception as e:
+                errors.append(f"Failed to move {src.name}: {str(e)}")
+                
+        return {
+            "status": "completed",
+            "executed_count": executed_count,
+            "total_changes": len(changes),
+            "errors": errors,
+            "message": f"✅ Successfully organized {executed_count} files."
+        }
 
     async def cleanup_downloads(self, hours: int = 72, **kwargs) -> Dict[str, Any]:
         """

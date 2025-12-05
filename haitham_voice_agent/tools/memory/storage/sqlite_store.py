@@ -314,6 +314,48 @@ class SQLiteStore:
             logger.error(f"Failed to search file index: {e}")
             return []
 
+    async def find_path_by_name(self, name: str) -> Optional[str]:
+        """
+        Find the full path of a file or folder by its name.
+        Returns the most recently modified match if duplicates exist.
+        """
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                # Search for path ending with /name or exactly name
+                # We order by last_modified DESC to get the most relevant/recent one
+                async with db.execute("""
+                    SELECT path FROM file_index 
+                    WHERE path LIKE ? OR path LIKE ?
+                    ORDER BY last_modified DESC
+                    LIMIT 1
+                """, (f"%/{name}", f"%/{name}/")) as cursor:
+                    row = await cursor.fetchone()
+                    if row:
+                        return row['path']
+                    
+                    # Fallback: Look for children to infer folder existence
+                    # If we have files like ".../Coaching/file.pdf", then ".../Coaching" exists
+                    await cursor.execute("""
+                        SELECT path FROM file_index 
+                        WHERE path LIKE ? 
+                        LIMIT 1
+                    """, (f"%/{name}/%",))
+                    row = await cursor.fetchone()
+                    if row:
+                        full_path = row['path']
+                        parts = full_path.split('/')
+                        if name in parts:
+                            # Return path up to the folder name
+                            # e.g. /Users/haitham/Documents/Coaching
+                            idx = parts.index(name)
+                            return '/'.join(parts[:idx+1])
+                            
+            return None
+        except Exception as e:
+            logger.error(f"Failed to find path by name {name}: {e}")
+            return None
+
     async def save_memory(self, memory: Memory) -> bool:
         """Save or update memory"""
         try:

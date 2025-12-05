@@ -73,7 +73,7 @@ class DeepOrganizer:
                 files_to_process.append((file_path, root_path))
                 
         # Limit total files to prevent massive bills/timeouts
-        MAX_FILES = 50 # Increased limit due to batching efficiency
+        MAX_FILES = 100 # Increased limit due to batching efficiency
         if len(files_to_process) > MAX_FILES:
             logger.warning(f"Too many files ({len(files_to_process)}). Limiting to {MAX_FILES}.")
             files_to_process = files_to_process[:MAX_FILES]
@@ -109,10 +109,14 @@ class DeepOrganizer:
             })
             
             # --- OPTIMIZATION GUARD (Safety Layer) ---
-            from haitham_voice_agent.intelligence.optimization_guard import get_optimization_guard
-            guard = get_optimization_guard()
+            # DISABLED TEMPORARILY TO FORCE ARABIC RE-ANALYSIS
+            # from haitham_voice_agent.intelligence.optimization_guard import get_optimization_guard
+            # guard = get_optimization_guard()
             
-            guard_check = await guard.check_file(str(file_path), context="deep_organize")
+            # guard_check = await guard.check_file(str(file_path), context="deep_organize")
+            
+            # Force process
+            guard_check = {"should_process": True}
             
             if not guard_check["should_process"]:
                 # Cache Hit! Return cached result with zero cost
@@ -296,14 +300,16 @@ class DeepOrganizer:
             1. Rename: Generate a descriptive, concise filename in snake_case (e.g., "invoice_google_oct2025.pdf"). Keep the original extension.
             2. Reorganize: Suggest a Category/Subcategory path (e.g., "Financials/Invoices").
             3. Context: Distinguish between Personal, Work, Legal, Health, etc.
+            4. Language: If the summary suggests Arabic content or the user request was in Arabic, provide the 'reason' field in Arabic.
             
             Return JSON ONLY:
             {{
                 "new_filename": "...",
-                "category_path": "Category/Subcategory",
-                "reason": "Brief explanation"
+                "category": "Category/Subcategory",
+                "reason": "Brief explanation of why this category was chosen (in Arabic if content is Arabic)"
             }}
             """
+
             
             response = await self.llm_router.generate_with_gpt(
                 prompt, 
