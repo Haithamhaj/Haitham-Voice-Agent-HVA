@@ -29,7 +29,7 @@ class SimpleOrganizer:
     def __init__(self):
         pass
         
-    async def scan_and_plan(self, directory: str) -> Dict[str, Any]:
+    async def scan_and_plan(self, directory: str, instruction: str = None) -> Dict[str, Any]:
         """
         Scan directory and generate a simple reorganization plan.
         """
@@ -60,12 +60,22 @@ class SimpleOrganizer:
                 file_path = Path(root) / file
                 ext = file_path.suffix.lower()
                 
-                # Find category
-                category = "Others"
-                for cat, extensions in self.CATEGORIES.items():
-                    if ext in extensions:
-                        category = cat
-                        break
+                # Check for Date Sorting Instruction
+                if instruction and ("date" in instruction.lower() or "تاريخ" in instruction):
+                    # Sort by Date: Year/Month
+                    mtime = file_path.stat().st_mtime
+                    dt = datetime.fromtimestamp(mtime)
+                    category = f"{dt.year}/{dt.strftime('%m-%B')}"
+                    reason = f"Sorted by Date: {dt.strftime('%Y-%m-%d')}"
+                else:
+                    # Default: Sort by Extension
+                    # Find category
+                    category = "Others"
+                    for cat, extensions in self.CATEGORIES.items():
+                        if ext in extensions:
+                            category = cat
+                            break
+                    reason = f"File extension {ext} maps to {category}"
                 
                 # Proposed path
                 proposed_path = root_path / category / file
@@ -80,7 +90,7 @@ class SimpleOrganizer:
                     "proposed_path": str(proposed_path),
                     "new_filename": file, # No renaming in simple mode
                     "category": category,
-                    "reason": f"File extension {ext} maps to {category}",
+                    "reason": reason,
                     "usage": {"cost": 0.0, "tokens": 0} # Explicit zero cost
                 })
                 

@@ -91,7 +91,9 @@ async def chat(request: ChatRequest):
                      "tool": "files",
                      "action": "organize_documents",
                      "params": {
-                         "path": ollama_result["parameters"].get("path")
+                         "path": ollama_result["parameters"].get("path"),
+                         "mode": ollama_result["parameters"].get("mode"),
+                         "instruction": ollama_result["parameters"].get("instruction")
                      }
                  }
             elif ollama_result["intent"] == "system_check":

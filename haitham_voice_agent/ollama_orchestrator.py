@@ -22,6 +22,7 @@ class OllamaOrchestrator:
     def __init__(self):
         self.base_url = Config.OLLAMA_BASE_URL
         self.model = Config.OLLAMA_MODEL
+        self.history = [] # Conversation history for context
         self.system_prompt = """
 You are Haitham, a smart Arabic/English voice assistant orchestrator.
 
@@ -54,11 +55,12 @@ VALID INTENTS:
 - open_app: افتح برنامج، شغل تطبيق، open app، launch
 - show_files: اعرض الملفات، list files (params: path, sort_by [date, size, name])
 - organize_documents: نظم الملفات، رتب المستندات، organize documents, organize document, clean up folder, نظم مجلد
-  * IMPORTANT: Add "mode" parameter:
+  * IMPORTANT: Add "mode" and "instruction" parameters:
     - mode="simple": For sorting, moving, or organizing by date/size/name (FREE, no AI)
       Keywords: رتب، sort، ترتيب، حسب التاريخ، by date، by size، نقل، move
     - mode="deep": For intelligent categorization based on content (Uses AI, costs $)
       Keywords: صنف، categorize، organize intelligently، نظم ذكي، حلل، analyze
+    - instruction: The exact user instruction (e.g. "Sort by date", "Group by project")
 - morning_briefing: صباح الخير، good morning (triggers daily briefing)
 - work_mode: وضع العمل، work mode
 - meeting_mode: وضع الاجتماع، meeting mode
@@ -141,6 +143,10 @@ When user agrees to a proposed plan or action:
 - "اعتمد"
 - "اوك"
 - "طيب"
+- "رتبهم"
+- "يلا"
+- "باشر"
+- "توكل"
 
 Response:
 {"type": "execute_command", "intent": "confirm_action", "parameters": {}}
@@ -153,7 +159,7 @@ User: "افتح مجلد التنزيلات"
 {"type": "execute_command", "intent": "open_folder", "parameters": {"path": "Downloads"}}
 
 User: "رتب الملفات في مجلد Coaching حسب التاريخ"
-{"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Coaching", "mode": "simple"}}
+{"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Coaching", "mode": "simple", "instruction": "حسب التاريخ"}}
 
 User: "نظم مجلد التنزيلات بشكل ذكي"
 {"type": "execute_command", "intent": "organize_documents", "parameters": {"path": "Downloads", "mode": "deep"}}
@@ -200,7 +206,8 @@ CRITICAL RULES
                 payload = {
                     "model": self.model,
                     "messages": [
-                        {"role": "system", "content": self.system_prompt},
+                        {"role": "system", "content": self.system_prompt}
+                    ] + self.history + [
                         {"role": "user", "content": user_input}
                     ],
                     "stream": False,
@@ -221,6 +228,15 @@ CRITICAL RULES
                     try:
                         classification = json.loads(content)
                         logger.info(f"Ollama classification: {classification['type']}")
+                        
+                        # Update history
+                        self.history.append({"role": "user", "content": user_input})
+                        self.history.append({"role": "assistant", "content": content})
+                        
+                        # Keep history manageable (last 10 messages)
+                        if len(self.history) > 10:
+                            self.history = self.history[-10:]
+                            
                         return classification
                     except json.JSONDecodeError:
                         logger.error("Failed to parse Ollama JSON response")

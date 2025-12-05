@@ -34,7 +34,7 @@ class DeepOrganizer:
     def __init__(self):
         self.llm_router = get_router()
         
-    async def scan_and_plan(self, directory: str, language: str = "Arabic") -> Dict[str, Any]:
+    async def scan_and_plan(self, directory: str, language: str = "Arabic", instruction: str = None) -> Dict[str, Any]:
         """
         Scan directory and generate a reorganization plan.
         Does NOT modify files.
@@ -89,7 +89,7 @@ class DeepOrganizer:
         
         results = []
         for batch in batches:
-            batch_results = await self._analyze_batch(batch, language=language)
+            batch_results = await self._analyze_batch(batch, language=language, instruction=instruction)
             results.extend(batch_results)
         
         for change in results:
@@ -99,7 +99,7 @@ class DeepOrganizer:
                 
         return plan
 
-    async def _analyze_file(self, file_path: Path, root_path: Path, language: str = "Arabic") -> Optional[Dict[str, Any]]:
+    async def _analyze_file(self, file_path: Path, root_path: Path, language: str = "Arabic", instruction: str = None) -> Optional[Dict[str, Any]]:
         """Analyze file content and propose new name/location"""
         try:
             # Broadcast: Scanning
@@ -120,10 +120,10 @@ class DeepOrganizer:
             
             # guard_check = await guard.check_file(str(file_path), context="deep_organize")
             
-            # Force process
+            # Force process to ensure language settings are applied (Bypass Cache)
             guard_check = {"should_process": True}
             
-            if not guard_check["should_process"]:
+            if False: # if not guard_check["should_process"]:
                 # Cache Hit! Return cached result with zero cost
                 cached_result = guard_check.get("cached_result")
                 if cached_result:
@@ -166,8 +166,9 @@ class DeepOrganizer:
 
             # Extract text
             text = content_extractor.extract_text(str(file_path))
-            if not text or len(text) < 50:
-                return None # Skip empty/unreadable files
+            # ALLOW MEDIA FILES: If text is empty, use filename/metadata instead of skipping
+            if not text:
+                text = f"Filename: {file_path.name}\nType: {file_path.suffix}\n(No text content extracted)"
                 
             # --- PHASE 1: ADAPTIVE LEARNING (High-Confidence Patterns) ---
             # Check if we have learned patterns for similar files
@@ -311,6 +312,7 @@ class DeepOrganizer:
             
             Current File: {file_path.name}
             Summary: {summary}
+            User Instruction: {instruction or "Organize logically"}
             
             Rules:
             1. Rename: Generate a descriptive, concise filename in snake_case.
@@ -404,7 +406,7 @@ class DeepOrganizer:
             logger.warning(f"Failed to analyze {file_path.name}: {e}")
             return None
 
-    async def _analyze_batch(self, files: List[tuple[Path, Path]], language: str = "Arabic") -> List[Dict[str, Any]]:
+    async def _analyze_batch(self, files: List[tuple[Path, Path]], language: str = "Arabic", instruction: str = None) -> List[Dict[str, Any]]:
         """Analyze a batch of files in one LLM call"""
         results = []
         batch_summary = []
@@ -417,7 +419,10 @@ class DeepOrganizer:
                 guard = get_optimization_guard()
                 guard_check = await guard.check_file(str(file_path), context="deep_organize")
                 
-                if not guard_check["should_process"]:
+                # Force process to ensure language settings are applied (Bypass Cache)
+                guard_check = {"should_process": True}
+                
+                if False: # if not guard_check["should_process"]:
                     # Cache Hit
                     # Cache Hit
                     if guard_check.get("cached_result"):
@@ -433,8 +438,9 @@ class DeepOrganizer:
                     
                 # Extract
                 text = content_extractor.extract_text(str(file_path))
-                if not text or len(text) < 50:
-                    continue
+                # ALLOW MEDIA FILES: If text is empty, use filename/metadata
+                if not text:
+                    text = f"Filename: {file_path.name}\nType: {file_path.suffix}\n(No text content extracted)"
                     
                 # Summarize (Gemini Flash is cheap, do individual summaries for better context)
                 # Or skip summary and send truncated text directly in batch?
@@ -464,6 +470,7 @@ class DeepOrganizer:
         2. Reorganize: Category/Subcategory.
         3. Context: Personal vs Work.
         4. Language: The 'reason' field MUST be in {language}.
+        5. User Instruction: {instruction or "Organize logically"}
         
         Files:
         """

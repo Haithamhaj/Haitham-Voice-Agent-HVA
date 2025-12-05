@@ -535,13 +535,14 @@ class FileTools:
         except Exception as e:
             return {"error": True, "message": str(e)}
 
-    async def organize_documents(self, path: str = None, mode: str = "deep", language: str = "Arabic", **kwargs) -> Dict[str, Any]:
+    async def organize_documents(self, path: str = None, mode: str = "deep", language: str = "Arabic", instruction: str = None, **kwargs) -> Dict[str, Any]:
         """
         Analyze and propose reorganization for a folder.
         Args:
             path: Folder to organize (default: Documents)
             mode: "deep" (AI-powered, cost $) or "simple" (Extension-based, Free)
             language: Language for the reasoning/explanation (e.g. "Arabic", "English")
+            instruction: Specific user instruction (e.g. "Sort by date", "Group by project")
         """
         # Handle LLM parameter hallucinations
         target_path = path or kwargs.get("folder_path") or kwargs.get("directory")
@@ -570,24 +571,35 @@ class FileTools:
             if not target_path_obj:
                  return {"error": True, "message": f"Could not find folder: {target_path}"}
             
+            # SMART ROUTING: If instruction implies "Date Sorting", force Simple Mode (Deterministic)
+            if instruction and ("date" in instruction.lower() or "تاريخ" in instruction):
+                mode = "simple"
+                logger.info("Instruction implies Date Sorting. Switching to Simple Mode.")
+
             if mode == "simple":
                 from haitham_voice_agent.tools.simple_organizer import get_simple_organizer
                 organizer = get_simple_organizer()
-                plan = await organizer.scan_and_plan(str(target_path_obj))
+                plan = await organizer.scan_and_plan(str(target_path_obj), instruction=instruction)
                 
                 if plan.get("error"):
                     return {"error": True, "message": plan["error"]}
                     
-                msg = f"I've analyzed {target_path_obj} (Simple Mode). Found {len(plan.get('changes', []))} files to organize by type."
+                if language.lower() == "arabic":
+                    msg = f"تم تحليل {target_path_obj} (الوضع البسيط). وجدت {len(plan.get('changes', []))} ملفات لتنظيمها حسب النوع."
+                else:
+                    msg = f"I've analyzed {target_path_obj} (Simple Mode). Found {len(plan.get('changes', []))} files to organize by type."
             else:
                 from haitham_voice_agent.tools.deep_organizer import get_deep_organizer
                 organizer = get_deep_organizer()
-                plan = await organizer.scan_and_plan(str(target_path_obj), language=language)
+                plan = await organizer.scan_and_plan(str(target_path_obj), language=language, instruction=instruction)
                 
                 if plan.get("error"):
                     return {"error": True, "message": plan["error"]}
 
-                msg = f"I've analyzed {target_path_obj} (Deep Mode). Found {len(plan.get('changes', []))} files to organize intelligently."
+                if language.lower() == "arabic":
+                    msg = f"تم تحليل {target_path_obj} (الوضع العميق). وجدت {len(plan.get('changes', []))} ملفات لتنظيمها بذكاء."
+                else:
+                    msg = f"I've analyzed {target_path_obj} (Deep Mode). Found {len(plan.get('changes', []))} files to organize intelligently."
             
             # Cache the plan for confirmation
             import json
