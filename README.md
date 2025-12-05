@@ -199,7 +199,8 @@ The memory system is unified to act as a single, interconnected "brain":
 
 - **اختصار عالمي**: `⌘⇧H` (Cmd+Shift+H) لبدء الاستماع من أي مكان.
 - **Premium Dashboard**: لوحة تحكم تعرض حالة النظام، الطقس، والمهام.
-- **Memory View**: استعراض وإدارة قاعدة المعرفة (Graph, Vector, SQL).
+- **Live Logs Widget**: نافذة حية تعرض "تفكير" النظام لحظة بلحظة (LLM Events) وتقدم المهام.
+- **Memory View (v2.5)**: واجهة بصرية مذهلة لاستعراض الذاكرة الحية بطبقاتها الثلاث (SQL, Vector, Graph) مع رسوم بيانية تفاعلية وشروحات توضيحية.
 - **Gmail & Calendar**: واجهات مخصصة لعرض الرسائل والمواعيد.
 - **Active Agent Indicator**: مؤشر حي يظهر لك "عقل" النظام وهو يعمل (تحليل، تفكير سحابي، تنفيذ أدوات).
 - **إجراءات سريعة**: أزرار للوصول السريع للموجز الصباحي والتقويم.
@@ -208,7 +209,11 @@ The memory system is unified to act as a single, interconnected "brain":
 
 - **Global Hotkey**: `⌘⇧H` (Cmd+Shift+H) to start listening from anywhere.
 - **Premium Dashboard**: A dynamic grid layout displaying System Health, Usage, Quick Stats, and a detailed System History timeline.
-- **Memory View**: Browse and manage the knowledge base (Graph, Vector, SQL).
+- **Live Logs Widget**: Real-time visibility into the agent's brain. Watch as it thinks (LLM), executes tools, and processes files with live status updates.
+- **Memory View (v2.5)**: A stunning 3D-inspired visualization of the Living Memory.
+    - **Structured Layer**: Bar charts showing file/note distribution.
+    - **Semantic Layer**: Scatter plot visualizing concept embeddings.
+    - **Associative Layer**: Animated neural network graph showing node relationships.
 - **Gmail & Calendar**: Dedicated views for emails and events.
 - **Active Agent Indicator**: Live indicator showing the system's "brain" at work (Analyzing, Cloud Thinking, Tool Execution).
 - **Quick Actions**: Buttons for instant access to Morning Briefing and Calendar.

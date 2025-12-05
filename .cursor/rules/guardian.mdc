@@ -116,6 +116,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
+| 2025-12-05 20:00 | FEATURE_ADD | **Memory UI Overhaul (v2.5)**: Redesigned Memory Page with large visualizations for SQL, Vector, and Graph layers. Added detailed Arabic explanations and fixed stats counting logic. | desktop/src/pages/MemoryView.jsx, haitham_voice_agent/tools/memory/storage/vector_store.py, haitham_voice_agent/tools/memory/storage/graph_store.py |
 | 2025-12-05 19:35 | FEATURE_ADD | **Live Logs UI**: Added `TaskProgressWidget` to Dashboard for real-time visibility of LLM actions (Gemini/GPT) and task progress. Updated `LLMRouter` and `DeepOrganizer` to broadcast structured events. | desktop/src/components/dashboard/TaskProgressWidget.jsx, haitham_voice_agent/llm_router.py, haitham_voice_agent/tools/deep_organizer.py |
 | 2025-12-04 14:00 | BUG_FIX_FLOW | Fixed **Action not found** error for "Organize Documents". Updated `ollama_orchestrator.py` to include `organize_documents` intent and mapped `open_folder` to `open_file` in `chat.py`. | haitham_voice_agent/ollama_orchestrator.py, api/routes/chat.py |
 | 2025-12-04 13:50 | BUG_FIX_FLOW | Fixed **File Tree Interaction**: Added click handler to `FileSystemTree` to open files using the system default app via `/files/open` API. | desktop/src/components/dashboard/FileSystemTree.jsx |
