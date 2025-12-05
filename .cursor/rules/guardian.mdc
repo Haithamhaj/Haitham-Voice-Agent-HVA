@@ -102,6 +102,12 @@ globs:
 - **[2025-12-05]** **Cost Transparency**: Added detailed Gemini vs GPT cost breakdown in History Widget.
 - **[2025-12-05]** **Strict Organization**: Enforced rules: `.app` -> `Applications`, `.dmg` -> `Software`, Docs -> `Documents`.
 - **[2025-12-05]** **Self-Healing**: Added `verify_integrity.py` to prevent broken startups.
+- **[2025-12-05]** **Adaptive Learning (Mentor Strategy)**: 
+    - Implemented SHA-256 digital fingerprints for all files (upgraded from MD5).
+    - Created `learning_events` table with confidence scoring (1.0 initial, ±0.1/0.3 adjustments).
+    - Added passive feedback loop: files staying in place increase confidence, manual corrections decrease it.
+    - Integrated confidence-based categorization in `DeepOrganizer` (≥0.8 = auto-apply, <0.5 = LLM fallback).
+    - System now learns from YOUR manual moves, not generic AI patterns.
 
 ## 📏 Organization Rules (Strict)
 1.  **Applications**: `.app` bundles MUST go to `~/Applications`.
@@ -127,6 +133,7 @@ globs:
 ## 📝 Recent Changes
 
 | Date | Type | Description | Files |
+| 2025-12-05 22:50 | FEATURE_ADD | **Adaptive Learning System (Mentor Strategy)**: Implemented complete 4-phase learning system: (1) SHA-256 digital fingerprints for all files, (2) `learning_events` table with confidence scoring, (3) Confidence-based categorization in DeepOrganizer (≥0.8 auto-apply, <0.5 LLM fallback), (4) Passive feedback loop tracking file stability. System now learns from user's manual moves with self-adjusting confidence scores. | haitham_voice_agent/intelligence/adaptive_sync.py, haitham_voice_agent/tools/deep_organizer.py, haitham_voice_agent/tools/memory/storage/sqlite_store.py |
 | 2025-12-05 20:00 | FEATURE_ADD | **Memory UI Overhaul (v2.5)**: Redesigned Memory Page with large visualizations for SQL, Vector, and Graph layers. Added detailed Arabic explanations and fixed stats counting logic. | desktop/src/pages/MemoryView.jsx, haitham_voice_agent/tools/memory/storage/vector_store.py, haitham_voice_agent/tools/memory/storage/graph_store.py |
 | 2025-12-05 19:50 | BUG_FIX | **File Tree Auto-Refresh**: Implemented 10s polling interval in `FileSystemTree` to ensure the UI stays in sync with local file changes automatically. | desktop/src/components/dashboard/FileSystemTree.jsx |
 | 2025-12-05 19:45 | BUG_FIX | **Gemini Pricing Fix**: Added pricing definitions for `gemini-2.5-pro` and `gemini-pro` to fix zero-cost tracking issue. | haitham_voice_agent/data/pricing.json, haitham_voice_agent/token_tracker.py |

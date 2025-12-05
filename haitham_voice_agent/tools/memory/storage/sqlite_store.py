@@ -117,17 +117,37 @@ class SQLiteStore:
             """)
             await db.execute("CREATE INDEX IF NOT EXISTS idx_checkpoint_timestamp ON checkpoints(timestamp)")
             
-            # Create Optimization Cache Table (Safety Layer)
+            # Create optimization cache table
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS optimization_cache (
-                    hash TEXT NOT NULL,
+                    hash TEXT PRIMARY KEY,
                     context TEXT NOT NULL,
-                    result TEXT NOT NULL, -- JSON
+                    result TEXT,
                     timestamp TEXT NOT NULL,
-                    cost_saved REAL DEFAULT 0.0,
-                    PRIMARY KEY (hash, context)
+                    cost_saved REAL DEFAULT 0.0
                 )
             """)
+            
+            # Create learning events table (Adaptive Learning)
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS learning_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    file_hash TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    old_path TEXT,
+                    new_path TEXT,
+                    old_category TEXT,
+                    new_category TEXT,
+                    timestamp TEXT NOT NULL,
+                    description TEXT,
+                    embedding_id TEXT,
+                    confidence REAL DEFAULT 1.0,
+                    times_applied INTEGER DEFAULT 0,
+                    last_feedback TEXT
+                )
+            """)
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_learning_hash ON learning_events(file_hash)")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_learning_confidence ON learning_events(confidence)")
             
             await db.commit()
             logger.info("SQLite schema initialized")
@@ -169,6 +189,69 @@ class SQLiteStore:
                 await db.commit()
         except Exception as e:
             logger.error(f"Failed to save optimization cache: {e}")
+
+    async def log_learning_event(self, file_hash: str, event_type: str, old_path: str, new_path: str, 
+                                  old_category: str, new_category: str, description: str = "", embedding_id: str = None):
+        """Log a learning event (manual file move/rename)"""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                await db.execute("""
+                    INSERT INTO learning_events 
+                    (file_hash, event_type, old_path, new_path, old_category, new_category, timestamp, description, embedding_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    file_hash, event_type, old_path, new_path, old_category, new_category,
+                    datetime.now().isoformat(), description, embedding_id
+                ))
+                await db.commit()
+                logger.info(f"Logged learning event: {old_category} -> {new_category}")
+        except Exception as e:
+            logger.error(f"Failed to log learning event: {e}")
+
+    async def get_learning_events_by_category(self, new_category: str, min_confidence: float = 0.5):
+        """Get learning events for a specific category with minimum confidence"""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                async with db.execute("""
+                    SELECT * FROM learning_events 
+                    WHERE new_category = ? AND confidence >= ?
+                    ORDER BY confidence DESC, times_applied DESC
+                    LIMIT 10
+                """, (new_category, min_confidence)) as cursor:
+                    rows = await cursor.fetchall()
+                    return [dict(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Failed to get learning events: {e}")
+            return []
+
+    async def update_learning_confidence(self, event_id: int, delta: float, feedback: str):
+        """Update confidence score for a learning event"""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                # Get current confidence
+                async with db.execute("SELECT confidence, times_applied FROM learning_events WHERE id = ?", (event_id,)) as cursor:
+                    row = await cursor.fetchone()
+                    if not row:
+                        return
+                    
+                    current_confidence = row[0]
+                    times_applied = row[1]
+                
+                # Calculate new confidence (clamp between 0.1 and 2.0)
+                new_confidence = max(0.1, min(2.0, current_confidence + delta))
+                
+                # Update
+                await db.execute("""
+                    UPDATE learning_events 
+                    SET confidence = ?, times_applied = ?, last_feedback = ?
+                    WHERE id = ?
+                """, (new_confidence, times_applied + 1, feedback, event_id))
+                await db.commit()
+                logger.info(f"Updated learning event {event_id}: confidence={new_confidence}, feedback={feedback}")
+        except Exception as e:
+            logger.error(f"Failed to update learning confidence: {e}")
+
 
     async def index_file(self, path: str, project_id: str, description: str = "", tags: List[str] = None, embedding_id: str = None, file_hash: str = None) -> bool:
         """Index a file"""

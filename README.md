@@ -146,6 +146,19 @@ The memory system is unified to act as a single, interconnected "brain":
         - **Smart Renaming**: Renames files based on content (e.g., `scan01.pdf` -> `Invoice_Google_Oct.pdf`).
         - **Dry Run Mode**: Generates a "Change Plan" for your review before touching any file.
         - **Time Machine (Checkpoints)**: Every organization action is saved. You can say "Undo" to reverse all changes instantly.
+- **Adaptive Learning (The "Mentor" Strategy)** 🎓:
+    - **Digital Fingerprint (SHA-256)**: Every file gets a unique cryptographic hash for precise tracking across moves/renames.
+    - **Learning from Manual Moves**: When you manually move a file, the system logs it as a "learning event" with confidence = 1.0.
+    - **Confidence-Based Categorization**: 
+        - **High Confidence (≥0.8)**: Applies learned pattern automatically (zero LLM cost).
+        - **Medium Confidence (0.5-0.8)**: Falls back to LLM categorization.
+        - **Low Confidence (<0.5)**: Uses LLM with extra validation.
+    - **Passive Feedback Loop**: 
+        - System tracks files organized using learned patterns.
+        - If file stays in place → confidence +0.1 (you approved).
+        - If file is moved again → confidence -0.3 (you corrected).
+    - **Self-Improving**: The more you use it, the smarter it gets at predicting YOUR preferences (not generic AI guesses).
+    - **Database**: All learning events stored in `learning_events` table with full audit trail.
 - **Knowledge Tree (Dashboard)**:
     - **Real-Time Visualization**: A live, interactive file tree widget on the dashboard.
     - **Lazy Loading**: Efficiently browses the entire file system without performance lag.

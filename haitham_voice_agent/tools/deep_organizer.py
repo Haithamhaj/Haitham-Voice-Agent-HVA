@@ -149,7 +149,78 @@ class DeepOrganizer:
             if not text or len(text) < 50:
                 return None # Skip empty/unreadable files
                 
-            # --- ADAPTIVE LEARNING (Mimicry) ---
+            # --- PHASE 1: ADAPTIVE LEARNING (High-Confidence Patterns) ---
+            # Check if we have learned patterns for similar files
+            try:
+                from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
+                from haitham_voice_agent.tools.memory.storage.sqlite_store import SQLiteStore
+                
+                mem_tools = VoiceMemoryTools()
+                await mem_tools.ensure_initialized()
+                sqlite_store = SQLiteStore()
+                await sqlite_store.initialize()
+                
+                # Search for similar files using vector search
+                similar_files = await mem_tools.memory_system.search_file_index(text[:1000])
+                
+                # Check if any similar file has a learning event
+                for match in similar_files:
+                    match_path = Path(match['path'])
+                    file_hash = match.get('file_hash')
+                    
+                    if not file_hash:
+                        continue
+                    
+                    # Query learning events for this file hash
+                    import aiosqlite
+                    async with aiosqlite.connect(sqlite_store.db_path) as db:
+                        db.row_factory = aiosqlite.Row
+                        async with db.execute("""
+                            SELECT * FROM learning_events 
+                            WHERE file_hash = ? AND confidence >= 0.5
+                            ORDER BY confidence DESC, times_applied DESC
+                            LIMIT 1
+                        """, (file_hash,)) as cursor:
+                            learning_event = await cursor.fetchone()
+                            
+                            if learning_event:
+                                event = dict(learning_event)
+                                confidence = event['confidence']
+                                new_category = event['new_category']
+                                
+                                # High confidence (>= 0.8): Apply automatically
+                                if confidence >= 0.8:
+                                    await manager.broadcast({
+                                        "type": "task_progress",
+                                        "task": "Deep Organize",
+                                        "status": "learning_applied",
+                                        "file": file_path.name,
+                                        "details": f"Learned pattern: {new_category} (confidence: {confidence:.1f})"
+                                    })
+                                    
+                                    return {
+                                        "original_path": str(file_path),
+                                        "proposed_path": str(root_path / new_category / file_path.name),
+                                        "new_filename": file_path.name,
+                                        "category": new_category,
+                                        "reason": f"Learned from your manual move (confidence: {confidence:.1f}, applied {event['times_applied']} times)",
+                                        "learning_event_id": event['id'],  # For feedback
+                                        "usage": {
+                                            "cost": 0.0,
+                                            "input_tokens": 0,
+                                            "output_tokens": 0
+                                        }
+                                    }
+                                # Medium confidence (0.5-0.8): Will ask for confirmation in Phase 4
+                                elif confidence >= 0.5:
+                                    # Store for potential confirmation request
+                                    # For now, fall through to mimicry/LLM
+                                    pass
+            except Exception as e:
+                logger.warning(f"Learning event query failed: {e}")
+            # -----------------------------------
+                
+            # --- PHASE 2: ADAPTIVE LEARNING (Mimicry) ---
             # Search for similar files to see where they live
             try:
                 from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
@@ -578,6 +649,26 @@ class DeepOrganizer:
                         tags=["organized", change.get("category", "general")],
                         file_hash=new_file_hash
                     )
+                    
+                    # If this was organized using a learned pattern, log auto-applied event
+                    if change.get("learning_event_id"):
+                        from haitham_voice_agent.tools.memory.storage.sqlite_store import SQLiteStore
+                        sqlite_store = SQLiteStore()
+                        await sqlite_store.initialize()
+                        
+                        # Log that we applied this learning event
+                        await sqlite_store.log_learning_event(
+                            file_hash=new_file_hash,
+                            event_type="auto_applied",
+                            old_path=str(src),
+                            new_path=str(dst),
+                            old_category="Downloads",  # Assuming from Downloads
+                            new_category=change.get("category", "Unknown"),
+                            description=f"Auto-applied learned pattern",
+                            embedding_id=None
+                        )
+                        logger.info(f"Logged auto-applied event for {dst.name}")
+                    
                 except Exception as mem_err:
                     logger.warning(f"Failed to index organized file {dst}: {mem_err}")
                 # -----------------------

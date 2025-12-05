@@ -167,6 +167,30 @@ class SmartOrganizer:
             shutil.move(str(item), str(dest_path))
             logger.info(f"Moved {item.name} -> {dest_path}")
             
+            # --- ADAPTIVE LEARNING: Index the moved file immediately ---
+            try:
+                from haitham_voice_agent.intelligence.adaptive_sync import AdaptiveSync
+                from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
+                
+                # Calculate Hash
+                sync = AdaptiveSync()
+                file_hash = sync.calculate_file_hash(dest_path)
+                
+                # Index in DB
+                mem_tools = VoiceMemoryTools()
+                await mem_tools.ensure_initialized()
+                await mem_tools.memory_system.index_file(
+                    path=str(dest_path),
+                    project_id="default",
+                    description=f"Smart Organized: {category}",
+                    tags=["smart_organizer", category],
+                    file_hash=file_hash
+                )
+                logger.info(f"Indexed {dest_path.name} with hash {file_hash}")
+            except Exception as idx_err:
+                logger.warning(f"Failed to index moved file {dest_path.name}: {idx_err}")
+            # -----------------------------------------------------------
+            
             report["total_moved"] += 1
             report["categories"][category] = report["categories"].get(category, 0) + 1
             

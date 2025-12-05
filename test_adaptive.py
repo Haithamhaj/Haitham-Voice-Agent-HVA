@@ -12,7 +12,8 @@ async def test_sync():
     # Test with a specific folder (e.g., Documents)
     docs_path = str(Path.home() / "Documents")
     
-    stats = await sync.sync_knowledge_base(scan_roots=[docs_path])
+    # Enable indexing of new files to populate DB
+    stats = await sync.sync_knowledge_base(scan_roots=[docs_path], index_new=True)
     print(f"✅ Sync Stats: {stats}")
 
 if __name__ == "__main__":

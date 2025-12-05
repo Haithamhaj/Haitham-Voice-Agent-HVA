@@ -1,6 +1,7 @@
 import os
 import logging
 import hashlib
+import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -37,7 +38,8 @@ class AdaptiveSync:
             MAX_SIZE = 10 * 1024 * 1024 
             file_size = file_path.stat().st_size
             
-            hasher = hashlib.md5()
+            # Upgrade to SHA-256 for better collision resistance
+            hasher = hashlib.sha256()
             with open(file_path, 'rb') as f:
                 if file_size > MAX_SIZE:
                     # Read head and tail for speed on large files
@@ -56,13 +58,13 @@ class AdaptiveSync:
             logger.warning(f"Failed to hash {file_path}: {e}")
             return None
 
-    async def sync_knowledge_base(self, scan_roots: List[str] = None) -> Dict[str, int]:
+    async def sync_knowledge_base(self, scan_roots: List[str] = None, index_new: bool = False) -> Dict[str, int]:
         """
         Scan file system and sync with DB.
         Detects:
         1. Moved files (Same Hash, Different Path) -> Update DB + Learn
         2. Renamed files (Same Hash, Different Name) -> Update DB + Learn
-        3. New files -> Index
+        3. New files -> Index (if index_new=True)
         """
         logger.info("🔄 Starting Adaptive Sync (Offline Learning)...")
         await self.ensure_initialized()
@@ -110,39 +112,170 @@ class AdaptiveSync:
                             if old_path.resolve() != current_path.resolve():
                                 # MOVED or RENAMED!
                                 logger.info(f"🎓 LEARNING: Detected move {old_path.name} -> {current_path.name}")
+                                logger.info(f"   Old Path: {old_path}")
+                                logger.info(f"   New Path: {current_path}")
+                                
+                                # Extract categories from paths
+                                old_category = self._extract_category(old_path)
+                                new_category = self._extract_category(current_path)
+                                
+                                # Log learning event
+                                await self.sqlite_store.log_learning_event(
+                                    file_hash=file_hash,
+                                    event_type="manual_move",
+                                    old_path=str(old_path),
+                                    new_path=str(current_path),
+                                    old_category=old_category,
+                                    new_category=new_category,
+                                    description=existing_record["description"],
+                                    embedding_id=existing_record.get("embedding_id")
+                                )
                                 
                                 # Update DB
                                 await self.memory_tools.memory_system.index_file(
                                     path=str(current_path),
-                                    project_id=existing_record["project_id"], # Keep project or re-evaluate? Keep for now.
+                                    project_id=existing_record["project_id"], 
                                     description=existing_record["description"],
                                     tags=json.loads(existing_record["tags"]) if existing_record["tags"] else [],
                                     file_hash=file_hash
                                 )
-                                
-                                # TODO: Delete old record? Or mark as moved?
-                                # For now, index_file with same hash might duplicate if path is PK.
-                                # SQLiteStore schema: path is PRIMARY KEY.
-                                # So we have a new record. We should delete the old one if it doesn't exist anymore.
-                                if not old_path.exists():
-                                    # It was indeed moved.
-                                    # We can't delete easily without a delete method in MemorySystem, 
-                                    # but we can leave it or implement delete.
-                                    pass
-                                    
                                 stats["learned_moves"] += 1
+                            else:
+                                # logger.info(f"No change for {current_path.name}")
+                                pass
                         else:
                             # New File
-                            # Index it? Maybe too expensive to index everything on startup.
-                            # Let's only index if it looks important or user requested "Full Sync".
-                            # For "Adaptive Learning", we care mostly about MOVES of known files.
-                            pass
+                            if index_new:
+                                logger.info(f"🆕 Indexing new file: {current_path.name}")
+                                await self.memory_tools.memory_system.index_file(
+                                    path=str(current_path),
+                                    project_id="default",
+                                    description=f"Discovered during sync: {current_path.name}",
+                                    tags=["discovered", "sync"],
+                                    file_hash=file_hash
+                                )
+                                stats["new_indexed"] += 1
+                            else:
+                                # logger.info(f"New file found (not in DB): {current_path.name}")
+                                pass
                             
                     except Exception as e:
                         logger.error(f"Error syncing {current_path}: {e}")
                         stats["errors"] += 1
                         
+        # --- PASSIVE FEEDBACK: Check auto-applied events ---
+        # If files organized using learned patterns are still in place, increase confidence
+        # If they were moved again, decrease confidence
+        try:
+            import aiosqlite
+            async with aiosqlite.connect(self.sqlite_store.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                # Get all auto_applied events from last 7 days
+                async with db.execute("""
+                    SELECT * FROM learning_events 
+                    WHERE event_type = 'auto_applied' 
+                    AND timestamp > datetime('now', '-7 days')
+                """) as cursor:
+                    auto_events = await cursor.fetchall()
+                    
+                for event in auto_events:
+                    event_dict = dict(event)
+                    new_path = Path(event_dict['new_path'])
+                    file_hash = event_dict['file_hash']
+                    
+                    # Check if file is still at new_path
+                    if new_path.exists():
+                        current_hash = self.calculate_file_hash(new_path)
+                        if current_hash == file_hash:
+                            # File stayed in place! Increase confidence
+                            # Find the original learning event (manual_move) for this category
+                            async with db.execute("""
+                                SELECT id FROM learning_events 
+                                WHERE event_type = 'manual_move' 
+                                AND new_category = ?
+                                ORDER BY confidence DESC
+                                LIMIT 1
+                            """, (event_dict['new_category'],)) as cursor2:
+                                original_event = await cursor2.fetchone()
+                                if original_event:
+                                    await self.sqlite_store.update_learning_confidence(
+                                        event_id=original_event[0],
+                                        delta=+0.1,
+                                        feedback="confirmed"
+                                    )
+                                    logger.info(f"✅ Increased confidence for {event_dict['new_category']} (file stayed in place)")
+                    else:
+                        # File was moved again! Decrease confidence
+                        async with db.execute("""
+                            SELECT id FROM learning_events 
+                            WHERE event_type = 'manual_move' 
+                            AND new_category = ?
+                            ORDER BY confidence DESC
+                            LIMIT 1
+                        """, (event_dict['new_category'],)) as cursor2:
+                            original_event = await cursor2.fetchone()
+                            if original_event:
+                                await self.sqlite_store.update_learning_confidence(
+                                    event_id=original_event[0],
+                                    delta=-0.3,
+                                    feedback="rejected"
+                                )
+                                logger.info(f"❌ Decreased confidence for {event_dict['new_category']} (file was moved again)")
+        except Exception as e:
+            logger.warning(f"Passive feedback check failed: {e}")
+        # -----------------------------------
+                        
         logger.info(f"✅ Adaptive Sync Complete: {stats}")
+        return stats
+
+    async def audit_fingerprints(self) -> Dict[str, int]:
+        """
+        Audit and backfill missing/outdated fingerprints (hashes).
+        Ensures 100% coverage with SHA-256.
+        """
+        logger.info("🕵️‍♂️ Starting Digital Fingerprint Audit...")
+        await self.ensure_initialized()
+        
+        stats = {"checked": 0, "updated": 0, "errors": 0}
+        
+        try:
+            import aiosqlite
+            async with aiosqlite.connect(self.sqlite_store.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                # Get all files
+                async with db.execute("SELECT path, file_hash FROM file_index") as cursor:
+                    rows = await cursor.fetchall()
+                    
+                for row in rows:
+                    path_str = row["path"]
+                    current_hash = row["file_hash"]
+                    file_path = Path(path_str)
+                    
+                    stats["checked"] += 1
+                    
+                    if not file_path.exists():
+                        continue
+                        
+                    # Check if hash is missing or looks like MD5 (32 chars) vs SHA-256 (64 chars)
+                    needs_update = not current_hash or len(current_hash) != 64
+                    
+                    if needs_update:
+                        new_hash = self.calculate_file_hash(file_path)
+                        if new_hash:
+                            await db.execute(
+                                "UPDATE file_index SET file_hash = ? WHERE path = ?",
+                                (new_hash, path_str)
+                            )
+                            stats["updated"] += 1
+                            logger.info(f"Updated fingerprint for {file_path.name} (SHA-256)")
+                            
+                await db.commit()
+                
+        except Exception as e:
+            logger.error(f"Audit failed: {e}")
+            stats["errors"] += 1
+            
+        logger.info(f"✅ Audit Complete: {stats}")
         return stats
 
     async def _find_file_by_hash(self, file_hash: str) -> Optional[Dict[str, Any]]:
@@ -159,3 +292,19 @@ class AdaptiveSync:
             return None
         except Exception:
             return None
+
+    def _extract_category(self, file_path: Path) -> str:
+        """Extract category from file path (e.g., 'Documents/Technology' -> 'Technology')"""
+        try:
+            # Get relative path from Documents root
+            docs_root = Path.home() / "Documents"
+            if str(file_path).startswith(str(docs_root)):
+                rel_path = file_path.relative_to(docs_root)
+                parts = rel_path.parts
+                if len(parts) > 1:
+                    # Return first subfolder as category
+                    return parts[0]
+            return "Uncategorized"
+        except Exception:
+            return "Uncategorized"
+
