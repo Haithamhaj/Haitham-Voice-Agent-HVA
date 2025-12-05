@@ -101,8 +101,43 @@ class DeepOrganizer:
         try:
             # Broadcast: Scanning
             from api.connection_manager import manager
-            await manager.broadcast({"type": "log", "message": f"🔍 Scanning: {file_path.name}..."})
+            # await manager.broadcast({"type": "log", "message": f"🔍 Scanning: {file_path.name}..."})
+            await manager.broadcast({
+                "type": "task_progress",
+                "task": "Deep Organize",
+                "status": "scanning",
+                "file": file_path.name,
+                "details": "Analyzing content..."
+            })
             
+            # Calculate file hash (MD5)
+            import hashlib
+            hasher = hashlib.md5()
+            with open(file_path, 'rb') as f:
+                buf = f.read(65536)
+                while len(buf) > 0:
+                    hasher.update(buf)
+                    buf = f.read(65536)
+            file_hash = hasher.hexdigest()
+            
+            # Check if file is already indexed and unchanged
+            from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
+            memory_tools = VoiceMemoryTools()
+            await memory_tools.ensure_initialized()
+            
+            existing_index = await memory_tools.memory_system.sqlite_store.get_file_index(str(file_path))
+            
+            if existing_index and existing_index.get("file_hash") == file_hash:
+                await manager.broadcast({
+                    "type": "task_progress",
+                    "task": "Deep Organize",
+                    "status": "skipped",
+                    "file": file_path.name,
+                    "details": "Unchanged (Zero Cost)"
+                })
+                logger.info(f"Skipping unchanged file: {file_path.name}")
+                return None
+
             # Extract text
             text = content_extractor.extract_text(str(file_path))
             if not text or len(text) < 50:
@@ -162,12 +197,30 @@ class DeepOrganizer:
             if proposed_path.resolve() == file_path.resolve():
                 return None
                 
+            # Calculate total usage for this file
+            file_usage = {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cost": 0.0
+            }
+            
+            if "usage" in summary_result:
+                file_usage["input_tokens"] += summary_result["usage"].get("input_tokens", 0)
+                file_usage["output_tokens"] += summary_result["usage"].get("output_tokens", 0)
+                file_usage["cost"] += summary_result["usage"].get("cost", 0.0)
+                
+            if "usage" in response:
+                file_usage["input_tokens"] += response["usage"].get("input_tokens", 0)
+                file_usage["output_tokens"] += response["usage"].get("output_tokens", 0)
+                file_usage["cost"] += response["usage"].get("cost", 0.0)
+
             return {
                 "original_path": str(file_path),
                 "proposed_path": str(proposed_path),
                 "new_filename": new_filename,
                 "category": category_path,
-                "reason": result.get("reason")
+                "reason": result.get("reason"),
+                "usage": file_usage
             }
             
         except Exception as e:
@@ -243,11 +296,22 @@ class DeepOrganizer:
                         except:
                             pass
                     
+                    # Calculate hash for the new file
+                    import hashlib
+                    hasher = hashlib.md5()
+                    with open(dst, 'rb') as f:
+                        buf = f.read(65536)
+                        while len(buf) > 0:
+                            hasher.update(buf)
+                            buf = f.read(65536)
+                    new_file_hash = hasher.hexdigest()
+
                     await memory_tools.memory_system.index_file(
                         path=str(dst),
                         project_id=project_id,
                         description=f"Organized file: {dst.name}",
-                        tags=["organized", change.get("category", "general")]
+                        tags=["organized", change.get("category", "general")],
+                        file_hash=new_file_hash
                     )
                 except Exception as mem_err:
                     logger.warning(f"Failed to index organized file {dst}: {mem_err}")

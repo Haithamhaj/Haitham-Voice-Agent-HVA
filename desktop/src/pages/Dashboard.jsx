@@ -6,6 +6,7 @@ import UsageWidget from '../components/dashboard/UsageWidget';
 import SystemHealthWidget from '../components/dashboard/SystemHealthWidget';
 import FileSystemTree from '../components/dashboard/FileSystemTree';
 import CheckpointsWidget from '../components/dashboard/CheckpointsWidget';
+import TaskProgressWidget from '../components/dashboard/TaskProgressWidget';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -82,8 +83,9 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Middle Row: System History (Full Width) */}
-                <div className="col-span-12 min-h-[300px]">
+                {/* Middle Row: Live Activity & History */}
+                <div className="col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[300px]">
+                    <TaskProgressWidget />
                     <CheckpointsWidget />
                 </div>
 

@@ -76,11 +76,18 @@ class SQLiteStore:
                     description TEXT,
                     tags TEXT, -- JSON list
                     last_modified TEXT,
-                    embedding_id TEXT
+                    embedding_id TEXT,
+                    file_hash TEXT
                 )
             """)
             await db.execute("CREATE INDEX IF NOT EXISTS idx_file_project ON file_index(project_id)")
             
+            # Migration: Add file_hash if missing
+            try:
+                await db.execute("ALTER TABLE file_index ADD COLUMN file_hash TEXT")
+            except Exception:
+                pass # Column likely exists
+
             # Create Token Usage Table
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS token_usage (
@@ -113,20 +120,21 @@ class SQLiteStore:
             await db.commit()
             logger.info("SQLite schema initialized")
 
-    async def index_file(self, path: str, project_id: str, description: str = "", tags: List[str] = None, embedding_id: str = None) -> bool:
+    async def index_file(self, path: str, project_id: str, description: str = "", tags: List[str] = None, embedding_id: str = None, file_hash: str = None) -> bool:
         """Index a file"""
         try:
             async with aiosqlite.connect(self.db_path) as db:
                 await db.execute("""
-                    INSERT OR REPLACE INTO file_index (path, project_id, description, tags, last_modified, embedding_id)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT OR REPLACE INTO file_index (path, project_id, description, tags, last_modified, embedding_id, file_hash)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (
                     path, 
                     project_id, 
                     description, 
                     json.dumps(tags or []), 
                     datetime.now().isoformat(), 
-                    embedding_id
+                    embedding_id,
+                    file_hash
                 ))
                 await db.commit()
             return True

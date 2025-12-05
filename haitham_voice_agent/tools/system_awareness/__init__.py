@@ -50,11 +50,68 @@ class SystemAwareness:
         
         self._initialized = True
         
-    def _on_file_change(self):
+    def _on_file_change(self, file_path: str):
         """Callback when files change"""
-        logger.info("File change detected. Updating Quick Index...")
-        # Run update in background thread to not block watcher
-        threading.Thread(target=self.indexer.update_index, daemon=True).start()
+        logger.info(f"File change detected: {file_path}")
+        
+        # Run updates in background
+        threading.Thread(target=self._process_file_change, args=(file_path,), daemon=True).start()
+        
+    def _process_file_change(self, file_path: str):
+        """Process the file change: Update Quick Index & Deep Memory"""
+        try:
+            # 1. Update Quick Index (Layer 2)
+            self.indexer.update_index()
+            
+            # 2. Update Deep Memory (Layer 3) - Smart Sync
+            import asyncio
+            import hashlib
+            from pathlib import Path
+            
+            path_obj = Path(file_path)
+            if not path_obj.exists() or path_obj.is_dir():
+                return
+                
+            # Calculate Hash
+            hasher = hashlib.md5()
+            with open(path_obj, 'rb') as f:
+                buf = f.read(65536)
+                while len(buf) > 0:
+                    hasher.update(buf)
+                    buf = f.read(65536)
+            file_hash = hasher.hexdigest()
+            
+            # Index in Memory
+            from haitham_voice_agent.tools.memory.voice_tools import VoiceMemoryTools
+            
+            async def update_memory():
+                memory_tools = VoiceMemoryTools()
+                await memory_tools.ensure_initialized()
+                
+                # Determine Project ID (Heuristic)
+                project_id = "documents"
+                parts = path_obj.parts
+                if "Projects" in parts:
+                    try:
+                        idx = parts.index("Projects")
+                        if idx + 1 < len(parts):
+                            project_id = parts[idx+1]
+                    except:
+                        pass
+                
+                await memory_tools.memory_system.index_file(
+                    path=str(path_obj),
+                    project_id=project_id,
+                    description=f"Auto-indexed: {path_obj.name}",
+                    tags=["auto-sync", "watched"],
+                    file_hash=file_hash
+                )
+                logger.info(f"✅ Smart Sync: Updated memory for {path_obj.name}")
+                
+            asyncio.run(update_memory())
+            
+        except Exception as e:
+            logger.error(f"Failed to process file change for {file_path}: {e}")
         
     def find_file(self, query: str) -> List[Dict[str, Any]]:
         """

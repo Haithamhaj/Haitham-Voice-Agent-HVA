@@ -19,6 +19,7 @@ import google.generativeai as genai
 
 from .config import Config
 from .token_tracker import get_tracker
+from api.connection_manager import manager
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +117,14 @@ class LLMRouter:
         model_name = Config.resolve_gemini_model(logical_model)
         logger.info(f"[LLMRouter] Gemini: {logical_model} -> {model_name}")
         
+        # Broadcast Start
+        await manager.broadcast({
+            "type": "llm_start",
+            "model": "Gemini",
+            "task": "Generating Content",
+            "details": f"Model: {model_name}"
+        })
+        
         try:
             # Create client for the specific model
             model = genai.GenerativeModel(model_name)
@@ -126,12 +135,15 @@ class LLMRouter:
                 full_prompt = f"{system_instruction}\n\n{prompt}"
             
             # Generate response
-            response = await asyncio.to_thread(
-                model.generate_content,
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=temperature
-                )
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    model.generate_content,
+                    full_prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=temperature
+                    )
+                ),
+                timeout=60.0
             )
             
             result = response.text
@@ -169,6 +181,15 @@ class LLMRouter:
                 logger.warning(f"Failed to track Gemini usage: {e}")
 
             logger.debug(f"Gemini response: {result[:100]}...")
+            
+            # Broadcast End
+            await manager.broadcast({
+                "type": "llm_end",
+                "model": "Gemini",
+                "status": "success",
+                "cost": usage_data["cost"]
+            })
+            
             return {"content": result, "model": model_name, "usage": usage_data}
             
         except Exception as e:
@@ -210,6 +231,14 @@ class LLMRouter:
             
             messages.append({"role": "user", "content": prompt})
             
+            # Broadcast Start
+            await manager.broadcast({
+                "type": "llm_start",
+                "model": "GPT",
+                "task": "Reasoning/Planning",
+                "details": f"Model: {model_name}"
+            })
+            
             # Prepare kwargs
             kwargs = {
                 "model": model_name,
@@ -239,7 +268,7 @@ class LLMRouter:
             
             # Generate response
             client = openai.AsyncOpenAI(api_key=Config.OPENAI_API_KEY)
-            response = await client.chat.completions.create(**kwargs)
+            response = await client.chat.completions.create(timeout=60.0, **kwargs)
             
             result = response.choices[0].message.content
             
@@ -271,6 +300,15 @@ class LLMRouter:
                 logger.warning(f"Failed to track GPT usage: {e}")
 
             logger.debug(f"GPT response: {result[:100]}...")
+            
+            # Broadcast End
+            await manager.broadcast({
+                "type": "llm_end",
+                "model": "GPT",
+                "status": "success",
+                "cost": usage_data["cost"]
+            })
+            
             return {"content": result, "model": model_name, "usage": usage_data}
             
         except Exception as e:

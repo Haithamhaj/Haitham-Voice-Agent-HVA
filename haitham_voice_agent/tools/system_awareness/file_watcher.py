@@ -57,7 +57,8 @@ class FileWatcher:
                     logger.info(f"Change detected in {folder}")
                     snapshots[folder] = current
                     try:
-                        self.callback()
+                        # Polling doesn't give exact file, so we pass folder
+                        self.callback(str(folder))
                     except Exception as e:
                         logger.error(f"Watcher callback failed: {e}")
                         
@@ -81,12 +82,12 @@ class FileWatcher:
             def on_any_event(self, event):
                 if event.is_directory: return
                 
-                # Debounce (max 1 update per 5 seconds)
+                # Debounce (max 1 update per 2 seconds per file)
                 now = time.time()
-                if now - self.last_trigger > 5:
+                if now - self.last_trigger > 2:
                     self.last_trigger = now
                     logger.info(f"Watchdog event: {event.src_path}")
-                    self.callback()
+                    self.callback(event.src_path)
                     
         self.observer = Observer()
         handler = Handler(self.callback)
