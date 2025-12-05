@@ -218,10 +218,16 @@ class SmartOrganizer:
         
         return report
 
-    def _get_category(self, file_path: Path) -> str:
-        """Determine category based on file extension"""
-        suffix = file_path.suffix.lower()
-        for cat, extensions in self.CATEGORIES.items():
-            if suffix in extensions:
-                return cat
         return None
+
+from haitham_voice_agent.intelligence.content_extractor import content_extractor
+from haitham_voice_agent.llm_router import get_router
+
+# Singleton
+_organizer = None
+
+def get_organizer():
+    global _organizer
+    if _organizer is None:
+        _organizer = SmartOrganizer()
+    return _organizer

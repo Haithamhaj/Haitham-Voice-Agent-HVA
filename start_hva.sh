@@ -11,4 +11,15 @@ pkill -f "api/main.py" || true
 
 # Activate virtual environment and run
 source .venv/bin/activate
+
+# Run Integrity Check
+echo "🔍 Running Integrity Check..."
+python3 verify_integrity.py
+if [ $? -ne 0 ]; then
+    echo "❌ Integrity Check Failed. Aborting startup."
+    exit 1
+fi
+
+# Start Backend
+echo "🚀 Starting HVA Backend..."
 python3 api/main.py
