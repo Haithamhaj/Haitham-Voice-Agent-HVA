@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, RefreshCw, ExternalLink } from 'lucide-react';
+import { Mail, RefreshCw, ExternalLink, Star } from 'lucide-react';
 import { api } from '../services/api';
 
 const GmailView = () => {
