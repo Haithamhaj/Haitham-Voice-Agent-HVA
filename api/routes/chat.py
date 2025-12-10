@@ -115,11 +115,12 @@ async def chat(request: ChatRequest):
                  from haitham_voice_agent.tools.memory.memory_system import memory_system
                  await memory_system.initialize()
                  
-                 query = ollama_result["parameters"].get("query", "")
+                 # Use the full text as the query to match Memory View behavior (which handles natural language well)
+                 query = text
                  
                  # Search Memories & Files (now includes transliteration in memory_system)
-                 memories = await memory_system.search_memories(query=query, limit=5)
-                 files = await memory_system.search_files(query=query, limit=5)
+                 memories = await memory_system.search_memories(query=query, limit=20)
+                 files = await memory_system.search_files(query=query, limit=50)
                  
                  # Format results for frontend (Rich Cards)
                  formatted_results = []
@@ -163,10 +164,11 @@ async def chat(request: ChatRequest):
                  if not memories and not files:
                      summary = "لم أجد أي نتائج مطابقة."
                  else:
-                     summary = f"وجدث {len(memories)} ملاحظات و {len(files)} ملفات."
+                     summary = f"وجدت {len(memories)} ملاحظات و {len(files)} ملفات."
                      if files:
-                         top_file = files[0].get('path', '').split('/')[-1]
-                         summary += f" أبرزها ملف '{top_file}'."
+                         top_files = [f.get('path', '').split('/')[-1] for f in files[:3]]
+                         file_list_str = "، ".join([f"'{f}'" for f in top_files])
+                         summary += f" أبرزها: {file_list_str}."
                  
                  # Return rich response
                  return {

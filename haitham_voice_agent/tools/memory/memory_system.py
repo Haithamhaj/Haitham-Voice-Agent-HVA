@@ -346,71 +346,101 @@ class MemorySystem:
             return False
 
 
-    async def search_files(self, query: str, project_id: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+    async def search_files(self, query: str, project_id: Optional[str] = None, limit: int = 20) -> List[Dict[str, Any]]:
         """
-        Search for files using semantic search + text match
+        Search for files using a smart ranking system:
+        Aggregates Semantic + Text + Transliterated matches, scores them, and returns top results.
         """
         try:
-            # 1. Semantic Search via Vector Store
+            candidates: Dict[str, Dict[str, Any]] = {}
+            
+            # Helper to add/update candidate
+            async def add_candidate(path, score_type, score_val, source_match_data=None):
+                if not path: return
+                
+                if path not in candidates:
+                    # Fetch details if new
+                    file_data = await self.sqlite_store.get_file_index(path)
+                    if file_data:
+                        candidates[path] = file_data
+                        candidates[path]["_scores"] = {score_type: score_val}
+                        candidates[path]["score"] = score_val # Base score
+                else:
+                    # Update score if existing
+                    candidates[path]["_scores"][score_type] = score_val
+                    # Keep max score or additive? Let's do additive bonuses on top of base vector
+                    
+            # 1. Semantic Search (Vector) - Base source of truth for "meaning"
             query_embedding = await self.embedding_generator.generate(query)
             filter_criteria = {"type": "file"}
             if project_id:
                 filter_criteria["project"] = project_id
                 
-            vector_results = self.vector_store.search(query_embedding, limit=limit, filter_criteria=filter_criteria)
+            # Fetch more than limit to allow re-ranking
+            vector_results = self.vector_store.search(query_embedding, limit=limit * 2, filter_criteria=filter_criteria)
             
-            # 2. Retrieve details from SQLite File Index
-            results = []
-            seen_paths = set()
-            
-            # Add vector results
             for res in vector_results:
-                path = res["metadata"].get("path")
-                if path and path not in seen_paths:
-                    file_data = await self.sqlite_store.get_file_index(path)
-                    if file_data:
-                        file_data["score"] = res["score"]
-                        results.append(file_data)
-                        seen_paths.add(path)
-            
-            # 3. Fallback/Augment with Text Search (if few results)
-            if len(results) < limit:
-                text_results = await self.sqlite_store.search_file_index(query)
-                for res in text_results:
-                    if res["path"] not in seen_paths:
-                        res["score"] = 0.5 # Arbitrary score for text match
-                        results.append(res)
-                        seen_paths.add(res["path"])
-            
-            # 4. Transliteration Fallback (Arabic -> Latin)
-            # e.g. "كرافت" -> "kraft" to match "CRAFTS"
-            if len(results) < limit:
-                import re
-                arabic_to_latin = {
-                    'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'a',
-                    'ب': 'b', 'ت': 't', 'ث': 'th',
-                    'ج': 'j', 'ح': 'h', 'خ': 'kh',
-                    'د': 'd', 'ذ': 'th', 'ر': 'r', 'ز': 'z',
-                    'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd',
-                    'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh',
-                    'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l',
-                    'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w',
-                    'ي': 'y', 'ى': 'a', 'ة': 'a', 'ء': '',
-                }
-                transliterated = ''.join(arabic_to_latin.get(c, c) for c in query)
-                
-                if transliterated != query:
-                    trans_results = await self.sqlite_store.search_file_index(transliterated)
-                    for res in trans_results:
-                        if res["path"] not in seen_paths:
-                            res["score"] = 0.4 # Slightly lower score for transliterated match
-                            results.append(res)
-                            seen_paths.add(res["path"])
+                await add_candidate(res["metadata"].get("path"), "vector", res["score"])
 
-            return results[:limit]
+            # 2. Text Search (Exact/Partial) - High precision bonus
+            text_results = await self.sqlite_store.search_file_index(query)
+            for res in text_results:
+                await add_candidate(res["path"], "text", 1.0)
+
+            # 3. Transliteration Search (Arabic -> Latin) - Fallback bonus
+            # e.g. "كرافت" -> "kraft" to match "CRAFTS"
+            import re
+            arabic_to_latin = {
+                'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'a',
+                'ب': 'b', 'ت': 't', 'ث': 'th',
+                'ج': 'j', 'ح': 'h', 'خ': 'kh',
+                'د': 'd', 'ذ': 'th', 'ر': 'r', 'ز': 'z',
+                'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd',
+                'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh',
+                'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l',
+                'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w',
+                'ي': 'y', 'ى': 'a', 'ة': 'a', 'ء': '',
+            }
+            transliterated = ''.join(arabic_to_latin.get(c, c) for c in query)
+            
+            if transliterated != query:
+                trans_results = await self.sqlite_store.search_file_index(transliterated)
+                for res in trans_results:
+                    await add_candidate(res["path"], "transliterated", 0.9)
+
+            # 4. Smart Ranking / Scoring Logic
+            ranked_results = []
+            for path, data in candidates.items():
+                scores = data.get("_scores", {})
+                
+                # Base Score: Vector (or 0.0 if not found in vector search)
+                final_score = scores.get("vector", 0.0)
+                
+                # Boosters
+                if scores.get("text"):
+                    final_score += 0.3 # Strong bonus for text match
+                    
+                if scores.get("transliterated"):
+                    final_score += 0.2 # Moderate bonus for transliteration match
+                
+                # Filename exact match bonus (if query is short/specific)
+                filename = path.split('/')[-1].lower()
+                query_lower = query.lower()
+                if query_lower in filename:
+                    final_score += 0.1
+                if query_lower == filename:
+                     final_score += 0.3
+                
+                data["score"] = final_score
+                ranked_results.append(data)
+                
+            # Sort by Descending Score
+            ranked_results.sort(key=lambda x: x["score"], reverse=True)
+            
+            return ranked_results[:limit]
             
         except Exception as e:
-            logger.error(f"File search failed: {e}")
+            logger.error(f"File search failed: {e}", exc_info=True)
             return []
 
 # Singleton instance

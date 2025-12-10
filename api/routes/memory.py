@@ -40,10 +40,10 @@ async def search_memory(query: str):
         await memory_system.initialize()
         
         # Search Memories (Notes, Thoughts)
-        memories = await memory_system.search_memories(query=query, limit=5)
+        memories = await memory_system.search_memories(query=query, limit=20)
         
         # Search Files (Indexed Documents)
-        files = await memory_system.search_files(query=query, limit=5)
+        files = await memory_system.search_files(query=query, limit=50)
         
         # Format results for frontend
         formatted_results = []
