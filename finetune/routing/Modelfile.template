@@ -1,0 +1,15 @@
+FROM qwen2.5:3b
+
+# Set parameter to use the instruction template for Qwen
+PARAMETER stop "<|endoftext|>"
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+
+# Load the LoRA adapter (Replace <ADAPTER_PATH> with actual path)
+ADAPTER <ADAPTER_PATH>
+
+# System Prompt
+SYSTEM """
+You are the HVA Local Classifier. Given the user input, return ONLY a JSON object that matches the routing schema.
+Do not output any explanation or markdown formatting. 
+"""

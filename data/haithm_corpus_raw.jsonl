@@ -1,0 +1,3 @@
+{"id": "68939983_0", "source_path": "docs/test_doc.txt", "source_type": "txt", "role": "user", "chunk_index": 0, "text": "This is a test document by Haithm.\n"}
+{"id": "384a3278_0", "source_path": "chats/test_chat.json", "source_type": "chat_json", "role": "user", "chunk_index": 0, "text": "Hello Haithm"}
+{"id": "384a3278_0", "source_path": "chats/test_chat.json", "source_type": "chat_json", "role": "assistant", "chunk_index": 0, "text": "Hi there"}

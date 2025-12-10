@@ -32,3 +32,4 @@ websockets>=12.0
 dateparser
 psutil
 sentence-transformers
+python-docx
