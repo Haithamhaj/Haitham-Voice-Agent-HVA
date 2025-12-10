@@ -32,13 +32,17 @@ export const api = {
     stopVoice: () => monitoredFetch('/voice/stop', { method: 'POST' }),
 
     // Tasks
+    // Tasks
     fetchTasks: () => monitoredFetch('/tasks/'),
+    deleteTask: (id) => monitoredFetch(`/tasks/${id}`, { method: 'DELETE' }),
 
     // Gmail
     fetchEmails: () => monitoredFetch('/gmail/unread'),
 
     // Calendar
+    // Calendar
     fetchEvents: () => monitoredFetch('/calendar/today'),
+    deleteEvent: (id) => monitoredFetch(`/calendar/events/${id}`, { method: 'DELETE' }),
 
     // Memory
     fetchMemoryStats: () => monitoredFetch('/memory/stats'),

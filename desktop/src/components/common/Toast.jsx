@@ -9,7 +9,18 @@ const Toast = () => {
         const unsubscribe = logger.subscribeErrors((log) => {
             addToast(log.message, 'error');
         });
-        return unsubscribe;
+
+        const handleNotification = (e) => {
+            const { message, level } = e.detail;
+            addToast(message, level === 'error' ? 'error' : level === 'success' ? 'success' : 'info');
+        };
+
+        window.addEventListener('hva-notification', handleNotification);
+
+        return () => {
+            unsubscribe();
+            window.removeEventListener('hva-notification', handleNotification);
+        };
     }, []);
 
     const addToast = (message, type = 'info') => {

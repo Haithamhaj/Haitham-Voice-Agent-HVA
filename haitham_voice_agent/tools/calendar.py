@@ -242,6 +242,7 @@ class CalendarTools:
             for event in events:
                 start = event['start'].get('dateTime', event['start'].get('date'))
                 formatted_events.append({
+                    "id": event.get('id'),
                     "summary": event.get('summary', 'No Title'),
                     "start": start,
                     "link": event.get('htmlLink')
@@ -249,14 +250,26 @@ class CalendarTools:
                 
             return {
                 "success": True,
-                "count": len(events),
                 "events": formatted_events,
-                "period": f"{time_min.strftime('%Y-%m-%d %H:%M')} to {time_max.strftime('%H:%M')}"
+                "count": len(events)
             }
             
         except Exception as e:
             logger.error(f"List events failed: {e}")
             return {"error": True, "message": str(e)}
+
+    async def delete_event(self, event_id: str) -> bool:
+        """Delete an event by ID"""
+        if not self._ensure_service():
+            return False
+            
+        try:
+            self.service.events().delete(calendarId='primary', eventId=event_id).execute()
+            logger.info(f"Deleted calendar event: {event_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete event {event_id}: {e}")
+            return False
 
     async def check_availability(self, day_str: str = "today", **kwargs) -> Dict[str, Any]:
         """Check availability for a given day (kwargs like 'time' are ignored for now)"""

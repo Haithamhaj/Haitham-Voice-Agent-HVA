@@ -81,6 +81,22 @@ class TaskManager:
         logger.info(f"Created task: {title} in {project_id}")
         return task
 
+    def delete_task(self, task_id: str, project_id: str = "inbox") -> bool:
+        """Delete a task by ID"""
+        tasks = self._load_tasks(project_id)
+        original_count = len(tasks)
+        
+        tasks = [t for t in tasks if t.id != task_id]
+        
+        if len(tasks) < original_count:
+            self._save_tasks(project_id, tasks)
+            logger.info(f"Deleted task {task_id} from {project_id}")
+            return True
+            
+        # If not found in primary project, try searching others?
+        # For now, strict project scoping
+        return False
+
     def list_tasks(self, project_id: Optional[str] = None, 
                    status: Optional[TaskStatus] = None) -> List[Task]:
         """List tasks, optionally filtered by project and status"""

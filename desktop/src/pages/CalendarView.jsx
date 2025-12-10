@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MapPin, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 
 const CalendarView = () => {
@@ -47,7 +47,6 @@ const CalendarView = () => {
                                         <span>
                                             {new Date(typeof event.start === 'string' ? event.start : (event.start?.dateTime || event.start?.date)).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                             {' - '}
-                                            {' - '}
                                             {event.end ? new Date(typeof event.end === 'string' ? event.end : (event.end?.dateTime || event.end?.date)).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
                                         </span>
                                     </div>
@@ -59,6 +58,19 @@ const CalendarView = () => {
                                     )}
                                 </div>
                             </div>
+
+                            <button
+                                onClick={() => {
+                                    if (window.confirm("حذف الموعد من التقويم؟")) {
+                                        api.deleteEvent(event.id).then(() => {
+                                            setEvents(prev => prev.filter(e => e.id !== event.id));
+                                        });
+                                    }
+                                }}
+                                className="p-2 text-hva-muted hover:text-red-500 transition-colors self-center opacity-70 hover:opacity-100"
+                            >
+                                <Trash2 size={18} />
+                            </button>
                         </div>
                     ))
                 ) : (

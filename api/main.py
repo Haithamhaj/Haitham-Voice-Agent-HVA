@@ -38,6 +38,12 @@ async def startup_event():
     import asyncio
     asyncio.create_task(AdaptiveSync().sync_knowledge_base())
     logger.info("Memory System Initialized")
+    
+    # Start Guardian (Background)
+    from haitham_voice_agent.intelligence.guardian import SystemGuardian
+    guardian = SystemGuardian()
+    asyncio.create_task(guardian.start_monitoring())
+    logger.info("Guardian Initialized")
 
 
 

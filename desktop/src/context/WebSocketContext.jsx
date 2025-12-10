@@ -32,6 +32,11 @@ export const WebSocketProvider = ({ children }) => {
                         logger.info(`Voice status updated: ${data.listening}`);
                     } else if (data.type === 'log') {
                         setLastLog({ message: data.message, timestamp: Date.now() });
+                    } else if (data.type === 'notification') {
+                        // Dispatch global event for Toast
+                        window.dispatchEvent(new CustomEvent('hva-notification', {
+                            detail: { message: data.message, level: data.level || 'info' }
+                        }));
                     }
                 } catch (e) {
                     logger.error("Failed to parse WS message", e.message);

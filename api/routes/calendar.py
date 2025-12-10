@@ -25,3 +25,21 @@ async def get_today_events():
             return {"error": "Method not found"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/events/{event_id}")
+async def delete_event(event_id: str):
+    """Delete a calendar event"""
+    dispatcher = get_dispatcher()
+    calendar_tool = dispatcher.tools.get("calendar")
+    
+    if not calendar_tool:
+        raise HTTPException(status_code=503, detail="Calendar tool not available")
+        
+    try:
+        success = await calendar_tool.delete_event(event_id)
+        if success:
+            return {"success": True}
+        else:
+            raise HTTPException(status_code=404, detail="Event not found or failed to delete")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

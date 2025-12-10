@@ -72,7 +72,16 @@ const TasksView = () => {
                                     )}
                                 </div>
 
-                                <button className="opacity-0 group-hover:opacity-100 p-2 text-hva-dim hover:text-red-500 transition-all">
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm("حذف المهمة؟")) {
+                                            api.deleteTask(task.id).then(() => {
+                                                setTasks(prev => prev.filter(t => t.id !== task.id));
+                                            });
+                                        }
+                                    }}
+                                    className="p-2 text-hva-muted hover:text-red-500 transition-colors opacity-70 hover:opacity-100"
+                                >
                                     <Trash2 size={18} />
                                 </button>
                             </div>
