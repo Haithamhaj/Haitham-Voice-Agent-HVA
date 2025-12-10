@@ -25,7 +25,26 @@ const TasksView = () => {
                     </h1>
                     <p className="text-hva-muted mt-1">إدارة قائمة المهام</p>
                 </div>
-                <button className="flex items-center gap-2 bg-hva-accent hover:bg-hva-accent-light text-hva-primary font-bold px-4 py-2 rounded-xl transition-colors">
+                <button
+                    onClick={() => {
+                        const title = window.prompt("عنوان المهمة:");
+                        if (title) {
+                            setLoading(true);
+                            api.sendChat(`Add task ${title}`)
+                                .then(() => {
+                                    // Refresh tasks after short delay to allow backend to process
+                                    setTimeout(() => {
+                                        api.fetchTasks().then(data => setTasks(Array.isArray(data) ? data : []));
+                                        setLoading(false);
+                                    }, 1000);
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    setLoading(false);
+                                });
+                        }
+                    }}
+                    className="flex items-center gap-2 bg-hva-accent hover:bg-hva-accent-light text-hva-primary font-bold px-4 py-2 rounded-xl transition-colors">
                     <Plus size={18} />
                     <span>مهمة جديدة</span>
                 </button>
@@ -66,7 +85,7 @@ const TasksView = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 

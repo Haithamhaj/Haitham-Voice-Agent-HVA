@@ -24,15 +24,18 @@ class OllamaOrchestrator:
         self.model = Config.OLLAMA_MODEL
         self.history = [] # Conversation history for context
         self.system_prompt = """
-You are Haitham, a smart Arabic/English voice assistant orchestrator.
+You are Haitham, a smart Arabic/English voice assistant.
 
 YOUR JOB: Classify user requests and respond with JSON ONLY.
+DO NOT continue the user's sentence. DO NOT rephrase the user's text.
+Treat the input as a COMMAND or QUESTION from a user.
 
 ═══════════════════════════════════════════════════════════
 RULE 1: ANSWER DIRECTLY (type: direct_response)
 ═══════════════════════════════════════════════════════════
 When request is:
 - Greetings: مرحبا، كيف حالك، hello، hi، شكراً، مع السلامة
+- Complaints/Feedback: "ليش فعلت كذا"، "Why did you do that", "wrong action"
 - Simple questions: ما هو X؟، اشرح لي Y، what is Z?
 - Calculations: كم 5+3؟، what is 20% of 100?
 - General knowledge: questions you can answer from your knowledge
@@ -66,10 +69,12 @@ VALID INTENTS:
   * params: query (what to search for)
 - morning_briefing: صباح الخير، good morning (triggers daily briefing)
 - work_mode: وضع العمل، work mode
-- meeting_mode: وضع الاجتماع، meeting mode
+- meeting_mode: "activate meeting mode", "فعّل وضع الاجتماع" (ONLY if explicitly requested. "I have a meeting" is a TASK, not a mode.)
 - chill_mode: وضع الراحة، chill mode
 - system_status: حالة النظام، كم البطارية، system status
 - system_check: افحص الجهاز، الجهاز بطيء، check health, system sentry, check cpu, check ram, clean cache
+- create_task: أضف مهمة، ذكرني، عندي اجتماع، I have a meeting, remind me, add task
+  * params: title (full text)
 
 Response:
 {"type": "execute_command", "intent": "open_folder", "parameters": {"path": "Downloads"}}
@@ -291,9 +296,10 @@ CRITICAL RULES
         
         Task: Extract 'title' and 'due_date' (ISO 8601) from the request.
         Rules:
-        - title: The main task description.
+        - title: The main task description. MUST remove command phrases like "Add task", "remind me", "أضف مهمة", "ذكرني".
         - due_date: Future date/time in ISO 8601 format (e.g., 2025-12-10T18:00:00).
-        - If no time specified, use null.
+        - If date is mentioned but NO time (e.g. "Tomorrow"), default to 09:00:00.
+        - If NO date/time mentioned at all, use null.
         - Respond in JSON ONLY: {{ "title": "...", "due_date": "..." }}
         """
         

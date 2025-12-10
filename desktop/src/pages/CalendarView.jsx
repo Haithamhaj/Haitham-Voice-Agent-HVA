@@ -35,8 +35,8 @@ const CalendarView = () => {
                     events.map((event, index) => (
                         <div key={index} className="bg-hva-card p-5 rounded-2xl border border-hva-border-subtle flex gap-4 hover:border-blue-500/30 transition-colors">
                             <div className="flex flex-col items-center justify-center bg-hva-primary/50 rounded-xl w-16 h-16 text-blue-400">
-                                <span className="text-xs font-bold uppercase">{new Date(event.start?.dateTime || event.start?.date).toLocaleDateString('en-US', { month: 'short' })}</span>
-                                <span className="text-xl font-bold">{new Date(event.start?.dateTime || event.start?.date).getDate()}</span>
+                                <span className="text-xs font-bold uppercase">{new Date(typeof event.start === 'string' ? event.start : (event.start?.dateTime || event.start?.date)).toLocaleDateString('en-US', { month: 'short' })}</span>
+                                <span className="text-xl font-bold">{new Date(typeof event.start === 'string' ? event.start : (event.start?.dateTime || event.start?.date)).getDate()}</span>
                             </div>
 
                             <div className="flex-1">
@@ -45,9 +45,10 @@ const CalendarView = () => {
                                     <div className="flex items-center gap-1">
                                         <Clock size={14} />
                                         <span>
-                                            {new Date(event.start?.dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(typeof event.start === 'string' ? event.start : (event.start?.dateTime || event.start?.date)).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                             {' - '}
-                                            {new Date(event.end?.dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                            {' - '}
+                                            {event.end ? new Date(typeof event.end === 'string' ? event.end : (event.end?.dateTime || event.end?.date)).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''}
                                         </span>
                                     </div>
                                     {event.location && (

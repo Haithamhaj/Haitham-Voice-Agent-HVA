@@ -118,31 +118,28 @@ class CalendarTools:
             return False
 
     async def _smart_parse_date(self, date_str: str) -> Optional[datetime.datetime]:
-        """
-        Parse date string using dateparser first, then fallback to LLM for complex timezones.
-        """
+        """Use Gemini to parse natural language date into ISO format"""
+        # 1. Check if it's already a datetime object
+        if isinstance(date_str, datetime.datetime):
+             return date_str
+             
+        # 2. Check if it's already an ISO string
+        try:
+            return datetime.datetime.fromisoformat(date_str)
+        except ValueError:
+            pass
+            
+        # 3. Try dateparser
         import dateparser
-        import pytz
+        dt = dateparser.parse(date_str, settings={'PREFER_DATES_FROM': 'future'})
         
-        # 1. Try dateparser with local timezone settings
-        # We assume the system timezone is the user's local time (e.g. Riyadh)
-        settings = {
-            'PREFER_DATES_FROM': 'future',
-            'RETURN_AS_TIMEZONE_AWARE': True
-        }
-        dt = dateparser.parse(date_str, settings=settings)
-        
-        # If dateparser worked and we don't suspect explicit foreign timezone, return it
-        # Heuristic: if string contains "time" or specific city names, verify with LLM
-        # But dateparser might ignore "Cairo time" and return local time, which is wrong.
-        # So if we detect "time" or "in", we prefer LLM.
         suspicious_keywords = ["time", "in ", "gmt", "utc", "est", "pst", "cairo", "egypt", "saudi", "london", "dubai"]
         is_complex = any(k in date_str.lower() for k in suspicious_keywords)
         
         if dt and not is_complex:
             return dt
             
-        # 2. Fallback to LLM (Gemini) for complex parsing
+        # 4. Fallback to LLM (Gemini) for complex parsing
         try:
             from haitham_voice_agent.llm_router import get_router
             router = get_router()
@@ -166,7 +163,7 @@ class CalendarTools:
             iso_str = iso_str.strip().replace('"', '').replace("'", "")
             
             if iso_str.lower() == "none":
-                return dt # Fallback to whatever dateparser found
+                return dt # Fallback to whatever dateparser found (or None)
                 
             # Parse ISO string
             return datetime.datetime.fromisoformat(iso_str)
@@ -201,6 +198,10 @@ class CalendarTools:
                 tomorrow = now + datetime.timedelta(days=1)
                 time_min = tomorrow.replace(hour=0, minute=0, second=0)
                 time_max = tomorrow.replace(hour=23, minute=59, second=59)
+            elif day_str.lower() in ["upcoming", "week", "الاسبوع", "القادم"]:
+                # Show next 7 days
+                time_min = now
+                time_max = now + datetime.timedelta(days=7)
             else:
                 # Use parsed date
                 time_min = base_date.replace(hour=0, minute=0, second=0)
@@ -257,8 +258,8 @@ class CalendarTools:
             logger.error(f"List events failed: {e}")
             return {"error": True, "message": str(e)}
 
-    async def check_availability(self, day_str: str = "today") -> Dict[str, Any]:
-        """Check availability for a given day"""
+    async def check_availability(self, day_str: str = "today", **kwargs) -> Dict[str, Any]:
+        """Check availability for a given day (kwargs like 'time' are ignored for now)"""
         # Reuse list_events logic to get events
         res = await self.list_events(day_str=day_str, max_results=50)
         if res.get("error"):
@@ -291,8 +292,15 @@ class CalendarTools:
             "events": events
         }
 
-    async def create_event(self, summary: str, start_time: str, duration_minutes: int = 60) -> Dict[str, Any]:
+    async def create_event(self, summary: str, start_time: str, duration_minutes: int = 60, **kwargs) -> Dict[str, Any]:
         """Create a new event with natural language parsing"""
+        # Handle param aliases
+        if "duration" in kwargs:
+             try:
+                 duration_minutes = int(kwargs["duration"])
+             except:
+                 pass
+                 
         try:
             if not self._ensure_service():
                 return {"error": True, "message": "Calendar not authorized."}

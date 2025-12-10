@@ -106,7 +106,25 @@ class ToolDispatcher:
         # Execute action
         try:
             action_method = getattr(handler, action)
-            result = await action_method(**params)
+            
+            # Check if method is async
+            if asyncio.iscoroutinefunction(action_method):
+                result = await action_method(**params)
+            else:
+                # Sync method
+                result = action_method(**params)
+                if asyncio.iscoroutine(result):
+                    result = await result
+            
+            # Normalize result to dict if possible
+            if not isinstance(result, dict):
+                if hasattr(result, "to_dict"):
+                    result = result.to_dict()
+                elif hasattr(result, "dict"): # Pydantic
+                    result = result.dict()
+                else:
+                    # Wrap raw object
+                    result = {"success": True, "data": result}
             
             logger.info(f"Tool execution successful: {tool_name}.{action}")
             return result

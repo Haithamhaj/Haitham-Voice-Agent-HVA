@@ -19,7 +19,7 @@ async def get_today_events():
             return events
         elif hasattr(calendar_tool, "list_events"):
              # Fallback
-             events = await calendar_tool.list_events(day_str="today")
+             events = await calendar_tool.list_events(day_str="upcoming")
              return events
         else:
             return {"error": "Method not found"}

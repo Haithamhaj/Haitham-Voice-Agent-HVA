@@ -69,7 +69,15 @@ class IntentRouter:
                 r"مهمة جديدة",
                 r"add task",
                 r"new task",
-                r"create task"
+                r"create task",
+                r"عندي اجتماع",
+                r"لدى اجتماع",
+                r"i have a meeting",
+                r"schedule a meeting",
+                r"لازم",
+                r"ضروري",
+                r"يجب",
+                r"need to"
             ],
             "list_tasks": [
                 r"اعرض المهام",

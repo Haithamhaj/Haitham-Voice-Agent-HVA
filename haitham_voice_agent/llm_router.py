@@ -322,10 +322,10 @@ You are the HVA Planner. Break requests into tool steps.
 TOOLS:
 1. files: open_file, list_files, move_file, move_all_files, delete_file, read_file, organize_documents, cleanup_downloads
 2. system: open_app, system_status, set_volume, mute, unmute
-3. memory: save_note, search_memory, get_last_note
-4. gmail: fetch_latest_email, send_email, draft_email
-5. calendar: list_events, create_event, check_availability
-6. tasks: list_tasks, add_task, complete_task
+3. memory: save_note(content), search_memory(query), get_last_note
+4. gmail: fetch_latest_email, send_email(to, subject, body), draft_email
+5. calendar: list_events(day), create_event(summary, start_time, duration), check_availability(day)
+6. tasks: list_tasks, add_task(title, due_date), complete_task(task_id)
 7. advisor: ask_advisor
 8. system_sentry: check_health, find_hogs, clean_cache
 9. pricing_tools: update_pricing, check_pricing_updates

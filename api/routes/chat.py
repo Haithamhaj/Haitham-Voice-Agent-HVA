@@ -344,8 +344,24 @@ async def chat(request: ChatRequest):
                          logger.info(f"Calendar sync result: {cal_result}")
                      except Exception as e:
                          logger.error(f"Failed to sync to calendar: {e}")
-            elif action == "tasks.add_task": # Handle potential LLM hallucinated action name
-                 step = {"tool": "tasks", "action": "add_task", "params": {"title": text}}
+            elif action == "tasks.add_task" or action == "system.create_task": # Handle potential LLM hallucinated action name
+                 # Redirect to smart extraction logic
+                 task_details = await ollama.extract_task_details(text)
+                 title = task_details.get("title", text)
+                 due_date = task_details.get("due_date")
+                 
+                 step = {
+                     "tool": "tasks", "action": "add_task", 
+                     "params": {"title": title, "due_date": due_date}
+                 }
+                 
+                 # 1.5. Sync to Calendar
+                 if due_date:
+                      try:
+                          cal_step = {"tool": "calendar", "action": "create_event", "params": {"summary": title, "start_time": due_date}}
+                          await dispatcher.dispatch(cal_step)
+                      except Exception as e:
+                          logger.error(f"Failed to sync to calendar: {e}")
             elif action == "system.move_file" or action == "files.move_file":
                  # Map move_file hallucination to files tool
                  step = {"tool": "files", "action": "move_file", "params": params}
@@ -356,6 +372,24 @@ async def chat(request: ChatRequest):
                 
             if step:
                 result = await dispatcher.dispatch(step)
+                
+                # Format response nicely for Tasks
+                if action in ["create_task", "tasks.add_task", "system.create_task"]:
+                    # Result is a dict (normalized by dispatcher)
+                    # title = params.get("title") # Might be in params or result
+                    t_title = result.get("title") or result.get("data", {}).get("title") or "Task"
+                    t_date = result.get("due_date") or result.get("data", {}).get("due_date")
+                    
+                    msg = f"تم إضافة المهمة: {t_title}"
+                    if t_date:
+                        msg += f" 📅 (الموعد: {t_date})"
+                        
+                    # Check calendar warning
+                    if "warning" in str(result):
+                         msg += " ⚠️ (تنبيه: يوجد تعارض في الموعد)"
+                    
+                    return {"response": msg, "model": "HVA Smart (Local)"}
+
                 return {"response": str(result.get("message") or result), "model": "Intent Router (Rule-based)"}
 
         # 2. LLM Planner (Slow Path)
