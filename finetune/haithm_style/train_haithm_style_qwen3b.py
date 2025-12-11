@@ -8,8 +8,9 @@ from datasets import load_dataset, concatenate_datasets
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
-    TrainingArguments
+    AutoTokenizer,
+    BitsAndBytesConfig
+    # TrainingArguments # Removed, using SFTConfig
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from trl import SFTTrainer
@@ -52,24 +53,25 @@ def train(config_path, run_id):
         except Exception as e:
             logger.warning(f"Could not load prompts dataset: {e}")
 
-    # QLoRA Config
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_use_double_quant=True,
-    )
+    # QLoRA Config - Disabled for macOS compatibility (MPS)
+    # bnb_config = BitsAndBytesConfig(
+    #     load_in_4bit=True,
+    #     bnb_4bit_quant_type="nf4",
+    #     bnb_4bit_compute_dtype=torch.float16,
+    #     bnb_4bit_use_double_quant=True,
+    # )
 
     # Load Model
     model = AutoModelForCausalLM.from_pretrained(
         config['base_model_name'],
-        quantization_config=bnb_config,
+        # quantization_config=bnb_config, # Disabled
+        torch_dtype=torch.float16,        # Use FP16 instead
         device_map="auto",
         trust_remote_code=True
     )
     model.config.use_cache = False
     model.config.pretraining_tp = 1
-    model = prepare_model_for_kbit_training(model)
+    # model = prepare_model_for_kbit_training(model) # Disabled
 
     # LoRA Config
     peft_config = LoraConfig(
@@ -85,7 +87,10 @@ def train(config_path, run_id):
     model.print_trainable_parameters()
 
     # Training Arguments
-    training_args = TrainingArguments(
+    # SFT Config (TRL v0.26+)
+    from trl import SFTConfig
+    
+    sft_config = SFTConfig(
         output_dir=output_dir,
         num_train_epochs=hyperparams['num_train_epochs'],
         per_device_train_batch_size=hyperparams['per_device_train_batch_size'],
@@ -95,13 +100,18 @@ def train(config_path, run_id):
         fp16=True,
         bf16=False,
         max_grad_norm=hyperparams['max_grad_norm'],
-        max_steps=-1,
+        max_steps=hyperparams.get('max_steps', -1), # Use get for robustness
         warmup_ratio=hyperparams['warmup_ratio'],
         group_by_length=True,
         lr_scheduler_type="constant",
         logging_steps=10,
         save_strategy="epoch",
-        optim="paged_adamw_32bit"
+        optim="adamw_torch",
+        
+        # SFT specific
+        dataset_text_field="output",
+        max_length=hyperparams['max_seq_length'], # Renamed from max_seq_length
+        packing=False
     )
 
     # Trainer
@@ -109,11 +119,8 @@ def train(config_path, run_id):
         model=model,
         train_dataset=dataset,
         peft_config=peft_config,
-        dataset_text_field="output", # Simple fine-tuning on text, or use formatting func
-        max_seq_length=hyperparams['max_seq_length'],
-        tokenizer=tokenizer,
-        args=training_args,
-        packing=False,
+        processing_class=tokenizer,
+        args=sft_config,
     )
 
     # Train

@@ -104,6 +104,11 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
     }),
+    finetuneStyleCompare: (prompt) => monitoredFetch('/finetune/style-compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+    }),
     finetuneChat: (model_provider, messages) => monitoredFetch('/finetune/tutor-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -37,4 +37,40 @@ All local runs are automatically logged to:
 ## Future Integration Ideas
 Once a model is trained (`adapter_model.bin` + `config.json`):
 1. **Ollama Integration**: Create a Modelfile that layers this adapter over `qwen2.5:3b`.
-2. **Style Adapter**: Use this model specifically for rewriting draft emails or generating final responses in Haithm's voice.
+3. **Inference: Base vs Haithm-V1**
+   To qualitatively test the model:
+   ```bash
+   python finetune/haithm_style/infer_haithm_style_qwen3b.py \
+     --prompt "Write a short paragraph about why I use AI in my projects."
+   ```
+
+4. **UI Integration**
+   The fine-tuned model is now integrated into the **Finetune Lab**.
+   - **Endpoint**: `POST /finetune/style-compare`
+   - **Function**: Compares Base vs Fine-Tuned (Haithm V1) side-by-side.
+   - **Status**: The UI will show "Haithm-V1 (LoRA)" as available if the adapter exists on disk.
+
+## 5. Experiment Log
+
+### Run hs-20251211-v1-text-only – V1 Text-Only Natural Style (Sanity Check)
+
+- **Date**: 2025-12-11
+- **Status**: COMPLETED
+- **Dataset**: Natural style only (~6170 samples)
+- **Base Model**: Qwen/Qwen2.5-3B-Instruct
+- **Output Dir**: `models/hva_haithm_style_lora_hs-20251211-v1-text-only`
+
+#### Configuration
+- **Max Steps**: 30 (Sanity Check)
+- **Batch Size**: 2
+- **Learning Rate**: 2e-4
+- **Max Length**: 1024
+- **Hardware**: macOS (MPS) - Full FP16 (no quantization)
+
+#### Results
+- **Final Loss**: ~2.16
+- **Training Time**: ~5.5 mins
+- **Notes**: 
+  - Ran as a short sanity check to verify pipeline.
+  - Used `adamw_torch` optimizer and disabled `bitsandbytes` due to macOS limitations.
+  - `trl` v0.26 compatibility fixes applied (`SFTConfig`, `processing_class`).

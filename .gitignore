@@ -90,3 +90,11 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+
+# Trained Models (Large Files)
+models/
+*.safetensors
+*.pt
+*.bin
+*.ckpt
+

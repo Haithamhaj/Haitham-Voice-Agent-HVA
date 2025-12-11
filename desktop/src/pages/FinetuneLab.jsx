@@ -94,10 +94,11 @@ const FinetuneLab = () => {
         if (!prompt.trim()) return;
         setComparing(true);
         try {
-            const result = await api.finetuneCompare(prompt);
+            const result = await api.finetuneStyleCompare(prompt);
             setComparisonResult(result);
         } catch (e) {
             console.error("Comparison failed", e);
+            // Optional: set error state to show in UI
         } finally {
             setComparing(false);
         }
@@ -210,7 +211,7 @@ const FinetuneLab = () => {
             <div className="bg-hva-card border border-hva-card-hover rounded-2xl p-8 shadow-lg">
                 <h3 className="font-bold text-hva-cream text-2xl mb-6 flex items-center gap-3">
                     <GitBranch size={28} className="text-purple-400" />
-                    مقارنة النماذج: Base vs Fine-Tuned
+                    مقارنة النماذج: Base vs Haithm-V1 Style
                 </h3>
 
                 <div className="flex gap-6 items-end mb-8">
@@ -239,27 +240,27 @@ const FinetuneLab = () => {
                         <div className="bg-hva-primary/30 rounded-xl p-6 border border-hva-card-hover">
                             <div className="flex justify-between mb-4 items-end">
                                 <span className="font-bold text-gray-400 text-lg">Base Model (Qwen 3B)</span>
-                                <span className="text-hva-muted font-mono">{comparisonResult.base.latency_ms}ms</span>
+                                <span className="text-hva-muted font-mono">{(comparisonResult.base_runtime_sec * 1000).toFixed(0)}ms</span>
                             </div>
                             <div className="whitespace-pre-wrap text-hva-cream text-base font-mono bg-black/20 p-4 rounded-lg leading-relaxed shadow-inner">
-                                {comparisonResult.base.response}
+                                {comparisonResult.base_response}
                             </div>
                         </div>
 
                         {/* Finetuned Model */}
                         <div className="bg-hva-primary/30 rounded-xl p-6 border border-green-500/30">
                             <div className="flex justify-between mb-4 items-end">
-                                <span className="font-bold text-green-400 text-lg">Fine-Tuned (HVA v1)</span>
-                                <span className="text-green-400/70 font-mono">{comparisonResult.finetuned.latency_ms}ms</span>
+                                <span className="font-bold text-green-400 text-lg">Haithm-V1 (LoRA)</span>
+                                <span className="text-green-400/70 font-mono">{(comparisonResult.haithm_v1_runtime_sec * 1000).toFixed(0)}ms</span>
                             </div>
-                            {comparisonResult.finetuned.available ? (
+                            {comparisonResult.haithm_v1_response && !comparisonResult.haithm_v1_response.startsWith("[Error") ? (
                                 <div className="whitespace-pre-wrap text-hva-cream text-base font-mono bg-black/20 p-4 rounded-lg leading-relaxed shadow-inner">
-                                    {comparisonResult.finetuned.response}
+                                    {comparisonResult.haithm_v1_response}
                                 </div>
                             ) : (
                                 <div className="text-red-400 text-base flex items-center gap-2 p-4 bg-red-500/10 rounded-lg">
                                     <AlertCircle size={20} />
-                                    النموذج غير متوفر بعد
+                                    {comparisonResult.haithm_v1_response || "النموذج غير متوفر"}
                                 </div>
                             )}
                         </div>
@@ -385,7 +386,7 @@ const FinetuneLab = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

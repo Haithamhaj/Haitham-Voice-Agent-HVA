@@ -222,3 +222,40 @@ Important constraints:
             {"role": "assistant", "content": response["content"]}
         ]
     }
+@router.post("/style-compare")
+async def style_compare(request: Dict[str, Any]):
+    """
+    Compare Base vs Haithm Style V1 using core inference logic.
+    """
+    # Import inside handler to avoid loading heavy models on app startup
+    from finetune.haithm_style.infer_haithm_style_core import compare_base_vs_haithm_v1
+    
+    prompt = request.get("prompt", "")
+    max_new_tokens = request.get("max_new_tokens", 256)
+    temperature = request.get("temperature", 0.7)
+    top_p = request.get("top_p", 0.9)
+    
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt is required")
+
+    try:
+        # Run in threadpool since it's blocking CPU work
+        import asyncio
+        import functools
+        
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            functools.partial(
+                compare_base_vs_haithm_v1,
+                prompt=prompt,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                top_p=top_p
+            )
+        )
+        return result
+        
+    except Exception as e:
+        logger.error(f"Style comparison failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

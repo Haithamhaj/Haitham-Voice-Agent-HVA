@@ -40,6 +40,7 @@ A voice-operated automation agent for macOS with hybrid LLM routing, a living me
 - 🧪 **مختبر التحسين (Fine-Tuning Lab)**: واجهة تفاعلية لمقارنة النماذج وتدريب Qwen على بيانات التوجيه الخاصة بك.
 - 📊 **نظام تجميع البيانات التلقائي**: يسجل كل قرار توجيه تلقائياً لبناء مجموعة بيانات تدريب عالية الجودة.
 - 🎯 **Qwen 2.5 (3B) المحسّن**: نموذج محلي سريع (1.2 ثانية) مع دقة عالية في التصنيف.
+- ✍️ **Haithm Style Fine-Tuning**: تدريب نموذج على أسلوب كتابة Haithm الطبيعي مع أدوات مقارنة مدمجة.
 
 </div>
 
@@ -49,6 +50,7 @@ A voice-operated automation agent for macOS with hybrid LLM routing, a living me
 - 🧪 **Fine-Tuning Lab**: Interactive interface for model comparison and training Qwen on your routing data.
 - 📊 **Automated Dataset Collection**: Automatically logs every routing decision to build high-quality training datasets.
 - 🎯 **Optimized Qwen 2.5 (3B)**: Fast local model (1.2s) with high classification accuracy.
+- ✍️ **Haithm Style Fine-Tuning**: Train models on Haithm's natural writing style with integrated comparison tools.
 
 ### 🎯 الأهداف الأساسية | Core Objectives
 
@@ -404,6 +406,11 @@ haitham_voice_agent/
 - **السرعة**: زمن الاستجابة
 - **الاتساق**: ثبات النتائج
 
+**مقارنة أسلوب Haithm (Haithm Style Comparison):**
+- مقارنة مباشرة بين النموذج الأساسي (Qwen 3B) ونموذج Haithm V1 المحسّن
+- اختبار جودة النص المولد وأسلوب الكتابة
+- قياس زمن الاستجابة على MPS/CPU
+
 #### 6. المدرس الذكي
 اسأل أي سؤال عن:
 - مفاهيم PEFT و QLoRA
@@ -475,6 +482,11 @@ Test the same request on both models and compare:
 - **Accuracy**: Is the answer correct?
 - **Speed**: Response time
 - **Consistency**: Result stability
+
+**Haithm Style Comparison:**
+- Direct comparison between base model (Qwen 3B) and fine-tuned Haithm V1
+- Test generated text quality and writing style
+- Measure response time on MPS/CPU
 
 #### 6. Intelligent Tutor
 Ask any question about:
@@ -758,6 +770,194 @@ open "desktop/dist/mac-arm64/HVA Premium.app"
 **5. Permission Denied (Microphone):**
 - **السبب**: قيود أمان macOS
 - **الحل**: امنح الأذونات في System Settings → Privacy & Security
+
+---
+
+## ✍️ تحسين أسلوب Haithm | Haithm Style Fine-Tuning
+
+<div dir="rtl">
+
+### نظرة عامة
+
+**Haithm Style Fine-Tuning** هو نظام متكامل لتدريب نماذج اللغة على أسلوب كتابة Haithm الطبيعي. يتضمن:
+- مجموعة بيانات من نصوص Haithm الأصلية (~6170 عينة)
+- نموذج V1 محسّن باستخدام QLoRA على Qwen 2.5 3B
+- أدوات مقارنة CLI و UI مدمجة
+
+### المكونات الرئيسية
+
+#### 1. مجموعة البيانات
+- **الموقع**: `data/dataset_haithm_style_natural.jsonl`
+- **الحجم**: ~6170 عينة من نصوص Haithm الطبيعية
+- **التنسيق**: Alpaca format (instruction, input, output)
+- **المصدر**: محادثات GPT، ملاحظات، ومراسلات
+
+#### 2. النموذج المحسّن (V1)
+- **الاسم**: `hs-20251211-v1-text-only`
+- **النموذج الأساسي**: Qwen/Qwen2.5-3B-Instruct
+- **الطريقة**: QLoRA (LoRA rank 16, alpha 32)
+- **الموقع**: `models/hva_haithm_style_lora_hs-20251211-v1-text-only`
+- **الخصائص**:
+  - تدريب خفيف (30 خطوة) كاختبار أولي
+  - Loss نهائي: ~2.16
+  - زمن التدريب: ~5.5 دقيقة على MPS
+  - متوافق مع macOS (FP16، بدون quantization)
+
+#### 3. أدوات المقارنة
+
+**أ. أداة CLI (سطر الأوامر):**
+```bash
+python finetune/haithm_style/infer_haithm_style_qwen3b.py \
+  --prompt "اكتب فقرة قصيرة عن استخدام AI في المشاريع"
+```
+
+**ب. واجهة Finetune Lab:**
+- افتح `/finetune-lab` في المتصفح
+- انتقل إلى قسم "مقارنة النماذج"
+- أدخل نصاً واضغط "تشغيل المقارنة"
+- شاهد النتائج جنباً إلى جنب مع أزمنة الاستجابة
+
+### سير العمل الكامل
+
+```bash
+# 1. مراجعة البيانات
+python scripts/analyze_haithm_style_dataset.py
+
+# 2. تدريب نموذج جديد (اختياري)
+python finetune/haithm_style/train_haithm_style_qwen3b.py \
+  --config finetune/haithm_style/config_style.yaml \
+  --run-id hs-$(date +%Y%m%d-%H%M)
+
+# 3. مقارنة النماذج (CLI)
+python finetune/haithm_style/infer_haithm_style_qwen3b.py \
+  --prompt "نص الاختبار"
+
+# 4. مقارنة النماذج (UI)
+# افتح http://localhost:8765/finetune-lab
+```
+
+### التكوين
+
+**ملف التكوين**: `finetune/haithm_style/config_style.yaml`
+
+```yaml
+base_model_name: "Qwen/Qwen2.5-3B-Instruct"
+dataset_natural: "data/dataset_haithm_style_natural.jsonl"
+use_prompts_dataset: false
+
+hyperparameters:
+  num_train_epochs: 1
+  per_device_train_batch_size: 2
+  learning_rate: 2e-4
+  max_seq_length: 1024
+  lora_r: 16
+  lora_alpha: 32
+  max_steps: 30  # للاختبار السريع
+```
+
+### سجل التجارب
+
+جميع التجارب مسجلة في:
+- **Registry**: `finetune/haithm_style/runs.json`
+- **Documentation**: `docs/haithm_style_finetune_runs.md`
+
+### الوثائق الإضافية
+
+- [📄 Haithm Style Dataset Guide](docs/haithm_style_dataset.md)
+- [📄 Fine-tuning Runs Log](docs/haithm_style_finetune_runs.md)
+- [📄 Haithm Corpus Status](docs/haithm_corpus_audio_status.md)
+
+</div>
+
+### Overview
+
+**Haithm Style Fine-Tuning** is an integrated system for training language models on Haithm's natural writing style. It includes:
+- Dataset of Haithm's original texts (~6170 samples)
+- V1 model fine-tuned using QLoRA on Qwen 2.5 3B
+- Integrated CLI and UI comparison tools
+
+### Main Components
+
+#### 1. Dataset
+- **Location**: `data/dataset_haithm_style_natural.jsonl`
+- **Size**: ~6170 samples of Haithm's natural texts
+- **Format**: Alpaca format (instruction, input, output)
+- **Source**: GPT conversations, notes, and correspondence
+
+#### 2. Fine-tuned Model (V1)
+- **Name**: `hs-20251211-v1-text-only`
+- **Base Model**: Qwen/Qwen2.5-3B-Instruct
+- **Method**: QLoRA (LoRA rank 16, alpha 32)
+- **Location**: `models/hva_haithm_style_lora_hs-20251211-v1-text-only`
+- **Characteristics**:
+  - Light training (30 steps) as initial test
+  - Final loss: ~2.16
+  - Training time: ~5.5 minutes on MPS
+  - macOS compatible (FP16, no quantization)
+
+#### 3. Comparison Tools
+
+**A. CLI Tool:**
+```bash
+python finetune/haithm_style/infer_haithm_style_qwen3b.py \
+  --prompt "Write a short paragraph about using AI in projects"
+```
+
+**B. Finetune Lab UI:**
+- Open `/finetune-lab` in browser
+- Navigate to "Model Comparison" section
+- Enter text and click "Run Comparison"
+- View side-by-side results with response times
+
+### Complete Workflow
+
+```bash
+# 1. Review data
+python scripts/analyze_haithm_style_dataset.py
+
+# 2. Train new model (optional)
+python finetune/haithm_style/train_haithm_style_qwen3b.py \
+  --config finetune/haithm_style/config_style.yaml \
+  --run-id hs-$(date +%Y%m%d-%H%M)
+
+# 3. Compare models (CLI)
+python finetune/haithm_style/infer_haithm_style_qwen3b.py \
+  --prompt "test text"
+
+# 4. Compare models (UI)
+# Open http://localhost:8765/finetune-lab
+```
+
+### Configuration
+
+**Config File**: `finetune/haithm_style/config_style.yaml`
+
+```yaml
+base_model_name: "Qwen/Qwen2.5-3B-Instruct"
+dataset_natural: "data/dataset_haithm_style_natural.jsonl"
+use_prompts_dataset: false
+
+hyperparameters:
+  num_train_epochs: 1
+  per_device_train_batch_size: 2
+  learning_rate: 2e-4
+  max_seq_length: 1024
+  lora_r: 16
+  lora_alpha: 32
+  max_steps: 30  # for quick testing
+```
+
+### Experiment Log
+
+All experiments are logged in:
+- **Registry**: `finetune/haithm_style/runs.json`
+- **Documentation**: `docs/haithm_style_finetune_runs.md`
+
+### Additional Documentation
+
+- [📄 Haithm Style Dataset Guide](docs/haithm_style_dataset.md)
+- [📄 Fine-tuning Runs Log](docs/haithm_style_finetune_runs.md)
+- [📄 Haithm Corpus Status](docs/haithm_corpus_audio_status.md)
 
 ---
 
