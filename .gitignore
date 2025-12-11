@@ -61,6 +61,7 @@ credentials/
 !.env.example
 !haitham_voice_agent/data/pricing.json
 !finetune/routing/runs.json
+!finetune/haithm_style/runs.json
 
 # Private Data & Datasets
 Haitham Data/
