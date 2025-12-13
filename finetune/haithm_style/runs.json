@@ -47,7 +47,40 @@
         "base_model": "Qwen/Qwen2.5-3B-Instruct",
         "output_dir": "models/hva_haithm_style_lora_v2",
         "platform": "Google Colab T4",
-        "status": "RUNNING",
-        "notes": "Retry of V2 Mini-Me run. OPTIMIZED: 1 Epoch, Batch Size 2, Grad Accum 16. Target: Finish in < 2 hours."
+        "status": "ABORTED",
+        "notes": "Aborted in favor of L4 execution."
+    },
+    {
+        "run_id": "hs-20251213-v2.5-colab-l4-bulletproof",
+        "date": "2025-12-13T08:30:00",
+        "dataset_natural": "dataset_haithm_style_natural_v2.jsonl",
+        "dataset_prompts": "dataset_haithm_style_prompts.jsonl",
+        "dataset_persona": "dataset_haithm_style_persona_v2.jsonl",
+        "dataset_cognitive": "dataset_haithm_style_cognitive_v2.jsonl",
+        "dataset_extra": "dataset_haithm_v3_cognitive_map.jsonl (Weighted 50x)",
+        "weights": {
+            "natural": 1,
+            "prompts": 3,
+            "persona": 6,
+            "cognitive": 6,
+            "v3_map": 50
+        },
+        "base_model": "Qwen/Qwen2.5-3B-Instruct",
+        "output_dir": "models/hva_haithm_style_lora_v2",
+        "platform": "Google Colab L4 (High RAM)",
+        "status": "FAILED_VALIDATION",
+        "final_loss": 1.50,
+        "config": {
+            "batch_size": 1,
+            "grad_accum": 32,
+            "max_seq_len": 1024,
+            "precision": "bfloat16 (Top Quality)"
+        },
+        "notes": "CRITICAL FAILURE. Deep diagnostic revealed 'Identity Crisis' (thinks it's an assistant), severe JSON hallucinations (invented paths/commands), and prompt parroting. NOT production ready. Requires V2.6/V3 with negative samples and strict system prompting.",
+        "failure_analysis": {
+            "identity": "Confused user/assistant roles (e.g. 'Excellent Haitham, let me explain...')",
+            "json": "Hallucinated Windows paths and non-existent keys",
+            "style": "Repeated prompts verbatim (Parroting)"
+        }
     }
 ]
