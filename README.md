@@ -950,6 +950,21 @@ All experiments are logged in:
 - [📄 Fine-tuning Runs Log](docs/haithm_style_finetune_runs.md)
 - [📄 Haithm Corpus Status](docs/haithm_corpus_audio_status.md)
 
+### 3. Google Colab V2.5 Fine-Tuning (L4 GPU)
+
+**The Winning Strategy (The "Bulletproof" Method):**
+After extensive testing with T4 GPUs (failed due to quantization issues), we successfully trained the V2.5 model using the **L4 GPU** with a specific high-stability configuration.
+
+**Key Configuration Features:**
+*   **Hardware:** Google Colab L4 (24GB VRAM).
+*   **Precision:** Full `torch.bfloat16` (No Quantization/BitsAndBytes involved).
+*   **Stability:** Batch Size 1 (Minimizes peak memory) + Gradient Accumulation 32 (Maintains quality).
+*   **Safety:** Built-in Memory Wiper (GC/Empty Cache) to prevent OOM errors.
+*   **Data Strategy:** V2 Datasets + **V3 Cognitive Map** (Weighted 50x for strong adherence).
+
+**Successful Script:**
+[HVA_Finetune_V2_5_L4_Method2_Success.py](colab_notebooks/HVA_Finetune_V2_5_L4_Method2_Success.py)
+
 ---
 
 ## 📖 الوثائق الإضافية | Additional Documentation

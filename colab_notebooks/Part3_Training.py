@@ -17,17 +17,18 @@ if 'train_dataset' in locals() and 'model' in locals():
     # 1. Standard Arguments
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=16,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=8,
         learning_rate=2e-4,
         num_train_epochs=1,
         warmup_ratio=0.03,
         logging_steps=10,
         save_strategy="no", 
-        fp16=True,
-        bf16=False, 
+        fp16=False,
+        bf16=True, 
         optim="paged_adamw_32bit",
         report_to="none",
+        gradient_checkpointing=True,
     )
 
     # 2. Dynamic Allocator
