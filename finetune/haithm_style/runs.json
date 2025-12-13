@@ -11,5 +11,43 @@
         "steps": 30,
         "final_loss": 2.16,
         "notes": "V1 – text-only natural style fine-tune (sanity check, 30 steps). MPS/Mac run."
+    },
+    {
+        "run_id": "hs-20251212-v2-colab-mini-me",
+        "date": "2025-12-12T22:30:00",
+        "dataset_natural": "dataset_haithm_style_natural_v2.jsonl",
+        "dataset_prompts": "dataset_haithm_style_prompts.jsonl",
+        "dataset_persona": "dataset_haithm_style_persona_v2.jsonl",
+        "dataset_cognitive": "dataset_haithm_style_cognitive_v2.jsonl",
+        "weights": {
+            "natural": 1,
+            "prompts": 3,
+            "persona": 6,
+            "cognitive": 6
+        },
+        "base_model": "Qwen/Qwen2.5-3B-Instruct",
+        "output_dir": "models/hva_haithm_style_lora_v2_fAILED",
+        "platform": "Google Colab T4",
+        "status": "CRASHED",
+        "notes": "Runtime disconnected/restarted mid-training. No checkpoints saved."
+    },
+    {
+        "run_id": "hs-20251213-v2-colab-retry",
+        "date": "2025-12-13T02:30:00",
+        "dataset_natural": "dataset_haithm_style_natural_v2.jsonl",
+        "dataset_prompts": "dataset_haithm_style_prompts.jsonl",
+        "dataset_persona": "dataset_haithm_style_persona_v2.jsonl",
+        "dataset_cognitive": "dataset_haithm_style_cognitive_v2.jsonl",
+        "weights": {
+            "natural": 1,
+            "prompts": 3,
+            "persona": 6,
+            "cognitive": 6
+        },
+        "base_model": "Qwen/Qwen2.5-3B-Instruct",
+        "output_dir": "models/hva_haithm_style_lora_v2",
+        "platform": "Google Colab T4",
+        "status": "RUNNING",
+        "notes": "Retry of V2 Mini-Me run after initial crash."
     }
 ]

@@ -797,15 +797,6 @@ open "desktop/dist/mac-arm64/HVA Premium.app"
 - **النموذج الأساسي**: Qwen/Qwen2.5-3B-Instruct
 - **الطريقة**: QLoRA (LoRA rank 16, alpha 32)
 - **الموقع**: `models/hva_haithm_style_lora_hs-20251211-v1-text-only`
-- **الخصائص**:
-  - تدريب خفيف (30 خطوة) كاختبار أولي
-  - Loss نهائي: ~2.16
-  - زمن التدريب: ~5.5 دقيقة على MPS
-  - متوافق مع macOS (FP16، بدون quantization)
-
-#### 3. أدوات المقارنة
-
-**أ. أداة CLI (سطر الأوامر):**
 ```bash
 python finetune/haithm_style/infer_haithm_style_qwen3b.py \
   --prompt "اكتب فقرة قصيرة عن استخدام AI في المشاريع"

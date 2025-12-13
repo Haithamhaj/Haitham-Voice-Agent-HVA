@@ -67,6 +67,7 @@ credentials/
 Haitham Data/
 haithm_corpus/
 data/haithm_corpus_raw*.jsonl
+data/haithm_corpus_whatsapp*.jsonl
 data/dataset_haithm_*.jsonl
 data/dataset_hva_qwen_routing.jsonl
 
