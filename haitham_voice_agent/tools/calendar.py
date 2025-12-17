@@ -172,8 +172,12 @@ class CalendarTools:
             logger.error(f"Smart date parsing failed: {e}")
             return dt # Fallback
 
-    async def list_events(self, day_str: str = "today", max_results: int = 10) -> Dict[str, Any]:
+    async def list_events(self, day_str: str = "today", max_results: int = 10, **kwargs) -> Dict[str, Any]:
         """List upcoming events with natural language date parsing"""
+        # Handle param aliases
+        if "day" in kwargs and day_str == "today":
+            day_str = kwargs["day"]
+            
         try:
             if not self._ensure_service():
                 return {"error": True, "message": "Calendar not authorized. Please say 'Authorize Calendar'."}
@@ -335,23 +339,34 @@ class CalendarTools:
                 time_min = time_min.astimezone()
             if time_max.tzinfo is None:
                 time_max = time_max.astimezone()
+                
+            # CRITICAL FIX: Update start_dt to be the timezone-aware version
+            start_dt = time_min
             
-            time_min_iso = time_min.isoformat()
-            time_max_iso = time_max.isoformat()
+            # Convert to UTC for API stability
+            time_min_utc = time_min.astimezone(datetime.timezone.utc)
+            time_max_utc = time_max.astimezone(datetime.timezone.utc)
             
-            events_result = self.service.events().list(
-                calendarId='primary',
-                timeMin=time_min_iso,
-                timeMax=time_max_iso,
-                singleEvents=True
-            ).execute()
+            time_min_iso = time_min_utc.isoformat().replace("+00:00", "Z")
+            time_max_iso = time_max_utc.isoformat().replace("+00:00", "Z")
             
-            conflicts = events_result.get('items', [])
-            conflict_warning = ""
-            if conflicts:
-                conflict_titles = [e.get('summary', 'Event') for e in conflicts]
-                conflict_warning = f"Warning: This overlaps with {', '.join(conflict_titles)}."
-                # We proceed anyway but return warning
+            try:
+                events_result = self.service.events().list(
+                    calendarId='primary',
+                    timeMin=time_min_iso,
+                    timeMax=time_max_iso,
+                    singleEvents=True,
+                    orderBy='startTime'
+                ).execute()
+                
+                conflicts = events_result.get('items', [])
+                conflict_warning = ""
+                if conflicts:
+                    conflict_titles = [e.get('summary', 'Event') for e in conflicts]
+                    conflict_warning = f"Warning: This overlaps with {', '.join(conflict_titles)}."
+            except Exception as check_exc:
+                logger.warning(f"Failed to check conflicts: {check_exc}")
+                conflict_warning = " (Could not check for conflicts)"
             
             end_dt = time_max
             
@@ -367,7 +382,7 @@ class CalendarTools:
                 },
             }
             
-            event = self.service.events().insert(calendarId='primary', body=event).execute()
+            event_result = self.service.events().insert(calendarId='primary', body=event).execute()
             
             msg = f"Event created: {summary} at {start_dt.strftime('%Y-%m-%d %H:%M')}."
             if conflict_warning:
@@ -376,8 +391,8 @@ class CalendarTools:
             return {
                 "success": True,
                 "message": msg,
-                "event_id": event.get('id'),
-                "link": event.get('htmlLink'),
+                "event_id": event_result.get('id'),
+                "link": event_result.get('htmlLink'),
                 "warning": conflict_warning
             }
             
