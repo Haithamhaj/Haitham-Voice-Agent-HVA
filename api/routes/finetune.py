@@ -273,8 +273,11 @@ async def style_compare(request: StyleCompareRequest):
         logger.error(f"Style comparison failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel
+
 class ExperimentChatRequest(BaseModel):
-    messages: List[Dict[str, str]]
+    messages: List[Dict[str, Any]]
     mode: Optional[str] = "haithm_v2"
 
 @router.post("/experiment/chat")

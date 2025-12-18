@@ -112,25 +112,56 @@ def chat_with_model(messages: list,
     except Exception as e:
          return {"error": f"Model load failed: {e}"}
 
-    # Format Prompt (Applied to both for fair Instruct comparison)
-    text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True
-    )
-    
-    model_inputs = tokenizer([text], return_tensors="pt").to(device)
-    
-    # ACQUIRE LOCK to prevent adapter switching race conditions
+    # ACQUIRE LOCK
+    print(f"DEBUG: Waiting for lock... (mode={mode})")
     with _INFERENCE_LOCK:
-        start_time = time.time()
-        generated_ids_full = None
-    
-        if mode == "base":
-            # Base Model Context
-            # disable_adapters is not a context manager in this version, it's a method
-            model.disable_adapters()
-            try:
+        print(f"DEBUG: Lock ACQUIRED (mode={mode})")
+        try:
+            start_time = time.time()
+            generated_ids_full = None
+            
+            # Sanitize messages (remove metadata)
+            clean_messages = []
+            for m in messages:
+                clean_msg = {"role": m["role"], "content": m["content"]}
+                clean_messages.append(clean_msg)
+            
+            # Re-format prompt with clean messages
+            text = tokenizer.apply_chat_template(
+                clean_messages,
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            model_inputs = tokenizer([text], return_tensors="pt").to(device)
+        
+            if mode == "base":
+                # Base Model Context
+                # disable_adapters is a method
+                model.disable_adapters()
+                try:
+                    with torch.no_grad():
+                        generated_ids_full = model.generate(
+                            model_inputs.input_ids,
+                            max_new_tokens=max_new_tokens,
+                            temperature=temperature,
+                            top_p=top_p,
+                            do_sample=True,
+                            pad_token_id=tokenizer.eos_token_id
+                        )
+                finally:
+                    model.enable_adapters()
+            else:
+                # Adapter Context
+                try:
+                    model.set_adapter("haithm_v2")
+                except:
+                     try:
+                         model.load_adapter(ADAPTER_PATH, adapter_name="haithm_v2")
+                         model.set_adapter("haithm_v2")
+                     except Exception as e:
+                         print(f"ERROR: Adapter failure: {e}")
+                         return {"error": f"Adapter set failed: {e}"}
+        
                 with torch.no_grad():
                     generated_ids_full = model.generate(
                         model_inputs.input_ids,
@@ -140,38 +171,16 @@ def chat_with_model(messages: list,
                         do_sample=True,
                         pad_token_id=tokenizer.eos_token_id
                     )
-            finally:
-                # Re-enable for safety (though next call will set adapter)
-                model.enable_adapters()
-        else:
-            # Adapter Context
-            try:
-                model.set_adapter("haithm_v2")
-            except:
-                 # Try loading if not set
-                 try:
-                     model.load_adapter(ADAPTER_PATH, adapter_name="haithm_v2")
-                     model.set_adapter("haithm_v2")
-                 except Exception as e:
-                     return {"error": f"Adapter set failed: {e}"}
-    
-            with torch.no_grad():
-                generated_ids_full = model.generate(
-                    model_inputs.input_ids,
-                    max_new_tokens=max_new_tokens,
-                    temperature=temperature,
-                    top_p=top_p,
-                    do_sample=True,
-                    pad_token_id=tokenizer.eos_token_id
-                )
-        
-        # Trim input
-        generated_ids = [
-            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids_full)
-        ]
-        
-        response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-        duration = time.time() - start_time
+            
+            # Trim input
+            generated_ids = [
+                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids_full)
+            ]
+            
+            response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+            duration = time.time() - start_time
+        finally:
+            print(f"DEBUG: Releasing lock (mode={mode})")
     
     return {
         "role": "assistant",
