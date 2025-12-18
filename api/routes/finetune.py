@@ -272,3 +272,78 @@ async def style_compare(request: StyleCompareRequest):
     except Exception as e:
         logger.error(f"Style comparison failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class ExperimentChatRequest(BaseModel):
+    messages: List[Dict[str, str]]
+    mode: Optional[str] = "haithm_v2"
+
+@router.post("/experiment/chat")
+async def experiment_chat(request: ExperimentChatRequest):
+    """
+    Experimental chat with Haithm-V2 or Base that logs sessions for evaluation.
+    """
+    from finetune.haithm_style.infer_haithm_style_core import chat_with_model
+    import datetime
+
+    # 1. Run Inference (Blocking CPU work -> ThreadPool)
+    import asyncio
+    import functools
+    
+    print(f"DEBUG: START experiment_chat mode={request.mode}")
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            functools.partial(
+                chat_with_model,
+                messages=request.messages,
+                mode=request.mode
+            )
+        )
+        print(f"DEBUG: END experiment_chat result={str(result)[:100]}")
+        
+        if "error" in result:
+             raise HTTPException(status_code=500, detail=result["error"])
+
+        # Logging disabled per user request (switched to manual session save)
+            
+        return result
+
+    except Exception as e:
+        logger.error(f"Experiment chat failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/experiment/save")
+async def save_experiment_session(request: ExperimentChatRequest):
+    """
+    Save a full conversation session log.
+    """
+    import datetime
+    
+    try:
+        log_entry = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "messages": request.messages,
+            "turn_count": len(request.messages),
+            "model": request.mode,
+            "type": "manual_session_save"
+        }
+        
+        # Save to specific file per model if desired, or shared jsonl. User requested "Saved with model name".
+        # We will keep using shared jsonl but adding clear metadata field 'model'.
+        # We can also backup to a separate text file for easier reading?
+        # Let's stick to JSONL for data processing, but maybe filename includes date?
+        # User said "Each section saved with model name + date".
+        
+        filename = f"experiment_{request.mode}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        save_path = Path("data/experiments") / filename
+        save_path.parent.mkdir(exist_ok=True, parents=True)
+        
+        with open(save_path, "w", encoding="utf-8") as f:
+            json.dump(log_entry, f, ensure_ascii=False, indent=2)
+            
+        return {"status": "saved", "path": str(save_path)}
+        
+    except Exception as e:
+        logger.error(f"Failed to save session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

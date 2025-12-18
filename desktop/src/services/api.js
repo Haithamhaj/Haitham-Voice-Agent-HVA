@@ -114,6 +114,21 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
     }),
+    finetuneExperimentChat: (messages) => monitoredFetch('/finetune/experiment/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages })
+    }),
+    finetuneExperimentChat: (messages, mode = "haithm_v2") => monitoredFetch('/finetune/experiment/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, mode })
+    }),
+    finetuneSaveExperiment: (messages, mode = "haithm_v2") => monitoredFetch('/finetune/experiment/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, mode })
+    }),
     finetuneChat: (model_provider, messages) => monitoredFetch('/finetune/tutor-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

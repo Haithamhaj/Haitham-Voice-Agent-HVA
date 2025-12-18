@@ -148,7 +148,7 @@ class Config:
     
     # Haithm Style Fine-tuning
     HAITHM_STYLE_DATASET_PATH: str = "data/dataset_haithm_style_natural.jsonl"
-    HAITHM_STYLE_MODEL_PATH: str = "models/hva_haithm_style_lora_hs-20251211-v1-text-only"
+    HAITHM_STYLE_MODEL_PATH = Path("models/hva_haithm_style_lora_v2")
 
     # ==================== LOGGING CONFIG ====================
     # Enable structured logging for routing dataset collection

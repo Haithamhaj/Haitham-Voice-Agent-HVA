@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
-import { FlaskConical, Database, Activity, GitBranch, Send, Bot, FileText, CheckCircle, AlertCircle, Clock, Cpu, Play } from 'lucide-react';
+import { FlaskConical, Database, Activity, GitBranch, Send, Bot, FileText, CheckCircle, AlertCircle, Clock, Cpu, Play, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 
@@ -43,6 +43,149 @@ const PipelineStep = ({ step, title, desc, status, isLast }) => (
         )}
     </div>
 );
+
+const ExperimentChat = () => {
+    // Dual State for Side-by-Side Comparison
+    const [messagesBase, setMessagesBase] = useState([]);
+    const [messagesV2, setMessagesV2] = useState([]);
+
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const baseEndRef = useRef(null);
+    const v2EndRef = useRef(null);
+
+    useEffect(() => {
+        baseEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messagesBase]);
+
+    useEffect(() => {
+        v2EndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messagesV2]);
+
+    const handleSend = async (e) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+
+        const userMsg = { role: "user", content: input };
+
+        // Update local UI immediately
+        const newHistBase = [...messagesBase, userMsg];
+        const newHistV2 = [...messagesV2, userMsg];
+
+        setMessagesBase(newHistBase);
+        setMessagesV2(newHistV2);
+
+        setInput("");
+        setLoading(true);
+
+        try {
+            // Parallel Fetch
+            const [resBase, resV2] = await Promise.all([
+                api.finetuneExperimentChat(newHistBase, "base").catch(err => ({ role: "assistant", content: `❌ Error: ${err.message}` })),
+                api.finetuneExperimentChat(newHistV2, "haithm_v2").catch(err => ({ role: "assistant", content: `❌ Error: ${err.message}` }))
+            ]);
+
+            setMessagesBase([...newHistBase, resBase]);
+            setMessagesV2([...newHistV2, resV2]);
+
+        } catch (error) {
+            console.error("Chat Error", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async (modelName, messages) => {
+        if (messages.length === 0) return;
+        try {
+            const res = await api.finetuneSaveExperiment(messages, modelName);
+            alert(`✅ Saved ${modelName} session to:\n${res.path}`);
+        } catch (e) {
+            console.error(e);
+            alert("Failed to save session");
+        }
+    };
+
+    const handleClear = () => {
+        if (window.confirm("مسح المحادثة وبدء جلسة جديدة؟")) {
+            setMessagesBase([]);
+            setMessagesV2([]);
+        }
+    };
+
+    // Helper to render a single chat column
+    const renderChatColumn = (title, messages, ref, modelKey, borderColor) => (
+        <div className={`flex-1 flex flex-col border ${borderColor} rounded-xl bg-black/20 overflow-hidden`}>
+            <div className="p-3 bg-hva-primary/50 border-b border-white/10 flex justify-between items-center">
+                <span className={`font-bold ${modelKey === 'haithm_v2' ? 'text-green-400' : 'text-gray-400'}`}>{title}</span>
+                <button
+                    onClick={() => handleSave(modelKey, messages)}
+                    disabled={messages.length === 0}
+                    className="text-xs bg-hva-card hover:bg-hva-card-hover px-3 py-1 rounded text-hva-muted transition-colors disabled:opacity-50"
+                >
+                    💾 حفظ
+                </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 h-[500px]">
+                {messages.length === 0 && (
+                    <div className="h-full flex flex-col items-center justify-center text-hva-muted opacity-30">
+                        <p>لا توجد رسائل</p>
+                    </div>
+                )}
+                {messages.map((msg, i) => (
+                    <div key={i} className={clsx("flex flex-col max-w-[90%]", msg.role === "user" ? "self-end items-end" : "self-start items-start")}>
+                        <div className={clsx("px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap",
+                            msg.role === "user" ? "bg-hva-accent text-white rounded-br-none" : "bg-hva-primary border border-hva-card-hover text-hva-cream rounded-bl-none"
+                        )}>
+                            {msg.content}
+                        </div>
+                        {msg.metadata && (
+                            <span className="text-[10px] text-hva-muted mt-1 px-1">
+                                {(msg.metadata.duration * 1000).toFixed(0)}ms
+                            </span>
+                        )}
+                    </div>
+                ))}
+                <div ref={ref} />
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="bg-hva-card border border-hva-card-hover rounded-2xl p-6 shadow-lg mt-8">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-hva-cream text-2xl flex items-center gap-3">
+                    <Layout size={28} className="text-blue-400" />
+                    المحادثة المقارنة (Side-by-Side Experiment)
+                </h3>
+                <button onClick={handleClear} className="text-red-400 text-sm hover:underline px-3">🗑️ مسح الكل</button>
+            </div>
+
+            <div className="flex gap-4 mb-4">
+                {renderChatColumn("Base Model (Qwen 3B)", messagesBase, baseEndRef, "base", "border-gray-500/30")}
+                {renderChatColumn("Haithm-V2 (LoRA)", messagesV2, v2EndRef, "haithm_v2", "border-green-500/30")}
+            </div>
+
+            <form onSubmit={handleSend} className="bg-hva-primary/20 p-4 rounded-xl border border-hva-card-hover/50 flex gap-3">
+                <input
+                    className="flex-1 bg-hva-primary border border-hva-card-hover rounded-xl px-4 py-3 text-hva-cream focus:border-hva-accent outline-none transition-all"
+                    placeholder="اكتب رسالة واحدة للنموذجين..."
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    disabled={loading}
+                />
+                <button
+                    type="submit"
+                    disabled={loading || !input.trim()}
+                    className="bg-hva-accent hover:bg-hva-accent/80 text-white px-6 rounded-xl font-bold transition-all disabled:opacity-50"
+                >
+                    {loading ? <Activity className="animate-spin" /> : <Send size={20} />}
+                </button>
+            </form>
+        </div>
+    );
+};
 
 // --- Main Page ---
 
@@ -234,38 +377,52 @@ const FinetuneLab = () => {
                     </button>
                 </div>
 
-                {comparisonResult && (
-                    <div className="grid grid-cols-2 gap-8">
-                        {/* Base Model */}
-                        <div className="bg-hva-primary/30 rounded-xl p-6 border border-hva-card-hover">
-                            <div className="flex justify-between mb-4 items-end">
-                                <span className="font-bold text-gray-400 text-lg">Base Model (Qwen 3B)</span>
-                                <span className="text-hva-muted font-mono">{(comparisonResult.base_runtime_sec * 1000).toFixed(0)}ms</span>
-                            </div>
-                            <div className="whitespace-pre-wrap text-hva-cream text-base font-mono bg-black/20 p-4 rounded-lg leading-relaxed shadow-inner">
-                                {comparisonResult.base_response}
-                            </div>
+                <div className="grid grid-cols-2 gap-8 mt-8">
+                    {/* Base Model */}
+                    <div className="bg-hva-primary/30 rounded-xl p-6 border border-hva-card-hover">
+                        <div className="flex justify-between mb-4 items-end">
+                            <span className="font-bold text-gray-400 text-lg">Base Model (Qwen 3B)</span>
+                            {comparisonResult && <span className="text-hva-muted font-mono">{(comparisonResult.base_runtime_sec * 1000).toFixed(0)}ms</span>}
                         </div>
-
-                        {/* Finetuned Model */}
-                        <div className="bg-hva-primary/30 rounded-xl p-6 border border-green-500/30">
-                            <div className="flex justify-between mb-4 items-end">
-                                <span className="font-bold text-green-400 text-lg">Haithm-V1 (LoRA)</span>
-                                <span className="text-green-400/70 font-mono">{(comparisonResult.haithm_v1_runtime_sec * 1000).toFixed(0)}ms</span>
-                            </div>
-                            {comparisonResult.haithm_v1_response && !comparisonResult.haithm_v1_response.startsWith("[Error") ? (
-                                <div className="whitespace-pre-wrap text-hva-cream text-base font-mono bg-black/20 p-4 rounded-lg leading-relaxed shadow-inner">
-                                    {comparisonResult.haithm_v1_response}
-                                </div>
+                        <div className={clsx("whitespace-pre-wrap text-hva-cream text-base font-mono bg-black/20 p-4 rounded-lg leading-relaxed shadow-inner min-h-[100px]", !comparisonResult && "flex items-center justify-center text-hva-muted/50")}>
+                            {comparing ? (
+                                <div className="flex items-center gap-2"><Activity className="animate-spin" size={16} /> جاري المعالجة...</div>
+                            ) : comparisonResult ? (
+                                comparisonResult.base_response
                             ) : (
-                                <div className="text-red-400 text-base flex items-center gap-2 p-4 bg-red-500/10 rounded-lg">
-                                    <AlertCircle size={20} />
-                                    {comparisonResult.haithm_v1_response || "النموذج غير متوفر"}
-                                </div>
+                                "ستظهر إجابة الموديل الأساسي هنا..."
                             )}
                         </div>
                     </div>
-                )}
+
+                    {/* Finetuned Model */}
+                    <div className="bg-hva-primary/30 rounded-xl p-6 border border-green-500/30 relative overflow-hidden">
+                        {status?.finetuned_model_exists && (
+                            <div className="absolute top-0 right-0 bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-bl-lg font-bold">نشط</div>
+                        )}
+                        <div className="flex justify-between mb-4 items-end">
+                            <span className="font-bold text-green-400 text-lg">Haithm-V2 (LoRA)</span>
+                            {comparisonResult && <span className="text-green-400/70 font-mono">{(comparisonResult.haithm_v1_runtime_sec * 1000).toFixed(0)}ms</span>}
+                        </div>
+
+                        <div className={clsx("whitespace-pre-wrap text-hva-cream text-base font-mono bg-black/20 p-4 rounded-lg leading-relaxed shadow-inner min-h-[100px]", !comparisonResult && "flex items-center justify-center text-hva-muted/50")}>
+                            {comparing ? (
+                                <div className="flex items-center gap-2"><Activity className="animate-spin" size={16} /> جاري المعالجة...</div>
+                            ) : comparisonResult ? (
+                                comparisonResult.haithm_v1_response && !comparisonResult.haithm_v1_response.startsWith("[Error") ? (
+                                    comparisonResult.haithm_v1_response
+                                ) : (
+                                    <div className="text-red-400 flex items-center gap-2">
+                                        <AlertCircle size={20} />
+                                        {comparisonResult.haithm_v1_response || "النموذج غير متوفر"}
+                                    </div>
+                                )
+                            ) : (
+                                "ستظهر إجابة الموديل المطور هنا..."
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Dataset Preview */}
@@ -302,6 +459,9 @@ const FinetuneLab = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Experiment Chat Section */}
+            <ExperimentChat />
 
             {/* Tutor Chat - Bottom Section */}
             <div className="bg-hva-card border border-hva-card-hover rounded-2xl shadow-xl overflow-hidden mt-4">
