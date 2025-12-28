@@ -1,7 +1,10 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, File, UploadFile
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import logging
+import shutil
+import os
+from pathlib import Path
 
 from haitham_voice_agent.tools.memory.memory_system import memory_system
 from haitham_voice_agent.intelligence.smart_summarizer import smart_summarizer
@@ -31,6 +34,36 @@ async def list_knowledge_files(project_id: Optional[str] = None):
         return {"files": results}
     except Exception as e:
         logger.error(f"Failed to list files: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/upload")
+async def upload_knowledge_file(
+    file: UploadFile = File(...), 
+    project_id: str = "general"
+):
+    """Upload and Ingest a new file"""
+    try:
+        # Save file to disk (Inbox)
+        inbox_dir = workspace_manager.get_inbox_path()
+        file_path = inbox_dir / file.filename
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        logger.info(f"File uploaded to {file_path}")
+        
+        # Ingest (builds tree & summary automatically)
+        await memory_system.ingest_file(
+            path=str(file_path),
+            project_id=project_id,
+            description=f"Uploaded via Knowledge Studio",
+            tags=["uploaded"]
+        )
+        
+        return {"status": "success", "path": str(file_path)}
+        
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/tree")

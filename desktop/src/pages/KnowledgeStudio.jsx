@@ -1,32 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box, Typography, Paper, Grid, List, ListItem, ListItemText,
-    ListItemAvatar, Avatar, IconButton, Divider, Button,
-    CircularProgress, Chip, Card, CardContent
-} from '@mui/material';
-import {
-    Description as FileIcon,
-    AccountTree as TreeIcon,
-    RecordVoiceOver as PodcastIcon,
-    Summarize as SummaryIcon,
-    PlayArrow as PlayIcon,
-    Pause as PauseIcon
-} from '@mui/icons-material';
+    FileText,
+    Network,
+    Mic,
+    FileOutput,
+    Play,
+    Pause,
+    Clock,
+    UploadCloud
+} from 'lucide-react';
 import { api } from '../services/api';
 
 // Simple Tree Visualization Component (Recursive)
 const TreeNode = ({ node, level = 0 }) => (
-    <Box sx={{ ml: level * 2, mt: 1 }}>
-        <Chip
-            label={node.name || node.label}
-            size="small"
-            color={level === 0 ? "primary" : "default"}
-            variant={level === 0 ? "filled" : "outlined"}
-        />
+    <div style={{ marginLeft: `${level * 16}px`, marginTop: '8px' }}>
+        <span className={`inline-flex items-center px-2 py-1 rounded text-sm ${level === 0 ? 'bg-hva-accent text-hva-primary font-bold' : 'border border-hva-card-hover text-hva-cream'}`}>
+            {node.name || node.label}
+        </span>
         {node.children && node.children.map((child, i) => (
             <TreeNode key={i} node={child} level={level + 1} />
         ))}
-    </Box>
+    </div>
 );
 
 const KnowledgeStudio = () => {
@@ -43,7 +37,7 @@ const KnowledgeStudio = () => {
     const fetchFiles = async () => {
         try {
             const res = await api.get('/knowledge/files');
-            setFiles(res.files || []); // Expecting { files: [...] }
+            setFiles(res.files || []);
         } catch (err) {
             console.error("Failed to load files", err);
         }
@@ -65,15 +59,13 @@ const KnowledgeStudio = () => {
 
         try {
             let result;
-            const path = selectedFile.path || selectedFile.metadata?.path; // Handle structure diffs
+            const path = selectedFile.path || selectedFile.metadata?.path;
 
             if (feature === 'summary') {
-                // Force deep recursive summary
                 result = await api.post('/knowledge/summary', { path });
                 setData(prev => ({ ...prev, summary: result }));
             } else if (feature === 'tree') {
                 result = await api.post('/knowledge/tree', { path });
-                // Transform for simple visualization if needed, or stick to list
                 setData(prev => ({ ...prev, tree: result }));
             } else if (feature === 'podcast') {
                 result = await api.post('/knowledge/podcast', { path });
@@ -86,203 +78,247 @@ const KnowledgeStudio = () => {
         }
     };
 
+    const handleUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setLoading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('project_id', 'general');
+
+        try {
+            await api.post('/knowledge/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            // Refresh list
+            await fetchFiles();
+        } catch (err) {
+            console.error("Upload failed", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // --- Renderers ---
 
     const renderSummary = () => (
-        <Box>
-            <Typography variant="h6" gutterBottom>Deep Summary</Typography>
+        <div className="space-y-4">
+            <h2 className="text-xl font-bold text-hva-cream mb-4">Deep Summary</h2>
             {data.summary ? (
-                <Box>
-                    <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                <div className="space-y-4">
+                    <div className="p-4 bg-hva-card rounded-lg border border-hva-card-hover text-hva-cream whitespace-pre-line leading-relaxed">
                         {data.summary.final_summary || data.summary}
-                    </Typography>
+                    </div>
                     {/* If recursive chunks exist */}
                     {data.summary.chunk_summaries && (
-                        <Box mt={4}>
-                            <Typography variant="subtitle2" color="text.secondary">Detailed Breakdown:</Typography>
+                        <div className="mt-6">
+                            <h3 className="text-sm font-semibold text-hva-muted mb-2">Detailed Breakdown:</h3>
                             {data.summary.chunk_summaries.map((chunk, i) => (
-                                <Paper key={i} sx={{ p: 2, my: 1, bgcolor: 'background.default' }}>
-                                    <Typography variant="body2">{chunk}</Typography>
-                                </Paper>
+                                <div key={i} className="p-3 mb-2 bg-hva-primary/50 rounded border border-hva-card-hover text-sm text-hva-dim">
+                                    {chunk}
+                                </div>
                             ))}
-                        </Box>
+                        </div>
                     )}
-                </Box>
+                </div>
             ) : (
-                <Box textAlign="center" mt={4}>
-                    <Typography color="text.secondary">No summary generated yet.</Typography>
-                    <Button variant="contained" onClick={() => generateFeature('summary')} sx={{ mt: 2 }}>
+                <div className="text-center mt-12">
+                    <p className="text-hva-muted mb-4">No summary generated yet.</p>
+                    <button
+                        onClick={() => generateFeature('summary')}
+                        className="px-6 py-2 bg-hva-accent text-hva-primary font-bold rounded-lg hover:bg-hva-accent/90 transition-colors"
+                    >
                         Generate Deep Summary
-                    </Button>
-                </Box>
+                    </button>
+                </div>
             )}
-        </Box>
+        </div>
     );
 
     const renderTree = () => (
-        <Box>
-            <Typography variant="h6" gutterBottom>Knowledge Tree</Typography>
+        <div>
+            <h2 className="text-xl font-bold text-hva-cream mb-4">Knowledge Tree</h2>
             {data.tree ? (
-                <Box>
-                    {/* Simple list of topics for now */}
-                    <Typography variant="subtitle1">Root: {data.tree.root}</Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                <div>
+                    <div className="mb-4">
+                        <span className="text-hva-muted">Root: </span>
+                        <span className="text-hva-accent font-mono">{data.tree.root}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                         {data.tree.topics && data.tree.topics.map((t, i) => (
-                            <Chip
-                                key={i}
-                                label={t.properties?.name || "Topic"}
-                                color="secondary"
-                                variant="outlined"
-                                icon={<TreeIcon />}
-                            />
+                            <div key={i} className="flex items-center gap-2 px-3 py-2 bg-hva-card border border-hva-card-hover rounded-lg">
+                                <Network size={16} className="text-hva-accent" />
+                                <span className="text-hva-cream">{t.properties?.name || "Topic"}</span>
+                            </div>
                         ))}
-                    </Box>
-                    {data.tree.topics?.length === 0 && <Typography>No topics extracted yet.</Typography>}
-                </Box>
+                    </div>
+                    {data.tree.topics?.length === 0 && <p className="text-hva-muted">No topics extracted yet.</p>}
+                </div>
             ) : (
-                <Box textAlign="center" mt={4}>
-                    <Typography color="text.secondary">Knowledge graph not built.</Typography>
-                    <Button variant="contained" onClick={() => generateFeature('tree')} sx={{ mt: 2 }}>
+                <div className="text-center mt-12">
+                    <p className="text-hva-muted mb-4">Knowledge graph not built.</p>
+                    <button
+                        onClick={() => generateFeature('tree')}
+                        className="px-6 py-2 bg-hva-accent text-hva-primary font-bold rounded-lg hover:bg-hva-accent/90 transition-colors"
+                    >
                         Build Knowledge Tree
-                    </Button>
-                </Box>
+                    </button>
+                </div>
             )}
-        </Box>
+        </div>
     );
 
     const renderPodcast = () => (
-        <Box>
-            <Typography variant="h6" gutterBottom>Deep Dive Podcast</Typography>
+        <div>
+            <h2 className="text-xl font-bold text-hva-cream mb-4">Deep Dive Podcast</h2>
             {data.podcast ? (
-                <Box>
-                    <Typography variant="subtitle1" gutterBottom>{data.podcast.title}</Typography>
-                    <Paper sx={{ maxHeight: '60vh', overflow: 'auto', p: 2 }}>
+                <div>
+                    <h3 className="text-lg font-medium text-hva-accent mb-4">{data.podcast.title}</h3>
+                    <div className="max-h-[60vh] overflow-y-auto space-y-4 p-4 bg-hva-card rounded-xl border border-hva-card-hover custom-scrollbar">
                         {data.podcast.script && data.podcast.script.map((line, i) => (
-                            <Box key={i} sx={{ mb: 2, display: 'flex', gap: 2 }}>
-                                <Avatar sx={{ bgcolor: line.speaker === 'Sarah' ? 'primary.main' : 'secondary.main' }}>
+                            <div key={i} className={`flex gap-4 ${line.speaker === 'Sarah' ? 'flex-row' : 'flex-row-reverse'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${line.speaker === 'Sarah' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'
+                                    }`}>
                                     {line.speaker[0]}
-                                </Avatar>
-                                <Box>
-                                    <Typography variant="subtitle2" color="text.secondary">{line.speaker}</Typography>
-                                    <Typography variant="body1">{line.text}</Typography>
-                                </Box>
-                            </Box>
+                                </div>
+                                <div className={`flex-1 p-3 rounded-lg ${line.speaker === 'Sarah' ? 'bg-purple-500/10 rounded-tl-none' : 'bg-blue-500/10 rounded-tr-none'
+                                    }`}>
+                                    <div className="text-xs font-bold mb-1 opacity-70 {line.speaker === 'Sarah' ? 'text-purple-400' : 'text-blue-400'}">
+                                        {line.speaker}
+                                    </div>
+                                    <p className="text-hva-cream leading-relaxed">{line.text}</p>
+                                </div>
+                            </div>
                         ))}
-                    </Paper>
-                    <Box mt={2} textAlign="center">
-                        <Button variant="outlined" startIcon={<PlayIcon />} disabled>
-                            Play Audio (Coming Soon)
-                        </Button>
-                    </Box>
-                </Box>
+                    </div>
+                    <div className="mt-6 text-center">
+                        <button disabled className="px-6 py-2 border border-hva-muted text-hva-muted rounded-lg flex items-center gap-2 mx-auto cursor-not-allowed opacity-50">
+                            <Play size={18} /> Play Audio (Coming Soon)
+                        </button>
+                    </div>
+                </div>
             ) : (
-                <Box textAlign="center" mt={4}>
-                    <Typography color="text.secondary">No podcast script generated.</Typography>
-                    <Button variant="contained" onClick={() => generateFeature('podcast')} sx={{ mt: 2 }}>
+                <div className="text-center mt-12">
+                    <p className="text-hva-muted mb-4">No podcast script generated.</p>
+                    <button
+                        onClick={() => generateFeature('podcast')}
+                        className="px-6 py-2 bg-hva-accent text-hva-primary font-bold rounded-lg hover:bg-hva-accent/90 transition-colors"
+                    >
                         Generate Podcast Script
-                    </Button>
-                </Box>
+                    </button>
+                </div>
             )}
-        </Box>
+        </div>
     );
 
     return (
-        <Grid container spacing={0} sx={{ height: '100vh' }}>
+        <div className="flex h-full">
             {/* Sidebar: File List */}
-            <Grid item xs={3} sx={{ borderRight: 1, borderColor: 'divider', height: '100%', overflow: 'auto' }}>
-                <Box p={2}>
-                    <Typography variant="h6" gutterBottom>Knowledge Source</Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    <List>
-                        {files.map((file, i) => {
-                            const path = file.path || file.metadata?.path;
-                            const name = path ? path.split('/').pop() : 'Unknown File';
-                            return (
-                                <ListItem
-                                    button
-                                    key={i}
-                                    selected={selectedFile === file}
-                                    onClick={() => handleFileSelect(file)}
-                                >
-                                    <ListItemAvatar>
-                                        <Avatar><FileIcon /></Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText primary={name} secondary={file.project || "No Project"} />
-                                </ListItem>
-                            );
-                        })}
-                    </List>
-                </Box>
-            </Grid>
+            <div className="w-1/4 border-l border-hva-card-hover h-full flex flex-col bg-hva-card/30">
+                <div className="p-4 border-b border-hva-card-hover">
+                    <h2 className="text-lg font-bold text-hva-cream flex items-center gap-2">
+                        <FileText size={20} className="text-hva-accent" />
+                        Knowledge Source
+                    </h2>
+                </div>
+
+                {/* Upload Button */}
+                <div className="px-4 pb-4 border-b border-hva-card-hover">
+                    <label className="flex items-center justify-center gap-2 w-full py-2 bg-hva-accent/10 border border-hva-accent/30 rounded-lg text-hva-accent hover:bg-hva-accent/20 cursor-pointer transition-colors">
+                        <UploadCloud size={18} />
+                        <span className="font-medium text-sm">Upload New File</span>
+                        <input type="file" className="hidden" onChange={handleUpload} />
+                    </label>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                    {files.map((file, i) => {
+                        const path = file.path || file.metadata?.path;
+                        const name = path ? path.split('/').pop() : 'Unknown File';
+                        const isSelected = selectedFile === file;
+                        return (
+                            <button
+                                key={i}
+                                onClick={() => handleFileSelect(file)}
+                                className={`w-full text-right p-3 rounded-lg mb-2 transition-all duration-200 flex items-start gap-3 ${isSelected
+                                    ? 'bg-hva-accent/20 border border-hva-accent/50'
+                                    : 'hover:bg-hva-card-hover border border-transparent'
+                                    }`}
+                            >
+                                <div className={`mt-1 ${isSelected ? 'text-hva-accent' : 'text-hva-muted'}`}>
+                                    <FileText size={18} />
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <div className={`font-medium truncate ${isSelected ? 'text-hva-cream' : 'text-hva-dim'}`}>
+                                        {name}
+                                    </div>
+                                    <div className="text-xs text-hva-muted truncate mt-0.5">
+                                        {file.project || "No Project"}
+                                    </div>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
 
             {/* Main Content */}
-            <Grid item xs={9} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
                 {selectedFile ? (
                     <>
                         {/* Feature Tabs */}
-                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                            <Grid container>
-                                <Grid item xs={4}>
-                                    <Button
-                                        fullWidth
-                                        startIcon={<SummaryIcon />}
-                                        variant={activeTab === 'summary' ? 'contained' : 'text'}
-                                        onClick={() => setActiveTab('summary')}
-                                        sx={{ borderRadius: 0, py: 2 }}
+                        <div className="border-b border-hva-card-hover bg-hva-card/50">
+                            <div className="flex">
+                                {[
+                                    { id: 'summary', icon: FileOutput, label: 'Smart Summary' },
+                                    { id: 'tree', icon: Network, label: 'Knowledge Tree' },
+                                    { id: 'podcast', icon: Mic, label: 'Deep Podcast' }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex-1 py-4 flex items-center justify-center gap-2 transition-all duration-200 border-b-2 ${activeTab === tab.id
+                                            ? 'border-hva-accent text-hva-accent bg-hva-accent/5'
+                                            : 'border-transparent text-hva-muted hover:text-hva-cream hover:bg-hva-card-hover'
+                                            }`}
                                     >
-                                        Smart Summary
-                                    </Button>
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <Button
-                                        fullWidth
-                                        startIcon={<TreeIcon />}
-                                        variant={activeTab === 'tree' ? 'contained' : 'text'}
-                                        onClick={() => setActiveTab('tree')}
-                                        sx={{ borderRadius: 0, py: 2 }}
-                                    >
-                                        Knowledge Tree
-                                    </Button>
-                                </Grid>
-                                <Grid item xs={4}>
-                                    <Button
-                                        fullWidth
-                                        startIcon={<PodcastIcon />}
-                                        variant={activeTab === 'podcast' ? 'contained' : 'text'}
-                                        onClick={() => setActiveTab('podcast')}
-                                        sx={{ borderRadius: 0, py: 2 }}
-                                    >
-                                        Deep Dive Podcast
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </Box>
+                                        <tab.icon size={18} />
+                                        <span className="font-medium">{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         {/* Content Area */}
-                        <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
+                        <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
                             {loading ? (
-                                <Box display="flex" justifyContent="center" alignItems="center" height="50%">
-                                    <CircularProgress />
-                                    <Typography sx={{ ml: 2 }}>Analyzing Knowledge Base...</Typography>
-                                </Box>
+                                <div className="h-full flex flex-col items-center justify-center text-hva-accent/80">
+                                    <Clock size={48} className="animate-spin mb-4" />
+                                    <p className="text-lg animate-pulse">Analyzing Knowledge Base...</p>
+                                </div>
                             ) : (
-                                <>
+                                <div className="max-w-4xl mx-auto">
                                     {activeTab === 'summary' && renderSummary()}
                                     {activeTab === 'tree' && renderTree()}
                                     {activeTab === 'podcast' && renderPodcast()}
-                                </>
+                                </div>
                             )}
-                        </Box>
+                        </div>
                     </>
                 ) : (
-                    <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                        <Typography variant="h5" color="text.secondary">
-                            Select a file to begin Deep Analysis
-                        </Typography>
-                    </Box>
+                    <div className="h-full flex flex-col items-center justify-center text-hva-muted">
+                        <div className="w-20 h-20 bg-hva-card rounded-full flex items-center justify-center mb-6">
+                            <FileText size={40} className="text-hva-dim" />
+                        </div>
+                        <h3 className="text-xl font-medium mb-2">Select a file to begin</h3>
+                        <p className="text-sm opacity-60">Choose a document from the sidebar to analyze</p>
+                    </div>
                 )}
-            </Grid>
-        </Grid>
+            </div>
+        </div>
     );
 };
 
