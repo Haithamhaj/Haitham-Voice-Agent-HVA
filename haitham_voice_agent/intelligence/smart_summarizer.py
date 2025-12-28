@@ -1,5 +1,6 @@
 import logging
-from typing import Optional
+import textwrap
+from typing import Optional, List, Dict, Any
 
 from haitham_voice_agent.ollama_orchestrator import get_orchestrator
 from haitham_voice_agent.llm_router import get_router
@@ -8,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class SmartSummarizer:
     """
-    Summarizes content using a Local-First strategy.
+    Summarizes content using a Local-First strategy with Recursive Logic.
     1. Try Local Qwen (via Ollama).
     2. Fallback to Cloud (Gemini/GPT) via LLMRouter.
     """
@@ -16,59 +17,103 @@ class SmartSummarizer:
     def __init__(self):
         self.ollama = get_orchestrator()
         self.llm_router = get_router()
+        self.chunk_size = 4000  # Characters approx
+        self.overlap = 200
         
     async def summarize_content(self, text: str, max_length: int = 2000) -> str:
-        """Generate a concise summary/description of the text"""
+        """Legacy Entry point: Generate a concise summary (single pass or simple)"""
         if not text:
             return ""
             
-        # Truncate if too long for context window
-        truncated_text = text[:max_length]
-        prompt = f"Summarize the following file content in 1-2 sentences. Focus on what it is and its key topics:\n\n{truncated_text}"
+        # If text is short enough, just summarize directly
+        if len(text) < self.chunk_size * 1.5:
+             return await self._generate_summary(text, prompt_type="short")
+             
+        # Otherwise, use recursive
+        result = await self.recursive_summarize(text)
+        return result.get("final_summary", "")
+
+    async def recursive_summarize(self, text: str) -> Dict[str, Any]:
+        """
+        Recursively summarizes large text.
+        Returns:
+            {
+                "final_summary": str,
+                "chunk_summaries": List[str],
+                "structure": "Recursive"
+            }
+        """
+        if not text:
+            return {"final_summary": "", "chunk_summaries": []}
+
+        # 1. Chunk the text
+        chunks = self._chunk_text(text)
+        logger.info(f"Recursive Summarization: Splitting {len(text)} chars into {len(chunks)} chunks")
         
+        # 2. Summarize each chunk
+        chunk_summaries = []
+        for i, chunk in enumerate(chunks):
+            # Contextual prompt for chunks
+            summary = await self._generate_summary(chunk, prompt_type="chunk", index=i, total=len(chunks))
+            if summary:
+                chunk_summaries.append(summary)
+        
+        # 3. Final Pass: Summarize the summaries
+        if len(chunk_summaries) == 1:
+            final_summary = chunk_summaries[0]
+        else:
+            combined_summaries = "\n\n".join([f"- Part {i+1}: {s}" for i, s in enumerate(chunk_summaries)])
+            final_summary = await self._generate_summary(combined_summaries, prompt_type="final")
+            
+        return {
+            "final_summary": final_summary,
+            "chunk_summaries": chunk_summaries,
+            "raw_chunks": len(chunks)
+        }
+
+    def _chunk_text(self, text: str) -> List[str]:
+        """Split text into overlapping chunks"""
+        return textwrap.wrap(
+            text, 
+            width=self.chunk_size, 
+            break_long_words=False, 
+            break_on_hyphens=False,
+            replace_whitespace=False
+        )
+        
+    async def _generate_summary(self, text: str, prompt_type: str = "short", index: int=0, total: int=0) -> str:
+        """Internal helper to call LLM"""
+        
+        # Select Prompt
+        if prompt_type == "chunk":
+            prompt = f"Summarize this section ({index+1}/{total}) of a larger document. Focus on key facts and topics:\n\n{text[:6000]}"
+        elif prompt_type == "final":
+            prompt = f"Create a cohesive final summary from these section summaries. Focus on the main narrative and key takeaways:\n\n{text[:6000]}"
+        else:
+            prompt = f"Summarize the following content in 2-3 concise sentences:\n\n{text[:4000]}"
+
         # 1. Try Local Qwen
         try:
-            logger.info("Attempting local summarization with Qwen...")
-            # We use classify_request as a generic generation interface for now if available,
-            # or we might need to add a generate method to OllamaOrchestrator.
-            # Assuming OllamaOrchestrator has a generate method or we use the underlying client.
-            # Let's check OllamaOrchestrator capabilities.
-            # If not exposed, we might need to add it. For now, let's assume we can use it.
-            # Actually, OllamaOrchestrator is designed for classification.
-            # Let's use the LLM Router's Gemini Flash as primary fallback if Ollama isn't easy to hook into for generation yet.
-            # BUT the requirement is Qwen first.
-            # Let's see if we can use the ollama client directly if the orchestrator doesn't support raw generation.
-            
-            # Re-reading OllamaOrchestrator code (from memory/context):
-            # It uses `AsyncClient`.
-            
             response = await self.ollama.client.generate(
                 model=self.ollama.model,
                 prompt=prompt,
-                options={"temperature": 0.3}
+                options={"temperature": 0.3, "num_predict": 500}
             )
-            
             summary = response.get("response", "").strip()
             if summary:
-                logger.info("Generated summary using Qwen")
                 return summary
-                
         except Exception as e:
             logger.warning(f"Local summarization failed: {e}")
             
-        # 2. Fallback to Cloud (Gemini Flash is preferred for speed/cost)
+        # 2. Fallback to Cloud (Gemini Flash)
         try:
-            logger.info("Falling back to Cloud summarization...")
-            # We force Gemini by asking for 'analysis' or just using the router
             result = await self.llm_router.generate_with_gemini(
-                prompt, 
-                logical_model="logical.gemini.flash" # Hint for Flash
+                prompt, logical_model="logical.gemini.flash"
             )
             return result["content"]
-            
         except Exception as e:
             logger.error(f"Cloud summarization failed: {e}")
-            return "Content available (Summarization failed)"
+            return "Summary unavailable."
 
 # Singleton
 smart_summarizer = SmartSummarizer()

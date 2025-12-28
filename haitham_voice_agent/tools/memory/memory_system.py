@@ -13,6 +13,7 @@ from .utils.embeddings import EmbeddingGenerator
 from haitham_voice_agent.intelligence.file_router import file_router
 from haitham_voice_agent.intelligence.content_extractor import content_extractor
 from haitham_voice_agent.intelligence.smart_summarizer import smart_summarizer
+from haitham_voice_agent.intelligence.knowledge_graph_builder import knowledge_graph_builder
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,8 @@ class MemorySystem:
 
     async def ingest_file(self, path: str, project_id: str, description: str = None, tags: List[str] = None) -> bool:
         """
-        Ingest a file into all 3 memory layers (SQLite, Vector, Graph)
+        Ingest a file into all 3 memory layers (SQLite, Vector, Graph).
+        Now includes Knowledge Tree building and Recursive Summarization.
         """
         try:
             # 0. Extract Content & Summarize (Smart Layer)
@@ -97,8 +99,18 @@ class MemorySystem:
                 
                 # Generate summary if no description provided
                 if not final_description:
+                    logger.info("Generating smart summary (recursive)...")
+                    # smart_summarizer.summarize_content now handles large files recursively
                     final_description = await smart_summarizer.summarize_content(extracted_text)
-                    logger.info(f"Generated summary: {final_description}")
+                    logger.info(f"Generated summary: {final_description[:100]}...")
+            
+                # --- NEW: Build Knowledge Tree ---
+                logger.info("Building Knowledge Tree...")
+                await knowledge_graph_builder.build_document_tree(
+                    document_id=path,
+                    content=extracted_text,
+                    title=path.split('/')[-1]
+                )
             
             # 1. SQLite & Vector (via index_file)
             # Pass extracted text for deep indexing
@@ -113,7 +125,7 @@ class MemorySystem:
             if not index_success:
                 return False
                 
-            # 2. Graph Store
+            # 2. Graph Store (Legacy Links)
             # Create File Node
             await self.graph_store.add_node(path, "File", {"description": final_description})
             
@@ -132,7 +144,7 @@ class MemorySystem:
                     await self.graph_store.add_node(tag_id, "Concept", {"name": tag})
                     await self.graph_store.add_edge(path, tag_id, "REFERS_TO", {})
             
-            logger.info(f"Ingested file {path} into Project {project_id} (3-Layer)")
+            logger.info(f"Ingested file {path} into Project {project_id} (3-Layer + Knowledge Tree)")
             return True
             
         except Exception as e:

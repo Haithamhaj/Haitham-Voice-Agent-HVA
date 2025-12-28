@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Brain, Mail, Calendar, CheckSquare, Settings, Mic, MessageSquare, Activity, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, Brain, Mail, Calendar, CheckSquare, Settings, Mic, MessageSquare, Activity, FlaskConical, Library } from 'lucide-react';
 import clsx from 'clsx';
 
 const Sidebar = ({ isListening, wsConnected, toggleListening }) => {
@@ -8,6 +8,7 @@ const Sidebar = ({ isListening, wsConnected, toggleListening }) => {
         { path: '/', icon: LayoutDashboard, label: 'الرئيسية' },
         { path: '/chat', icon: MessageSquare, label: 'المحادثة' },
         { path: '/memory', icon: Brain, label: 'الذاكرة' },
+        { path: '/knowledge', icon: Library, label: 'استوديو المعرفة' },
         { path: '/finetune-lab', icon: FlaskConical, label: 'مختبر النموذج' },
         { path: '/gmail', icon: Mail, label: 'البريد' },
         { path: '/calendar', icon: Calendar, label: 'التقويم' },
